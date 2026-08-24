@@ -1,0 +1,2 @@
+Drop your pause-menu song here (mp3, ogg, wav, m4a, flac).
+It plays while the game is paused and stops on resume.

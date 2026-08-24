@@ -1,0 +1,3 @@
+Drop your radio songs here (mp3, ogg, wav, m4a, flac).
+They play as a looping station during gameplay.
+Tap LB / R to skip to the next song, hold LB / R to switch the radio on or off.
