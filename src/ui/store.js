@@ -19,6 +19,7 @@ export const ui = reactive({
   offer: null,
   prompt: null,
   payment: null,
+  bagSecured: null,
   insideName: null,
   toasts: [],
 
@@ -49,4 +50,11 @@ export function showPayment(amount, onTime) {
   setTimeout(() => {
     if (ui.payment && Date.now() - ui.payment.key >= 2400) ui.payment = null;
   }, 2500);
+}
+
+export function showBagSecured(foodItem) {
+  ui.bagSecured = { foodItem, key: Date.now() };
+  setTimeout(() => {
+    if (ui.bagSecured && Date.now() - ui.bagSecured.key >= 500) ui.bagSecured = null;
+  }, 600);
 }

@@ -10,6 +10,7 @@
     <RadioWidget />
     <ToastStack />
     <PaymentFlash />
+    <BagSecuredFlash />
   </div>
   <Screens />
 </template>
@@ -27,6 +28,7 @@ import Minimap from './components/Minimap.vue';
 import RadioWidget from './components/RadioWidget.vue';
 import ToastStack from './components/ToastStack.vue';
 import PaymentFlash from './components/PaymentFlash.vue';
+import BagSecuredFlash from './components/BagSecuredFlash.vue';
 import Screens from './components/Screens.vue';
 
 const inGame = computed(() => ui.screen === 'playing');

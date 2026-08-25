@@ -637,3 +637,99 @@ kbd {
 @keyframes pop-in {
   from { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
 }
+
+.bag-flash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 200;
+}
+
+.bag-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  animation: bag-bg-flash 0.4s ease-out forwards;
+}
+
+@keyframes bag-bg-flash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.bag-text-wrap {
+  position: relative;
+  text-align: center;
+  animation: bag-pop 0.5s cubic-bezier(0.18, 1.8, 0.4, 1) forwards;
+}
+
+@keyframes bag-pop {
+  0% { transform: scale(0.2) rotate(-12deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+  80% { transform: scale(0.95) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.bag-text {
+  font-family: 'Trebuchet MS', 'Arial Black', sans-serif;
+  font-size: 88px;
+  font-weight: 900;
+  line-height: 0.92;
+  color: #9ef01a;
+  -webkit-text-stroke: 4px #1a1a2e;
+  text-shadow:
+    0 6px 0 #1a1a2e,
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 60px rgba(158, 240, 26, 0.5);
+  letter-spacing: -0.02em;
+}
+
+.bag-sub {
+  margin-top: 10px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: bag-sub-in 0.4s 0.2s ease-out both;
+}
+
+@keyframes bag-sub-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.bag-star {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: #ffd23f;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: bag-star-burst 0.7s ease-out forwards;
+}
+
+.bag-star-1 { top: 30%; left: 25%; animation-delay: 0.05s; }
+.bag-star-2 { top: 25%; right: 28%; animation-delay: 0.12s; }
+.bag-star-3 { bottom: 35%; left: 30%; animation-delay: 0.08s; }
+.bag-star-4 { bottom: 30%; right: 25%; animation-delay: 0.15s; }
+
+@keyframes bag-star-burst {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  40% { transform: scale(1.3) rotate(90deg); opacity: 1; }
+  100% { transform: scale(0.6) rotate(180deg) translate(var(--tx, 20px), var(--ty, -20px)); opacity: 0; }
+}
+
+.bag-star-1 { --tx: -30px; --ty: -40px; }
+.bag-star-2 { --tx: 30px; --ty: -35px; }
+.bag-star-3 { --tx: -25px; --ty: 30px; }
+.bag-star-4 { --tx: 35px; --ty: 25px; }
+
+.bag-enter-active { animation: none; }
+.bag-leave-active { animation: bag-out 0.3s ease-in forwards; }
+
+@keyframes bag-out {
+  to { transform: scale(1.3); opacity: 0; }
+}

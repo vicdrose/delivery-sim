@@ -3,7 +3,7 @@ import { CONFIG } from '../../config.js';
 import { bus } from '../../core/bus.js';
 import { DeliveryState } from '../../delivery/DeliveryStateMachine.js';
 import { makeMarkerMaterial } from '../../city/materials.js';
-import { ui, toast, showPayment } from '../../ui/store.js';
+import { ui, toast, showPayment, showBagSecured } from '../../ui/store.js';
 
 const fmtTime = (sec) => {
   const s = Math.max(0, Math.round(sec));
@@ -88,7 +88,7 @@ export class DeliveryMode {
       }),
       bus.on('delivery:foodCollected', () => {
         g.audio.play('pickup');
-        toast('Bag secured!', 'success');
+        showBagSecured(this._short(this.fsmDelivery.foodItem));
       }),
       bus.on('delivery:drivingToCustomer', () => {
         toast('Deliver it before it gets cold!', 'info');
