@@ -172,7 +172,7 @@ export class Vehicle {
     const steerFade = THREE.MathUtils.clamp(absFs / V.steerFadeSpeed, 0, 1);
     const steerRate = THREE.MathUtils.lerp(V.steerRateLow, V.steerRateHigh, steerFade);
     const turnAuth = THREE.MathUtils.clamp(absFs / 2.2, 0, 1);
-    this.heading += this.steerSmooth * steerRate * turnAuth * dt * Math.sign(fs || 1) * (controls.handbrake ? 1.35 : 1);
+    this.heading -= this.steerSmooth * steerRate * turnAuth * dt * Math.sign(fs || 1) * (controls.handbrake ? 1.35 : 1);
 
     const grip = controls.handbrake ? V.gripHandbrake : V.gripLateral;
     this.lateralSpeed *= Math.exp(-grip * dt);

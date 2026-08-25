@@ -61,28 +61,29 @@ function buildMountains(rng) {
     const a = (i / steps) * 360 + rng.float(-4, 4);
     if (facesWest(a)) continue;
     const rad = (a * Math.PI) / 180;
-    const dist = 258 + Math.sin(a * 2.31) * 42 + rng.float(-28, 58);
+    const r = rng.float(44, 82);
+    const dist = Math.max(258 + Math.sin(a * 2.31) * 42 + rng.float(-28, 58), H + 16 + r);
     const dev = Math.abs(((a - 180 + 540) % 360) - 180);
     const scale = 0.72 + 0.28 * Math.min(1, dev / 60);
     parts.push(
-      makeMountain(
-        rng,
-        rng.float(44, 82),
-        rng.float(78, 188) * scale,
-        rng.float(0.9, 1.06)
-      ).translate(Math.cos(rad) * dist, 0, Math.sin(rad) * dist)
+      makeMountain(rng, r, rng.float(78, 188) * scale, rng.float(0.9, 1.06)).translate(
+        Math.cos(rad) * dist,
+        0,
+        Math.sin(rad) * dist
+      )
     );
   }
   for (let i = 0; i < 46; i++) {
     const a = rng.float(0, 360);
     if (facesWest(a)) continue;
     const rad = (a * Math.PI) / 180;
-    const dist = H + rng.float(38, 98);
+    const fr = rng.float(18, 34);
+    const fd = Math.max(H + rng.float(38, 98), H + 8 + fr);
     parts.push(
-      makeMountain(rng, rng.float(18, 34), rng.float(20, 46), rng.float(0.85, 1.02)).translate(
-        Math.cos(rad) * dist,
+      makeMountain(rng, fr, rng.float(20, 46), rng.float(0.85, 1.02)).translate(
+        Math.cos(rad) * fd,
         0,
-        Math.sin(rad) * dist
+        Math.sin(rad) * fd
       )
     );
   }
@@ -166,10 +167,10 @@ export function createScenery(scene, collision) {
   const group = new THREE.Group();
 
   group.add(flatPlane(175, 1400, -H - 86, -0.045, 0, '#e6d5a4'));
-  group.add(flatPlane(30, 2 * (H + 60), SHORE_X + 9, -0.04, 0, '#cbb27e'));
+  group.add(flatPlane(30, 2 * (H + 60), SHORE_X + 9, 0.002, 0, '#cbb27e'));
 
-  const deep = flatPlane(1100, 1600, SHORE_X - 580, -0.14, 0, '#1f6f92', 0.97);
-  const shallow = flatPlane(72, 2 * (H + 80), SHORE_X - 41, -0.075, 0, '#59bccd', 0.82);
+  const deep = flatPlane(1100, 1600, SHORE_X - 580, -0.03, 0, '#1f6f92', 0.97);
+  const shallow = flatPlane(72, 2 * (H + 80), SHORE_X - 41, 0.0, 0, '#59bccd', 0.82);
   group.add(deep, shallow);
 
   const foamMat = () =>
@@ -178,8 +179,8 @@ export function createScenery(scene, collision) {
   const foamB = new THREE.Mesh(new THREE.PlaneGeometry(3, 2 * (H + 55)), foamMat());
   foamA.rotation.x = -Math.PI / 2;
   foamB.rotation.x = -Math.PI / 2;
-  foamA.position.set(SHORE_X - 4, -0.03, 0);
-  foamB.position.set(SHORE_X - 22, -0.05, 0);
+  foamA.position.set(SHORE_X - 4, 0.012, 0);
+  foamB.position.set(SHORE_X - 22, 0.004, 0);
   group.add(foamA, foamB);
 
   group.add(buildMountains(rng));
@@ -205,8 +206,8 @@ export function createScenery(scene, collision) {
     group,
     update(dt) {
       t += dt;
-      deep.position.y = -0.14 + Math.sin(t * 0.4) * 0.02;
-      shallow.position.y = -0.075 + Math.sin(t * 0.7 + 1.2) * 0.028;
+      deep.position.y = -0.03 + Math.sin(t * 0.4) * 0.012;
+      shallow.position.y = Math.sin(t * 0.7 + 1.2) * 0.015;
       foamA.position.x = SHORE_X - 3 + Math.sin(t * 0.55) * 6;
       foamA.material.opacity = 0.3 + 0.25 * Math.sin(t * 0.55 + 0.8);
       foamB.position.x = SHORE_X - 24 + Math.sin(t * 0.42 + 2) * 9;
