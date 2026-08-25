@@ -127,9 +127,9 @@ export class Vehicle {
     const rx = Math.cos(this.heading);
     const rz = -Math.sin(this.heading);
     return out.set(
-      this.group.position.x - rx * (V.bodyWidth / 2 + 0.9),
+      this.group.position.x + rx * (V.bodyWidth / 2 + 0.9),
       0,
-      this.group.position.z - rz * (V.bodyWidth / 2 + 0.9)
+      this.group.position.z + rz * (V.bodyWidth / 2 + 0.9)
     );
   }
 

@@ -283,7 +283,7 @@ export class DeliveryMode {
     const g = this.g;
     const pos = g.vehicle.exitPosition();
     g.collision.resolveCircle(pos, 0.5, 'city');
-    g.player.teleport(pos.x, pos.z, g.vehicle.heading + Math.PI / 2);
+    g.player.teleport(pos.x, pos.z, g.vehicle.heading);
     g.player.setVisible(true);
     this.playerMode = 'foot';
     this.camYawFoot = g.player.yaw;
