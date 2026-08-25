@@ -15,8 +15,13 @@ const radioFiles = import.meta.glob('./tracks/radio/*.{mp3,ogg,wav,m4a,flac}', {
   query: '?url',
   import: 'default'
 });
+const ambientFiles = import.meta.glob('./tracks/ambient/*.{mp3,ogg,wav,m4a,flac}', {
+  eager: true,
+  query: '?url',
+  import: 'default'
+});
 
-const VOLUMES = { title: 0.65, pause: 0.65, radio: 0.55 };
+const VOLUMES = { title: 0.65, pause: 0.65, radio: 0.55, ambient: 0.30 };
 
 const trackName = (path) =>
   decodeURIComponent(path.split('/').pop() || '').replace(/\.[^.]+$/, '');
@@ -26,7 +31,8 @@ export class MusicManager {
     this.groups = {
       title: this._list(titleFiles),
       pause: this._list(pauseFiles),
-      radio: this._list(radioFiles)
+      radio: this._list(radioFiles),
+      ambient: this._list(ambientFiles)
     };
     this.radioIndex = 0;
     this.radioOn = true;
@@ -34,6 +40,7 @@ export class MusicManager {
     this.muted = false;
     this.ambient = null;
     this._unlocked = false;
+    this._ambientPlaying = false;
     for (const entry of this.groups.radio) {
       entry.el.addEventListener('ended', () => {
         if (this.radioPlaying && this.groups.radio.length > 1) this.radioNext(true);
@@ -102,7 +109,7 @@ export class MusicManager {
   unlock() {
     if (this._unlocked) return;
     this._unlocked = true;
-    for (const group of ['title', 'pause', 'radio']) {
+    for (const group of ['title', 'pause', 'radio', 'ambient']) {
       for (const entry of this.groups[group]) entry.el.muted = false;
     }
   }
@@ -113,9 +120,7 @@ export class MusicManager {
     this._stopGroup('pause');
     const n = this.groups.radio.length;
     if (n > 1) this.radioIndex = Math.floor(Math.random() * n);
-    if (this.radioOn && n) {
-      this._startRadioCurrent(false);
-    }
+    this.startAmbient();
     this._syncUi();
   }
 
@@ -136,6 +141,7 @@ export class MusicManager {
   pauseGame() {
     this.ambient = 'pause';
     this._radioElsPause();
+    this.stopAmbient();
     const g = this.groups.pause;
     if (g.length) this._playEl(g[0], 'pause');
   }
@@ -143,8 +149,25 @@ export class MusicManager {
   resumeGame(inCar = true) {
     this.ambient = null;
     this._stopGroup('pause');
+    this.startAmbient();
     if (inCar && this.radioOn && this.groups.radio.length) this._startRadioCurrent(true);
     this._syncUi();
+  }
+
+  startAmbient() {
+    if (this._ambientPlaying) return;
+    this._ambientPlaying = true;
+    for (const entry of this.groups.ambient) {
+      entry.el.loop = true;
+      entry.el.volume = this.muted ? 0 : VOLUMES.ambient;
+      entry.el.play().catch(() => void 0);
+    }
+  }
+
+  stopAmbient() {
+    if (!this._ambientPlaying) return;
+    this._ambientPlaying = false;
+    this._stopGroup('ambient');
   }
 
   pauseForFoot() {
@@ -160,7 +183,11 @@ export class MusicManager {
   radioNext(auto = false) {
     const g = this.groups.radio;
     if (g.length < 2) return;
-    this.radioIndex = (this.radioIndex + 1) % g.length;
+    let next;
+    do {
+      next = Math.floor(Math.random() * g.length);
+    } while (next === this.radioIndex);
+    this.radioIndex = next;
     if (auto ? this.radioPlaying : this.radioOn && !this.ambient) {
       for (const [i, entry] of g.entries()) {
         if (i !== this.radioIndex && !entry.el.paused) entry.el.pause();
@@ -183,7 +210,7 @@ export class MusicManager {
 
   setMuted(m) {
     this.muted = m;
-    for (const group of ['title', 'pause', 'radio']) {
+    for (const group of ['title', 'pause', 'radio', 'ambient']) {
       for (const entry of this.groups[group]) {
         entry.el.volume = m ? 0 : VOLUMES[group];
       }
@@ -191,7 +218,7 @@ export class MusicManager {
   }
 
   dispose() {
-    for (const group of ['title', 'pause', 'radio']) this._stopGroup(group);
+    for (const group of ['title', 'pause', 'radio', 'ambient']) this._stopGroup(group);
   }
 
   _syncUi() {

@@ -24,6 +24,7 @@ export class DeliveryMode {
     this._minimapClock = 0;
 
     this.targetPos = null;
+    this._showCarBeacon = false;
 
     const beamMat = makeMarkerMaterial('#ffd23f', 0.20);
     const ringMat = makeMarkerMaterial('#ffd23f', 0.5);
@@ -42,18 +43,22 @@ export class DeliveryMode {
 
   enter() {
     const g = this.g;
-    g.vehicle.reset(g.city.spawn.x, g.city.spawn.z, Math.PI);
+    const sp = g.city.spawn;
+    g.vehicle.reset(sp.x + 6, sp.z - 5, Math.PI);
     g.vehicle.onCrash = (i) => {
       g.cameraRig.shake(i);
       g.audio.play('crash');
     };
     g.vehicle.onSkid = (a) => g.audio.setSkid(a);
-    g.player.setVisible(false);
-    this.playerMode = 'drive';
-    g.cameraRig.setMode('car');
-    g.cameraRig.snapBehind(g.vehicle.position, Math.PI);
+    g.player.teleport(sp.x, sp.z, Math.PI);
+    g.player.setVisible(true);
+    this.playerMode = 'foot';
+    this.camYawFoot = Math.PI;
+    g.cameraRig.setMode('foot');
+    g.cameraRig.snapBehind(g.player.pos, this.camYawFoot);
     this.offerTimer = 1.2;
     this.lastPickupId = null;
+    this._showCarBeacon = true;
 
     this._registerDoorItems();
 
@@ -83,7 +88,7 @@ export class DeliveryMode {
       }),
       bus.on('delivery:foodCollected', () => {
         g.audio.play('pickup');
-        toast(`Got the ${this._short(this.fsmDelivery.foodItem)}! Back to the car.`, 'info');
+        toast('Bag secured!', 'success');
       }),
       bus.on('delivery:drivingToCustomer', () => {
         toast('Deliver it before it gets cold!', 'info');
@@ -294,6 +299,7 @@ export class DeliveryMode {
     const g = this.g;
     g.player.setVisible(false);
     this.playerMode = 'drive';
+    this._showCarBeacon = false;
     g.cameraRig.setMode('car');
     g.cameraRig.snapBehind(g.vehicle.position, g.vehicle.heading);
     g.audio.play('enter');
@@ -466,7 +472,10 @@ export class DeliveryMode {
     let hex = '#ffd23f';
 
     if (this.playerMode !== 'inside') {
-      if (fsm.state === DeliveryState.RETURNING && d) {
+      if (this._showCarBeacon && !fsm.isActive) {
+        pos = this.g.vehicle.position;
+        hex = '#4cc9f0';
+      } else if (fsm.state === DeliveryState.RETURNING && d) {
         pos = this.g.vehicle.position;
         hex = '#4cc9f0';
       } else if (fsm.isActive && d) {

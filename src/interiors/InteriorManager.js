@@ -94,11 +94,10 @@ export class InteriorManager {
     this.scene.add(g);
 
     const c = this.collision;
-    c.addBox(ox, oz - 5, 6.5, 0.15, 'interior');
-    c.addBox(ox - 6.5, oz, 0.15, 5, 'interior');
-    c.addBox(ox + 6.5, oz, 0.15, 5, 'interior');
-    c.addBox(ox - 4.2, oz + 5, 2.3, 0.15, 'interior');
-    c.addBox(ox + 4.2, oz + 5, 2.3, 0.15, 'interior');
+    c.addBox(ox, oz - 5, 7, 1, 'interior');
+    c.addBox(ox - 7, oz, 1, 6, 'interior');
+    c.addBox(ox + 7, oz, 1, 6, 'interior');
+    c.addBox(ox, oz + 6, 7, 1, 'interior');
     c.addBox(ox + 2.6, oz - 1.4, 2.6, 0.6, 'interior');
 
     this.entryPos = new THREE.Vector3(ox, 0, oz + 3.9);

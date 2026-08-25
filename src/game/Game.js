@@ -134,7 +134,6 @@ export class Game {
 
     this._buildMinimap();
     this._bindEvents();
-    this.music.autoplayTitle();
 
     this._titleT = 0;
     this.loop = new Loop((dt) => this.update(dt), () => this.render());
@@ -220,7 +219,6 @@ export class Game {
     const start = () => {
       this.audio.init().then(() => {
         this.music.setMuted(this.audio.muted);
-        if (ui.screen === 'title') this.music.startTitle();
       });
     };
     start();
