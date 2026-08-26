@@ -420,14 +420,14 @@ body {
 
 .fuel-gauge {
   bottom: 18px;
-  right: 400px;
+  right: 410px;
   background: rgba(29, 36, 48, 0.85);
   color: #fff;
   border-radius: 14px;
-  padding: 10px 12px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   opacity: 0.55;
   transition: opacity 0.3s ease;
 }
@@ -446,51 +446,40 @@ body {
   animation: fuel-pulse 0.4s ease-in-out infinite;
 }
 
-.fuel-bar-track {
-  width: 6px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
-  overflow: hidden;
-  position: relative;
-}
-
-.fuel-bar-fill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: #4cc9f0;
-  border-radius: 3px;
-  transition: height 0.3s ease;
-}
-
-.fuel-gauge.low .fuel-bar-fill {
-  background: #ffca3a;
-}
-
-.fuel-gauge.empty .fuel-bar-fill {
-  background: #ff595e;
-}
-
-.fuel-label {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+.fuel-emoji {
+  font-size: 16px;
   line-height: 1;
 }
 
-.fuel-pct {
-  font-size: 18px;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
+.fuel-bar {
+  width: 70px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-.fuel-unit {
-  font-size: 8px;
-  letter-spacing: 0.2em;
-  opacity: 0.6;
-  margin-top: 2px;
+.fuel-fill {
+  height: 100%;
+  background: #4cc9f0;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.fuel-gauge.low .fuel-fill {
+  background: #ffca3a;
+}
+
+.fuel-gauge.empty .fuel-fill {
+  background: #ff595e;
+}
+
+.fuel-pct {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+  text-align: right;
 }
 
 @keyframes fuel-pulse {
