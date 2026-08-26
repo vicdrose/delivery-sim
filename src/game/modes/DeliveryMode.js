@@ -16,6 +16,7 @@ export class DeliveryMode {
     this.playerMode = 'drive';
     this.camYawFoot = 0;
     this.offerTimer = 1.0;
+    this._offerExpiry = -1;
     this.completeTimer = -1;
     this.lastPickupId = null;
     this._unsubs = [];
@@ -524,12 +525,23 @@ export class DeliveryMode {
       }
       return;
     }
+    if (fsm.state === DeliveryState.OFFER) {
+      this._offerExpiry -= dt;
+      if (this._offerExpiry <= 0) {
+        fsm.decline();
+        toast('Order expired.', 'warn');
+        this._offerExpiry = -1;
+        this.offerTimer = 2.0;
+      }
+      return;
+    }
     if (fsm.state === DeliveryState.IDLE && !fsm.delivery) {
       this.offerTimer -= dt;
       if (this.offerTimer <= 0) {
         const d = this.g.generator.create(this.lastPickupId);
         if (d && fsm.offer(d)) {
           this.lastPickupId = d.pickup.id;
+          this._offerExpiry = 5 + Math.random() * 5;
         } else {
           this.offerTimer = 2.0;
         }
@@ -607,7 +619,7 @@ export class DeliveryMode {
     if (d) {
       const ref = this.playerMode === 'drive' ? g.vehicle.position : g.player.pos;
       if (st === DeliveryState.OFFER) {
-        obj = { title: 'NEW ORDER AVAILABLE', sub: `${d.pickup.name} → ${d.dropoff.name}`, distM: null };
+        obj = { title: `NEW ORDER  ${Math.ceil(this._offerExpiry)}s`, sub: `${d.pickup.name} → ${d.dropoff.name}`, distM: null };
       } else if (st === DeliveryState.TO_PICKUP || st === DeliveryState.PARKED_PICKUP) {
         obj = { title: 'PICK UP ORDER', sub: d.pickup.name, distM: ref.distanceTo(d.pickup.pos) };
       } else if (st === DeliveryState.ON_FOOT_PICKUP) {
