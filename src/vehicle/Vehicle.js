@@ -86,20 +86,22 @@ export class Vehicle {
     this.wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.3, 10);
     this.wheelGeo.rotateZ(Math.PI / 2);
     this.wheels = [];
-    this.frontWheelPivots = [];
+    this.steerGroups = [];
     const wx = V.bodyWidth / 2 - 0.05;
     const wz = V.bodyLength * 0.31;
     for (const [sx, sz, front] of [[-wx, wz, true], [wx, wz, true], [-wx, -wz, false], [wx, -wz, false]]) {
+      const steerNode = new THREE.Group();
+      steerNode.position.set(sx, 0.38, sz);
       const pivot = new THREE.Group();
-      pivot.position.set(sx, 0.38, sz);
       const tire = new THREE.Mesh(this.wheelGeo, tireMat);
       tire.castShadow = true;
       pivot.add(tire);
       const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.32, 8).rotateZ(Math.PI / 2), rimMat);
       pivot.add(rim);
-      this.tiltNode.add(pivot);
+      steerNode.add(pivot);
+      this.tiltNode.add(steerNode);
       this.wheels.push({ pivot, tire, front });
-      if (front) this.frontWheelPivots.push(pivot);
+      if (front) this.steerGroups.push(steerNode);
     }
 
     this.group.add(this.tiltNode);
@@ -247,7 +249,7 @@ export class Vehicle {
     const wheelSpin = (this.forwardSpeed / 0.38) * 0.016;
     for (const w of this.wheels) w.pivot.rotation.x += wheelSpin;
     this._wheelAngle += (this.steerSmooth - this._wheelAngle) * (1 - Math.exp(-6 * dt));
-    for (const p of this.frontWheelPivots) p.rotation.y = this._wheelAngle * 0.42;
+    for (const s of this.steerGroups) s.rotation.y = this._wheelAngle * 0.42;
   }
 
   setNightFactor(f) {
