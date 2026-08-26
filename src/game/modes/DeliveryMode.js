@@ -15,7 +15,7 @@ export class DeliveryMode {
     this.g = ctx;
     this.playerMode = 'drive';
     this.camYawFoot = 0;
-    this.offerTimer = 1.0;
+    this.offerTimer = this._nextOfferWait();
     this._offerExpiry = -1;
     this.completeTimer = -1;
     this.lastPickupId = null;
@@ -521,7 +521,7 @@ export class DeliveryMode {
       this.completeTimer -= dt;
       if (this.completeTimer <= 0) {
         fsm.state = DeliveryState.IDLE;
-        this.offerTimer = 0.8;
+        this.offerTimer = this._nextOfferWait();
       }
       return;
     }
@@ -531,7 +531,7 @@ export class DeliveryMode {
         fsm.decline();
         toast('Order expired.', 'warn');
         this._offerExpiry = -1;
-        this.offerTimer = 2.0;
+        this.offerTimer = this._nextOfferWait();
       }
       return;
     }
@@ -543,7 +543,7 @@ export class DeliveryMode {
           this.lastPickupId = d.pickup.id;
           this._offerExpiry = 5 + Math.random() * 5;
         } else {
-          this.offerTimer = 2.0;
+          this.offerTimer = this._nextOfferWait();
         }
       }
     }
@@ -674,5 +674,10 @@ export class DeliveryMode {
     this.g.audio.horn(false);
     this.g.audio.setEngine(0, 0, false);
     this.g.audio.setSkid(0);
+  }
+
+  _nextOfferWait() {
+    const r = Math.random();
+    return r < 0.15 ? 5 : r < 0.65 ? 10 : 20;
   }
 }
