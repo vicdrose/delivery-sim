@@ -36,11 +36,10 @@ class NPCCar {
     this.active = false;
     this.hornTimer = 0;
     this.colorIdx = 0;
-    this.nextI = 0;
-    this.nextJ = 0;
+    this.fromEdge = false;
   }
 
-  reset(x, z, heading, colorIdx) {
+  reset(x, z, heading, colorIdx, fromEdge) {
     this.x = x;
     this.z = z;
     this.heading = heading;
@@ -48,22 +47,8 @@ class NPCCar {
     this.active = true;
     this.hornTimer = HORN_COOLDOWN * Math.random();
     this.colorIdx = colorIdx;
-    this._setNextIntersection();
+    this.fromEdge = fromEdge;
   }
-
-  _setNextIntersection() {
-    const step = headingStep(this.heading);
-    this.nextI = Math.round((this.z + H - R / 2) / P) + step.iz;
-    this.nextJ = Math.round((this.x + H - R / 2) / P) + step.jx;
-  }
-}
-
-function headingStep(h) {
-  const snapped = Math.round(h / (Math.PI / 2)) * (Math.PI / 2);
-  if (Math.abs(snapped) < 0.1) return { jx: 1, iz: 0 };
-  if (Math.abs(snapped - Math.PI / 2) < 0.1) return { jx: 0, iz: 1 };
-  if (Math.abs(snapped + Math.PI / 2) < 0.1) return { jx: 0, iz: -1 };
-  return { jx: -1, iz: 0 };
 }
 
 export class NPCTraffic {
@@ -121,7 +106,7 @@ export class NPCTraffic {
     else if (edge === 1) { x = H; z = lc; heading = Math.PI; }
     else if (edge === 2) { x = lc; z = -H; heading = Math.PI / 2; }
     else { x = lc; z = H; heading = -Math.PI / 2; }
-    car.reset(x, z, heading, this.rng.int(0, COLORS.length - 1));
+    car.reset(x, z, heading, this.rng.int(0, COLORS.length - 1), true);
   }
 
   _spawnPatrolBatch(dt, phase) {
@@ -149,47 +134,40 @@ export class NPCTraffic {
     for (const car of this.cars) {
       if (!car.active) continue;
 
-      const targetX = lineCoord(car.nextJ);
-      const targetZ = lineCoord(car.nextI);
-      const dx = targetX - car.x;
-      const dz = targetZ - car.z;
-      const dist = Math.sqrt(dx * dx + dz * dz);
-
-      if (dist < 1.5) {
-        car.x = targetX;
-        car.z = targetZ;
-
-        if (this.rng.chance(0.35)) {
-          const turn = this.rng.chance(0.5) ? 1 : -1;
-          car.heading += turn * Math.PI / 2;
-        }
-        car._setNextIntersection();
-      } else {
-        const moveStep = car.speed * dt;
-        if (moveStep >= dist) {
-          car.x = targetX;
-          car.z = targetZ;
-          if (this.rng.chance(0.35)) {
-            const turn = this.rng.chance(0.5) ? 1 : -1;
-            car.heading += turn * Math.PI / 2;
-          }
-          car._setNextIntersection();
-        } else {
-          car.x += (dx / dist) * moveStep;
-          car.z += (dz / dist) * moveStep;
-        }
-      }
+      car.x += Math.cos(car.heading) * car.speed * dt;
+      car.z += Math.sin(car.heading) * car.speed * dt;
 
       if (Math.abs(car.x) > H + DESPAWN_MARGIN || Math.abs(car.z) > H + DESPAWN_MARGIN) {
         car.active = false;
         continue;
       }
 
+      const li = Math.round((car.z + H - R / 2) / P);
+      const lj = Math.round((car.x + H - R / 2) / P);
+
+      if (car.fromEdge) {
+        const distToGrid = Math.abs(car.x - lineCoord(Math.max(0, Math.min(N, Math.round((car.x + H - R / 2) / P)))));
+        const onRoad = this._isOnRoad(car.x, car.z);
+        if (onRoad) car.fromEdge = false;
+      }
+
+      if (this._shouldTurn(car)) {
+        const turn = this.rng.chance(0.5) ? 1 : -1;
+        car.heading += turn * Math.PI / 2;
+        const li2 = Math.round((car.z + H - R / 2) / P);
+        const lj2 = Math.round((car.x + H - R / 2) / P);
+        if (li2 >= 0 && li2 <= N && lj2 >= 0 && lj2 <= N) {
+          car.x = lineCoord(lj2);
+          car.z = lineCoord(li2);
+        }
+        car.fromEdge = false;
+      }
+
       car.hornTimer -= dt;
       if (car.hornTimer <= 0 && playerPos) {
-        const pdx = car.x - playerPos.x;
-        const pdz = car.z - playerPos.z;
-        if (pdx * pdx + pdz * pdz < HORN_DIST * HORN_DIST) {
+        const dx = car.x - playerPos.x;
+        const dz = car.z - playerPos.z;
+        if (dx * dx + dz * dz < HORN_DIST * HORN_DIST) {
           car.hornTimer = HORN_COOLDOWN;
         }
       }
@@ -211,6 +189,25 @@ export class NPCTraffic {
       this.bodies.instanceMatrix.needsUpdate = true;
       this.cabins.instanceMatrix.needsUpdate = true;
     }
+  }
+
+  _isOnRoad(x, z) {
+    const li = Math.round((z + H - R / 2) / P);
+    const lj = Math.round((x + H - R / 2) / P);
+    if (li >= 0 && li <= N && Math.abs(x - lineCoord(lj)) < R / 2) return true;
+    if (lj >= 0 && lj <= N && Math.abs(z - lineCoord(li)) < R / 2) return true;
+    return false;
+  }
+
+  _shouldTurn(car) {
+    const li = Math.round((car.z + H - R / 2) / P);
+    const lj = Math.round((car.x + H - R / 2) / P);
+    if (li < 0 || li > N || lj < 0 || lj > N) return false;
+    const cx = lineCoord(lj);
+    const cz = lineCoord(li);
+    const atIntersection = Math.abs(car.x - cx) < 1.5 && Math.abs(car.z - cz) < 1.5;
+    if (!atIntersection) return false;
+    return this.rng.chance(0.35);
   }
 
   destroy() {
