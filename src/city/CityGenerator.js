@@ -159,16 +159,16 @@ export function generateCity(collision) {
     return out;
   }
 
-  function facingOutward(col, row, qdx, qdz) {
+  function facingOutward(col, row) {
     const toCenterX = (N - 1) / 2 - col;
     const toCenterZ = (N - 1) / 2 - row;
-    let fx;
-    let fz;
-    if (Math.abs(qdx) > Math.abs(qdz)) fx = -(qdx > 0 ? 1 : -1);
-    else fz = -(qdz > 0 ? 1 : -1);
-    if (fx === undefined && fz === undefined) fz = toCenterZ >= 0 ? -1 : 1;
-    if (fx === 0 && Math.abs(toCenterZ) > Math.abs(toCenterX)) { fz = toCenterZ > 0 ? -1 : 1; fx = 0; }
-    if (fz === 0 && Math.abs(toCenterX) > Math.abs(toCenterZ)) { fx = toCenterX > 0 ? -1 : 1; fz = 0; }
+    let fx = 0;
+    let fz = 0;
+    if (Math.abs(toCenterX) >= Math.abs(toCenterZ)) {
+      fx = toCenterX >= 0 ? -1 : 1;
+    } else {
+      fz = toCenterZ >= 0 ? -1 : 1;
+    }
     let ry = 0;
     if (fx > 0) ry = Math.PI / 2;
     else if (fx < 0) ry = -Math.PI / 2;
@@ -238,16 +238,13 @@ export function generateCity(collision) {
     if (style === 'houses') {
       for (const q of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
         if (rng.chance(0.14)) continue;
-        const face = facingOutward(col, row, q[0], q[1]);
-        face.fx = -face.fx;
-        face.fz = -face.fz;
-        if (face.fx > 0) face.ry = Math.PI / 2;
-        else if (face.fx < 0) face.ry = -Math.PI / 2;
-        else if (face.fz < 0) face.ry = Math.PI;
-        else face.ry = 0;
+        let ry = 0;
+        if (q[0] < 0) ry = -Math.PI / 2;
+        else if (q[0] > 0) ry = Math.PI / 2;
+        else if (q[1] < 0) ry = Math.PI;
         const cx = bx + q[0] * inner * 0.52;
         const cz = bz + q[1] * inner * 0.52;
-        const f = frameAt(cx, cz, face.ry);
+        const f = frameAt(cx, cz, ry);
         f.col = col; f.row = row;
         const num = 100 + ((col * 17 + row * 29 + (q[0] + 1) * 3 + (q[1] + 1)) % 89) * 2;
         placeBuilding(smallHouse, f, [], (cat) =>
@@ -260,7 +257,7 @@ export function generateCity(collision) {
         }
       }
     } else if (style === 'row') {
-      const face = facingOutward(col, row, 0, -1);
+      const face = facingOutward(col, row);
       const rz = bz + (face.fz <= 0 ? inner * 0.5 : -inner * 0.5);
       const f = frameAt(bx, rz, face.ry);
       f.col = col; f.row = row;
@@ -273,7 +270,7 @@ export function generateCity(collision) {
         }
       }
     } else {
-      const faceA = facingOutward(col, row, 0, -1);
+      const faceA = facingOutward(col, row);
       const az = bz + (faceA.fz <= 0 ? inner * 0.42 : -inner * 0.42);
       const fa = frameAt(bx, az, faceA.ry);
       fa.col = col; fa.row = row;
@@ -287,7 +284,7 @@ export function generateCity(collision) {
 
   function buildCommercial(col, row) {
     const { bx, bz, inner } = buildSidewalkAndLot(col, row, 'commercial');
-    const face = facingOutward(col, row, 0, -1);
+    const face = facingOutward(col, row);
     const mallFacesSouth = face.fz <= 0;
     const mallRy = mallFacesSouth ? 0 : Math.PI;
     const backZ = bz - inner * 0.46;
@@ -340,7 +337,7 @@ export function generateCity(collision) {
 
   function buildBusiness(col, row) {
     const { bx, bz, inner } = buildSidewalkAndLot(col, row, 'business');
-    const face = facingOutward(col, row, 0, -1);
+    const face = facingOutward(col, row);
     const towerRy = face.ry;
     if (rng.chance(0.55)) {
       for (const sx of [-1, 1]) {
@@ -377,8 +374,12 @@ export function generateCity(collision) {
     ];
     const cats = [r1, r2];
     for (let i = 0; i < 2; i++) {
-      const face = facingOutward(col, row, spots[i].x > bx ? 1 : -1, spots[i].z > bz ? 1 : -1);
-      const f = frameAt(spots[i].x, spots[i].z, face.ry);
+      const sdx = spots[i].x > bx ? 1 : -1;
+      const sdz = spots[i].z > bz ? 1 : -1;
+      let ry = 0;
+      if (Math.abs(sdx) >= Math.abs(sdz)) ry = sdx > 0 ? Math.PI / 2 : -Math.PI / 2;
+      else ry = sdz > 0 ? 0 : Math.PI;
+      const f = frameAt(spots[i].x, spots[i].z, ry);
       f.col = col; f.row = row;
       const cat = cats[i];
       placeBuilding(campusHall, f, [cat], (c) =>
@@ -412,7 +413,7 @@ export function generateCity(collision) {
   for (const { col, row } of gasSpots) {
     const bx = blockCenter(col);
     const bz = blockCenter(row);
-    const face = facingOutward(col, row, 0, -1);
+    const face = facingOutward(col, row);
     const f = frameAt(bx, bz, face.ry);
     f.col = col; f.row = row;
     const meta = gasStation(S, W, rng, f);
@@ -434,6 +435,7 @@ export function generateCity(collision) {
       block: [col, row]
     });
     buildingBoxes.push({ cx: storeWorldX, cz: storeWorldZ, hw: hw + 2.5, hd: hd + 2.5 });
+    minimapBlocks.push({ x: bx, z: bz, w: B, d: B, zone: 'residential' });
   }
 
   for (const b of locations.pois) {
