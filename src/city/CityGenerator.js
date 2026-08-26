@@ -433,15 +433,10 @@ export function generateCity(collision) {
 
   S.box(T + 2, 1.2, 1, 0, 0.6, -H - 0.5, '#9aa0a6');
   S.box(T + 2, 1.2, 1, 0, 0.6, H + 0.5, '#9aa0a6');
-  const wallGap = R / 2 + 1;
-  const wallSegD = (H - wallGap) / 2;
-  const wallSegZ = (H + wallGap) / 2;
-  S.box(1, 1.2, wallSegD, H + 0.5, 0.6, -wallSegZ, '#9aa0a6');
-  S.box(1, 1.2, wallSegD, H + 0.5, 0.6, wallSegZ, '#9aa0a6');
+  S.box(1, 1.2, T + 2, H + 0.5, 0.6, 0, '#9aa0a6');
   collision.addBox(0, -H - 0.5, T / 2 + 2, 0.5);
   collision.addBox(0, H + 0.5, T / 2 + 2, 0.5);
-  collision.addBox(H + 0.5, -wallSegZ, 0.5, wallSegD);
-  collision.addBox(H + 0.5, wallSegZ, 0.5, wallSegD);
+  collision.addBox(H + 0.5, 0, 0.5, T / 2 + 2);
 
   const materials = makeSharedMaterials();
   const group = new THREE.Group();
