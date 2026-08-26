@@ -50,7 +50,7 @@ function buildMinimapStatic(minimapData) {
   for (const p of minimapData.pois) {
     ctx.beginPath();
     ctx.arc(toPx(p.x), toPx(p.z), 2.6, 0, Math.PI * 2);
-    ctx.fillStyle = p.category === 'food' ? '#ffd23f' : '#ff8fab';
+    ctx.fillStyle = p.category === 'food' ? '#ffd23f' : p.category === 'gas' ? '#4cc9f0' : '#ff8fab';
     ctx.fill();
   }
 

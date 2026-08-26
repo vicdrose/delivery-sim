@@ -25,6 +25,7 @@ export class DeliveryMode {
 
     this.targetPos = null;
     this._showCarBeacon = false;
+    this._fuelWarned = false;
 
     const beamMat = makeMarkerMaterial('#ffd23f', 0.20);
     const ringMat = makeMarkerMaterial('#ffd23f', 0.5);
@@ -180,6 +181,17 @@ export class DeliveryMode {
           },
           action: () => this._deliverAtDoor(poi)
         });
+      } else if (poi.category === 'gas') {
+        g.interaction.add({
+          position: poi.door,
+          radius: CONFIG.gas.refillRadius,
+          label: () => {
+            if (this.playerMode !== 'foot') return null;
+            if (g.vehicle.fuelLevel >= g.vehicle.fuelMax) return null;
+            return 'Refuel Car';
+          },
+          action: () => this._refuelAtStation(poi)
+        });
       }
     }
   }
@@ -296,6 +308,26 @@ export class DeliveryMode {
     this.doorstepBag.visible = true;
     const payout = g.generator.finalize(d, fsm.timeRemainingFrac);
     fsm.complete(payout);
+  }
+
+  _refuelAtStation() {
+    const g = this.g;
+    const veh = g.vehicle;
+    const missing = veh.fuelMax - veh.fuelLevel;
+    if (missing <= 0) {
+      toast('Tank is already full!', 'info');
+      return;
+    }
+    const cost = missing * CONFIG.gas.refillCostPerUnit;
+    if (g.progression.profile.bank < cost) {
+      toast('Not enough money to refuel!', 'danger');
+      return;
+    }
+    g.progression.addMoney(-cost);
+    ui.money = g.progression.profile.bank;
+    veh.refuel(missing);
+    g.audio.play('cash');
+    toast(`Refueled! -$${cost.toFixed(2)}`, 'success');
   }
 
   _clearTempItems() {
@@ -550,6 +582,21 @@ export class DeliveryMode {
       this.playerMode === 'drive' ? Math.round(Math.abs(g.vehicle.speed) * 2.23694) : 0;
     ui.hasFood = fsm.hasFood;
     ui.day = g.dayCycle.day;
+    ui.fuelLevel = g.vehicle.fuelLevel;
+    ui.fuelMax = g.vehicle.fuelMax;
+
+    if (this.playerMode === 'drive') {
+      const frac = g.vehicle.fuelFraction;
+      if (frac <= 0 && !this._fuelWarned) {
+        toast('Out of gas! Find a gas station.', 'danger', 5000);
+        this._fuelWarned = true;
+      } else if (frac > 0 && frac <= 0.25 && !this._fuelWarned) {
+        toast('Low fuel! Find a gas station.', 'info', 4000);
+        this._fuelWarned = true;
+      } else if (frac > 0.25) {
+        this._fuelWarned = false;
+      }
+    }
 
     const env = g.envState;
     ui.clock = env.clock;

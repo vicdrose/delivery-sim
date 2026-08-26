@@ -6,7 +6,7 @@ import { makeSharedMaterials } from './materials.js';
 import { LocationRegistry } from './Locations.js';
 import {
   smallHouse, townhouseRow, apartmentBlock, restaurant, shopUnit,
-  stripMall, officeTower, campusHall
+  stripMall, officeTower, campusHall, gasStation
 } from './Buildings.js';
 import { FOOD_NAMES, HOME_NAMES, HOUSE_STREETS } from './names.js';
 
@@ -400,6 +400,37 @@ export function generateCity(collision) {
       else if (zone === 'business') buildBusiness(col, row);
       else buildCampus(col, row);
     }
+  }
+
+  const gasSpots = [
+    { col: 0, row: 0 },
+    { col: N - 1, row: 0 },
+    { col: 0, row: N - 1 },
+    { col: N - 1, row: N - 1 }
+  ];
+  for (const { col, row } of gasSpots) {
+    const bx = blockCenter(col);
+    const bz = blockCenter(row);
+    const face = facingOutward(col, row, 0, -1);
+    const f = frameAt(bx, bz, face.ry);
+    f.col = col; f.row = row;
+    const meta = gasStation(S, W, rng, f);
+    const rot90 = Math.abs(Math.sin(face.ry)) > 0.5;
+    const hw = rot90 ? meta.hd : meta.hw;
+    const hd = rot90 ? meta.hw : meta.hd;
+    collision.addBox(bx, bz, hw, hd);
+    const doorLocal = meta.doorOverride || l2wV(f, meta.doorLocal.dx, meta.doorLocal.dz);
+    const parkX = THREE.MathUtils.clamp(doorLocal.x, bx - 12, bx + 12);
+    const frontZ = bz + (face.fz <= 0 ? -10 : 10);
+    locations.register({
+      name: 'Gas & Go',
+      category: 'gas',
+      door: new THREE.Vector3(doorLocal.x, 0, doorLocal.z),
+      parkPos: new THREE.Vector3(parkX, 0, frontZ),
+      buildingAABB: { cx: bx, cz: bz, hw, hd },
+      block: [col, row]
+    });
+    buildingBoxes.push({ cx: bx, cz: bz, hw: hw + 2.5, hd: hd + 2.5 });
   }
 
   for (const b of locations.pois) {

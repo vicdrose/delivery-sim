@@ -293,4 +293,32 @@ export function warehouseStore(S, W, rng, f) {
   return { hw: w / 2, hd: d / 2, poiCategory: 'food', doorLocal: { dx: -w / 4, dz: d / 2 + 0.15 } };
 }
 
+export function gasStation(S, W, rng, f) {
+  const w = rng.float(10, 12);
+  const d = rng.float(8, 9);
+  const h = rng.float(3.6, 4.2);
+  const canopyW = rng.float(14, 16);
+  const canopyD = rng.float(9, 11);
+  const c = l2w(f, 0, 0);
+  const canopyP = l2w(f, 0, 0);
+  S.box(canopyW, 0.2, canopyD, canopyP.x, 3.8, canopyP.z, '#e8e6df', f.ry);
+  S.box(0.3, 3.6, 0.3, canopyP.x - canopyW / 2 + 0.5, 2.0, canopyP.z - canopyD / 2 + 0.5, '#888', f.ry);
+  S.box(0.3, 3.6, 0.3, canopyP.x + canopyW / 2 - 0.5, 2.0, canopyP.z - canopyD / 2 + 0.5, '#888', f.ry);
+  S.box(0.3, 3.6, 0.3, canopyP.x - canopyW / 2 + 0.5, 2.0, canopyP.z + canopyD / 2 - 0.5, '#888', f.ry);
+  S.box(0.3, 3.6, 0.3, canopyP.x + canopyW / 2 - 0.5, 2.0, canopyP.z + canopyD / 2 - 0.5, '#888', f.ry);
+  const storeP = l2w(f, 0, -d / 2 - 1.8);
+  S.box(w, h, d, storeP.x, h / 2 + 0.22, storeP.z, '#f2efe6', f.ry);
+  S.box(w + 0.3, 0.8, d + 0.3, storeP.x, h + 0.32, storeP.z, '#e63946', f.ry);
+  windowStrip(W, f, w - 2, h * 0.5, -(d / 2 + 1.8) + d / 2 + 0.06, PALETTES.glassStorefront);
+  addDoor(S, f, 0, -(d / 2 + 1.8) + d / 2 + 0.04, 1.6, 2.5);
+  const sp = l2w(f, 0, -(d / 2 + 1.8) + d / 2 + 0.2);
+  S.wallQuad(w * 0.6, 1.0, sp.x, h + 0.32, sp.z, f.ry, '#ffca3a');
+  const pumpOffsetX = rng.pick([-3.5, 3.5]);
+  const pumpP = l2w(f, pumpOffsetX, 0);
+  S.box(0.5, 1.6, 0.5, pumpP.x, 1.0, pumpP.z, '#3d3d3d', f.ry);
+  S.box(0.6, 0.15, 0.3, pumpP.x, 1.85, pumpP.z, '#555', f.ry);
+  const doorLocal = { dx: 0, dz: -(d / 2 + 1.8) + d / 2 + 0.15 };
+  return { hw: canopyW / 2, hd: canopyD / 2, poiCategory: 'gas', doorLocal };
+}
+
 export { frameAt };

@@ -28,6 +28,9 @@ export const ui = reactive({
   timeLeftStr: '',
   timeFrac: 1,
   timeCritical: false,
+  fuelLevel: 40,
+  fuelMax: 40,
+  nearGasStation: false,
 
   radio: { on: true, track: null, hasTracks: false },
 

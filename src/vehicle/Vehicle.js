@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 
 const V = CONFIG.vehicle;
+const G = CONFIG.gas;
 
 export class Vehicle {
   constructor(scene, collision) {
@@ -16,6 +17,9 @@ export class Vehicle {
     this.onCrash = null;
     this.onSkid = null;
     this._skidLevel = 0;
+
+    this.fuelLevel = G.tankSize;
+    this.fuelMax = G.tankSize;
 
     this.group = new THREE.Group();
     this.tiltNode = new THREE.Group();
@@ -142,7 +146,7 @@ export class Vehicle {
     const throttle = controls.throttle || 0;
     const brake = controls.brake || 0;
 
-    if (throttle > 0) {
+    if (throttle > 0 && this.fuelLevel > 0) {
       const headroom = Math.max(0, 1 - Math.max(0, fs) / V.maxSpeed);
       fs += V.accel * throttle * headroom * dt;
     }
@@ -225,6 +229,10 @@ export class Vehicle {
 
     this.parkedDwell = absFs < V.parkedSpeedThreshold ? this.parkedDwell + dt : 0;
 
+    if (this.fuelLevel > 0 && Math.abs(newFs) > 1) {
+      this.fuelLevel = Math.max(0, this.fuelLevel - G.consumptionRate * dt * (Math.abs(newFs) / V.maxSpeed));
+    }
+
     this.syncMesh(dt);
   }
 
@@ -251,5 +259,17 @@ export class Vehicle {
 
   get isParkedStill() {
     return this.parkedDwell >= CONFIG.vehicle.parkedDwellTime;
+  }
+
+  get hasFuel() {
+    return this.fuelLevel > 0;
+  }
+
+  refuel(amount) {
+    this.fuelLevel = Math.min(this.fuelMax, this.fuelLevel + amount);
+  }
+
+  get fuelFraction() {
+    return this.fuelLevel / this.fuelMax;
   }
 }

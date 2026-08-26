@@ -6,6 +6,7 @@
     <DeliveryCard />
     <InteractionPrompt />
     <Speedometer />
+    <FuelGauge />
     <Minimap />
     <RadioWidget />
     <ToastStack />
@@ -24,6 +25,7 @@ import ObjectiveBanner from './components/ObjectiveBanner.vue';
 import DeliveryCard from './components/DeliveryCard.vue';
 import InteractionPrompt from './components/InteractionPrompt.vue';
 import Speedometer from './components/Speedometer.vue';
+import FuelGauge from './components/FuelGauge.vue';
 import Minimap from './components/Minimap.vue';
 import RadioWidget from './components/RadioWidget.vue';
 import ToastStack from './components/ToastStack.vue';

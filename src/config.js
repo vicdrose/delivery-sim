@@ -110,6 +110,13 @@ export const CONFIG = {
     currency: '$'
   },
 
+  gas: {
+    tankSize: 40,
+    consumptionRate: 0.18,
+    refillRadius: 4.5,
+    refillCostPerUnit: 0.85
+  },
+
   audio: {
     masterVolume: 0.8,
     engineBaseFreq: 36,

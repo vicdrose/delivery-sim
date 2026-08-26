@@ -418,6 +418,74 @@ body {
   opacity: 0.7;
 }
 
+.fuel-gauge {
+  bottom: 18px;
+  right: 400px;
+  background: rgba(29, 36, 48, 0.85);
+  color: #fff;
+  border-radius: 14px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.55;
+  transition: opacity 0.3s ease;
+}
+
+.fuel-gauge.driving {
+  opacity: 1;
+}
+
+.fuel-gauge.low {
+  opacity: 1;
+  animation: fuel-pulse 1s ease-in-out infinite;
+}
+
+.fuel-gauge.empty {
+  opacity: 1;
+  animation: fuel-pulse 0.4s ease-in-out infinite;
+}
+
+.fuel-icon {
+  font-size: 16px;
+}
+
+.fuel-bar {
+  width: 80px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.fuel-fill {
+  height: 100%;
+  background: #4cc9f0;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.fuel-gauge.low .fuel-fill {
+  background: #ffca3a;
+}
+
+.fuel-gauge.empty .fuel-fill {
+  background: #ff595e;
+}
+
+.fuel-text {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+@keyframes fuel-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .minimap {
   bottom: 16px;
   right: 16px;
