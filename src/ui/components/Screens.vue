@@ -4,7 +4,6 @@
       <h1 class="game-title">SNACK<span>RUN</span></h1>
       <p class="tagline">drive · dash · deliver · repeat</p>
       <button class="btn primary big" @click="start">START SHIFT</button>
-      <button v-if="canInstall" class="btn ghost install-btn" @click="installApp">INSTALL APP</button>
       <div class="controls-panel">
         <div v-for="row in controls" :key="row[0]" class="ctrl-row">
           <kbd>{{ row[0] }}</kbd><span>{{ row[1] }}</span>
@@ -29,32 +28,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { computed } from 'vue';
 import { ui } from '../store.js';
 import { bus } from '../../core/bus.js';
 import { CONFIG } from '../../config.js';
 
 const controls = CONFIG.controlsHelp;
 const padConnected = computed(() => ui.padConnected);
-
-let deferredPrompt = null;
-const canInstall = ref(false);
-
-function onBeforeInstall(e) {
-  e.preventDefault();
-  deferredPrompt = e;
-  canInstall.value = true;
-}
-
-function installApp() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt = null;
-  canInstall.value = false;
-}
-
-onMounted(() => window.addEventListener('beforeinstallprompt', onBeforeInstall));
-onUnmounted(() => window.removeEventListener('beforeinstallprompt', onBeforeInstall));
 
 function start() {
   bus.emit('ui:start');

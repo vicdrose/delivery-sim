@@ -549,12 +549,6 @@ body {
   margin: 6px 0 30px;
 }
 
-.install-btn {
-  margin-top: 12px;
-  font-size: 11px;
-  letter-spacing: 0.15em;
-}
-
 .controls-panel {
   margin-top: 28px;
   display: inline-grid;
