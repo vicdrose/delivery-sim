@@ -275,10 +275,10 @@ export function generateCity(collision) {
   function buildCommercial(col, row) {
     const { bx, bz, inner } = buildSidewalkAndLot(col, row, 'commercial');
     const face = facingOutward(col, row);
-    const mallFacesSouth = face.fz > 0;
-    const mallRy = mallFacesSouth ? 0 : Math.PI;
-    const backZ = bz - inner * 0.46;
-    const frontZ = bz + inner * 0.38;
+    const southFacing = face.fz > 0;
+    const mallRy = southFacing ? 0 : Math.PI;
+    const backZ = southFacing ? bz - inner * 0.46 : bz + inner * 0.46;
+    const frontZ = southFacing ? bz + inner * 0.38 : bz - inner * 0.38;
 
     const units = rng.int(3, 4);
     const fm = frameAt(bx, backZ, mallRy);
@@ -329,41 +329,43 @@ export function generateCity(collision) {
     const { bx, bz, inner } = buildSidewalkAndLot(col, row, 'business');
     const face = facingOutward(col, row);
     const towerRy = face.ry;
+    const bldSide = face.fz > 0 ? -1 : 1;
     if (rng.chance(0.55)) {
       for (const sx of [-1, 1]) {
-        const f = frameAt(bx + sx * inner * 0.44, bz - inner * 0.22, towerRy);
+        const f = frameAt(bx + sx * inner * 0.44, bz + bldSide * inner * 0.22, towerRy);
         f.col = col; f.row = row;
         placeBuilding(officeTower, f, [], () => 'Office Tower');
       }
     } else {
-      const f = frameAt(bx, bz - inner * 0.28, towerRy);
+      const f = frameAt(bx, bz + bldSide * inner * 0.28, towerRy);
       f.col = col; f.row = row;
       placeBuilding(officeTower, f, [], () => 'Office Tower');
-      const cf = frameAt(bx + (rng.chance(0.5) ? inner * 0.5 : -inner * 0.5), bz + inner * 0.42, towerRy);
+      const cf = frameAt(bx + (rng.chance(0.5) ? inner * 0.5 : -inner * 0.5), bz - bldSide * inner * 0.42, towerRy);
       cf.col = col; cf.row = row;
       placeBuilding(shopUnit, cf, [], () => foodNames[foodIdx++ % foodNames.length]);
     }
     for (const px of [-inner * 0.55, inner * 0.55]) {
-      S.box(2.2, 0.5, 2.2, bx + px, 0.32, bz + inner * 0.5, '#8f979c');
+      S.box(2.2, 0.5, 2.2, bx + px, 0.32, bz - bldSide * inner * 0.5, '#8f979c');
       const tx = bx + px;
-      const tz = bz + inner * 0.5;
+      const tz = bz - bldSide * inner * 0.5;
       if (!treeOverlapsBuilding(tx, tz)) treeSpots.push({ x: tx, z: tz, s: 0.72 });
     }
   }
 
   function buildCampus(col, row) {
     const { bx, bz, inner } = buildSidewalkAndLot(col, row, 'campus');
+    const blockFace = facingOutward(col, row);
+    const cSide = blockFace.fz > 0 ? -1 : 1;
     S.groundQuad(inner * 0.5, inner * 2, bx, 0.04, bz, '#cbc4b4');
     S.groundQuad(inner * 2, inner * 0.5, bx, 0.041, bz, '#cbc4b4');
     const roles = ['food', 'home', null];
     const r1 = roles[((col * 2 + row) % 3 + 3) % 3];
     const r2 = roles[((col * 2 + row + 1) % 3 + 3) % 3];
     const spots = [
-      { x: bx - inner * 0.48, z: bz - inner * 0.44 },
-      { x: bx + inner * 0.48, z: bz + inner * 0.44 }
+      { x: bx - inner * 0.48, z: bz + cSide * inner * 0.44 },
+      { x: bx + inner * 0.48, z: bz - cSide * inner * 0.44 }
     ];
     const cats = [r1, r2];
-    const blockFace = facingOutward(col, row);
     for (let i = 0; i < 2; i++) {
       const f = frameAt(spots[i].x, spots[i].z, blockFace.ry);
       f.col = col; f.row = row;
