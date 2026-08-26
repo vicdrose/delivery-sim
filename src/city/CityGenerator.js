@@ -160,20 +160,10 @@ export function generateCity(collision) {
   }
 
   function facingOutward(col, row) {
-    const toCenterX = (N - 1) / 2 - col;
     const toCenterZ = (N - 1) / 2 - row;
-    let fx = 0;
-    let fz = 0;
-    if (Math.abs(toCenterX) >= Math.abs(toCenterZ)) {
-      fx = toCenterX >= 0 ? -1 : 1;
-    } else {
-      fz = toCenterZ >= 0 ? -1 : 1;
-    }
-    let ry = 0;
-    if (fx > 0) ry = Math.PI / 2;
-    else if (fx < 0) ry = -Math.PI / 2;
-    else if (fz < 0) ry = Math.PI;
-    return { fx, fz, ry };
+    const fz = toCenterZ >= 0 ? -1 : 1;
+    const ry = fz < 0 ? Math.PI : 0;
+    return { fx: 0, fz, ry };
   }
 
   function buildSidewalkAndLot(col, row, zone) {
