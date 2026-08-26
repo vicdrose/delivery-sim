@@ -44,6 +44,11 @@ export class Player {
     this.armR.position.set(0.29, 0.75, 0);
     this.bodyNode.add(this.legL, this.legR, torso, this.armL, this.armR, head, capTop, brim, bag);
     this.group.add(this.bodyNode);
+
+    this.heldBag = this._buildHeldBag();
+    this.heldBag.visible = false;
+    this._holdingBag = false;
+    this.bodyNode.add(this.heldBag);
     this.group.visible = false;
     scene.add(this.group);
   }
@@ -92,8 +97,36 @@ export class Player {
     const swing = Math.sin(this.walkPhase) * 0.65;
     this.legL.rotation.x = swing;
     this.legR.rotation.x = -swing;
-    this.armL.rotation.x = -swing * 0.7;
-    this.armR.rotation.x = swing * 0.7;
+    if (this._holdingBag) {
+      this.armL.rotation.x = -0.55;
+      this.armR.rotation.x = -0.55;
+    } else {
+      this.armL.rotation.x = -swing * 0.7;
+      this.armR.rotation.x = swing * 0.7;
+    }
     this.bodyNode.position.y = Math.abs(Math.sin(this.walkPhase)) * 0.04;
+  }
+
+  setHoldingBag(v) {
+    this._holdingBag = v;
+    this.heldBag.visible = v;
+  }
+
+  _buildHeldBag() {
+    const g = new THREE.Group();
+    const bagMat = new THREE.MeshLambertMaterial({ color: '#c9915a' });
+    const receiptMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.3, 0.18), bagMat);
+    body.position.y = 0.15;
+    body.castShadow = true;
+    g.add(body);
+    const flap = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.02, 0.05), bagMat);
+    flap.position.set(0, 0.32, -0.07);
+    g.add(flap);
+    const receipt = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.18, 0.01), receiptMat);
+    receipt.position.set(0, 0.2, 0.095);
+    g.add(receipt);
+    g.position.set(0, 0.52, 0.28);
+    return g;
   }
 }

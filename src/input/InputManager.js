@@ -119,8 +119,8 @@ export class InputManager {
       state.handbrake = state.handbrake || pad.handbrake;
       state.sprint = state.sprint || pad.sprint;
       state.horn = state.horn || pad.horn;
-      state.interactPressed = state.interactPressed || (pad.interact && !this._padPrev[0]);
-      state.acceptPressed = state.acceptPressed || (pad.interact && !this._padPrev[0]);
+      state.interactPressed = state.interactPressed || (pad.horn && !this._padPrev[2]) || (pad.interact && !this._padPrev[0]);
+      state.acceptPressed = state.acceptPressed || (pad.interact && !this._padPrev[0]) || (pad.horn && !this._padPrev[2]);
       state.declinePressed = state.declinePressed || (pad.decline && !this._padPrev[1]);
       state.enterExitPressed = state.enterExitPressed || (pad.enterExit && !this._padPrev[3]);
       state.pausePressed = state.pausePressed || (pad.pause && !this._padPrev[9]);
@@ -128,6 +128,7 @@ export class InputManager {
       if (pad.radio && !this._padPrev[4]) state.radioPressed = true;
       this._padPrev[0] = pad.interact;
       this._padPrev[1] = pad.decline;
+      this._padPrev[2] = pad.horn;
       this._padPrev[3] = pad.enterExit;
       this._padPrev[4] = pad.radio;
       this._padPrev[9] = pad.pause;

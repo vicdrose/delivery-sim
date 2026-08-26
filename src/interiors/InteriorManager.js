@@ -84,6 +84,11 @@ export class InteriorManager {
     this.pickupMarker.position.set(ox + 2.6, 1.75, oz - 0.4);
     g.add(this.pickupMarker);
 
+    this.counterBag = this._buildBag();
+    this.counterBag.position.set(ox + 3.2, 1.1, oz - 1.4);
+    this.counterBag.visible = false;
+    g.add(this.counterBag);
+
     this.light = new THREE.PointLight('#ffe6bd', 60, 26, 2);
     this.light.position.set(ox, 3.0, oz);
     this.light.visible = false;
@@ -132,5 +137,33 @@ export class InteriorManager {
     if (!this._built || !this.group.visible) return;
     this.pickupMarker.rotation.y += dt * 2.2;
     this.pickupMarker.position.y = 1.75 + Math.sin(performance.now() * 0.003) * 0.09;
+  }
+
+  _buildBag() {
+    const g = new THREE.Group();
+    const bagMat = new THREE.MeshLambertMaterial({ color: '#c9915a' });
+    const receiptMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.38, 0.24), bagMat);
+    body.position.y = 0.19;
+    body.castShadow = true;
+    g.add(body);
+    const flap = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.02, 0.06), bagMat);
+    flap.position.set(0, 0.4, -0.09);
+    g.add(flap);
+    const receipt = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.01), receiptMat);
+    receipt.position.set(0, 0.22, 0.125);
+    g.add(receipt);
+    return g;
+  }
+
+  showCounterBag() {
+    if (!this._built) return;
+    this.counterBag.visible = true;
+    this.pickupMarker.visible = false;
+  }
+
+  hideCounterBag() {
+    if (!this._built) return;
+    this.counterBag.visible = false;
   }
 }

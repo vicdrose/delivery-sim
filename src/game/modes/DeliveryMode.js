@@ -39,6 +39,10 @@ export class DeliveryMode {
     ctx.scene.add(this.beaconGroup);
     this.beamMat = beamMat;
     this.ringMat = ringMat;
+
+    this.doorstepBag = this._buildDoorstepBag();
+    this.doorstepBag.visible = false;
+    ctx.scene.add(this.doorstepBag);
   }
 
   enter() {
@@ -88,6 +92,8 @@ export class DeliveryMode {
       }),
       bus.on('delivery:foodCollected', () => {
         g.audio.play('pickup');
+        g.interiors.hideCounterBag();
+        g.player.setHoldingBag(true);
         showBagSecured(this._short(this.fsmDelivery.foodItem));
       }),
       bus.on('delivery:drivingToCustomer', () => {
@@ -106,6 +112,7 @@ export class DeliveryMode {
       }),
       bus.on('delivery:failed', ({ reason }) => {
         g.progression.recordDelivery(false);
+        g.player.setHoldingBag(false);
         g.audio.play('fail');
         toast(
           reason === 'timeout' ? 'Too slow! The customer canceled the order.' : 'Order failed.',
@@ -180,6 +187,7 @@ export class DeliveryMode {
   _enterBuilding(poi) {
     const g = this.g;
     g.audio.play('door');
+    this.doorstepBag.visible = false;
     const res = g.interiors.enter(poi, g.player.pos.clone());
     this.playerMode = 'inside';
     g.player.teleport(res.entryPos.x, res.entryPos.z, Math.PI);
@@ -234,6 +242,9 @@ export class DeliveryMode {
     } else if (!isTarget()) {
       toast(`You step into ${poi.name}.`, 'info', 2200);
     }
+    if (isTarget()) {
+      g.interiors.showCounterBag();
+    }
     ui.insideName = poi.name;
   }
 
@@ -270,6 +281,19 @@ export class DeliveryMode {
       toast('Grab the order from the restaurant first!', 'info');
       return;
     }
+    g.player.setHoldingBag(false);
+    const bld = poi.buildingAABB;
+    let offX = 0;
+    let offZ = 2.5;
+    if (bld) {
+      const dx = poi.door.x - bld.cx;
+      const dz = poi.door.z - bld.cz;
+      const len = Math.hypot(dx, dz) || 1;
+      offX = (dx / len) * 2.5;
+      offZ = (dz / len) * 2.5;
+    }
+    this.doorstepBag.position.set(poi.door.x + offX, 0, poi.door.z + offZ);
+    this.doorstepBag.visible = true;
     const payout = g.generator.finalize(d, fsm.timeRemainingFrac);
     fsm.complete(payout);
   }
@@ -277,6 +301,23 @@ export class DeliveryMode {
   _clearTempItems() {
     for (const off of this._tempItems) off();
     this._tempItems = [];
+  }
+
+  _buildDoorstepBag() {
+    const g = new THREE.Group();
+    const bagMat = new THREE.MeshLambertMaterial({ color: '#c9915a' });
+    const receiptMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.38, 0.24), bagMat);
+    body.position.y = 0.19;
+    body.castShadow = true;
+    g.add(body);
+    const flap = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.02, 0.06), bagMat);
+    flap.position.set(0, 0.4, -0.09);
+    g.add(flap);
+    const receipt = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.01), receiptMat);
+    receipt.position.set(0, 0.22, 0.125);
+    g.add(receipt);
+    return g;
   }
 
   _exitVehicle() {
@@ -337,7 +378,7 @@ export class DeliveryMode {
     const g = this.g;
     this._time += dt;
 
-    if (s.acceptPressed && g.fsm.state === DeliveryState.OFFER) {
+    if ((s.interactPressed || s.acceptPressed) && g.fsm.state === DeliveryState.OFFER) {
       g.fsm.accept();
     }
     if (s.declinePressed && g.fsm.state === DeliveryState.OFFER) {
