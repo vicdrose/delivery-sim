@@ -19,8 +19,9 @@ export class Vehicle {
     this.onSkid = null;
     this._skidLevel = 0;
 
-    this.fuelLevel = G.tankSize;
     this.fuelMax = G.tankSize;
+    const saved = parseFloat(localStorage.getItem('snackrun_fuel'));
+    this.fuelLevel = Number.isFinite(saved) ? saved : G.tankSize;
 
     this.group = new THREE.Group();
     this.tiltNode = new THREE.Group();
@@ -234,6 +235,7 @@ export class Vehicle {
 
     if (this.fuelLevel > 0 && Math.abs(newFs) > 1) {
       this.fuelLevel = Math.max(0, this.fuelLevel - G.consumptionRate * dt * (Math.abs(newFs) / V.maxSpeed));
+      this._saveFuel();
     }
 
     this.syncMesh(dt);
@@ -271,9 +273,14 @@ export class Vehicle {
 
   refuel(amount) {
     this.fuelLevel = Math.min(this.fuelMax, this.fuelLevel + amount);
+    this._saveFuel();
   }
 
   get fuelFraction() {
     return this.fuelLevel / this.fuelMax;
+  }
+
+  _saveFuel() {
+    localStorage.setItem('snackrun_fuel', this.fuelLevel);
   }
 }
