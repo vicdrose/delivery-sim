@@ -57,6 +57,7 @@ export function generateCity(collision) {
   const W = new GeoBucket();
   const locations = new LocationRegistry();
   const treeSpots = [];
+  const buildingBoxes = [];
   const carSpots = [];
   const lampSpots = [];
   const foodNames = rng.shuffle(FOOD_NAMES);
@@ -199,6 +200,7 @@ export function generateCity(collision) {
     const hw = rot90 ? meta.hd : meta.hw;
     const hd = rot90 ? meta.hw : meta.hd;
     collision.addBox(f.x, f.z, hw, hd);
+    buildingBoxes.push({ cx: f.x, cz: f.z, hw: hw + 2.5, hd: hd + 2.5 });
     const poiCat = categoryOverride || meta.poiCategory;
     if (poiCat && poiCat !== 'none') {
       let doorW;
@@ -220,6 +222,13 @@ export function generateCity(collision) {
     return meta;
   }
 
+  function treeOverlapsBuilding(x, z) {
+    for (const b of buildingBoxes) {
+      if (Math.abs(x - b.cx) < b.hw && Math.abs(z - b.cz) < b.hd) return true;
+    }
+    return false;
+  }
+
   function buildResidential(col, row) {
     const { bx, bz, inner } = buildSidewalkAndLot(col, row, 'residential');
     const roll = rng.next();
@@ -239,7 +248,9 @@ export function generateCity(collision) {
           cat === 'food' ? `${num} ${streetName} Kitchen` : `${num} ${streetName}`
         , 'home');
         if (rng.chance(CONFIG.city.treeChance)) {
-          treeSpots.push({ x: cx + rng.float(-5, 5), z: cz + q[1] * rng.float(7, 10), s: rng.float(0.8, 1.3) });
+          const tx = cx + rng.float(-5, 5);
+          const tz = cz + q[1] * rng.float(7, 10);
+          if (!treeOverlapsBuilding(tx, tz)) treeSpots.push({ x: tx, z: tz, s: rng.float(0.8, 1.3) });
         }
       }
     } else if (style === 'row') {
@@ -249,7 +260,11 @@ export function generateCity(collision) {
       f.col = col; f.row = row;
       placeBuilding(townhouseRow, f, [], () => `${homeNames[homeIdx++ % homeNames.length]} Row`, 'home');
       for (const q of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-        if (rng.chance(0.55)) treeSpots.push({ x: bx + q[0] * inner * 0.55, z: bz + q[1] * inner * 0.42, s: rng.float(0.9, 1.4) });
+        if (rng.chance(0.55)) {
+          const tx = bx + q[0] * inner * 0.55;
+          const tz = bz + q[1] * inner * 0.42;
+          if (!treeOverlapsBuilding(tx, tz)) treeSpots.push({ x: tx, z: tz, s: rng.float(0.9, 1.4) });
+        }
       }
     } else {
       const faceA = facingOutward(col, row, 0, -1);
@@ -337,7 +352,9 @@ export function generateCity(collision) {
     }
     for (const px of [-inner * 0.55, inner * 0.55]) {
       S.box(2.2, 0.5, 2.2, bx + px, 0.32, bz + inner * 0.5, '#8f979c');
-      treeSpots.push({ x: bx + px, z: bz + inner * 0.5, s: 0.72 });
+      const tx = bx + px;
+      const tz = bz + inner * 0.5;
+      if (!treeOverlapsBuilding(tx, tz)) treeSpots.push({ x: tx, z: tz, s: 0.72 });
     }
   }
 
@@ -363,11 +380,9 @@ export function generateCity(collision) {
       );
     }
     for (let t = 0; t < 5; t++) {
-      treeSpots.push({
-        x: bx + rng.float(-inner * 0.85, inner * 0.85),
-        z: bz + rng.float(-inner * 0.85, inner * 0.85),
-        s: rng.float(0.9, 1.5)
-      });
+      const tx = bx + rng.float(-inner * 0.85, inner * 0.85);
+      const tz = bz + rng.float(-inner * 0.85, inner * 0.85);
+      if (!treeOverlapsBuilding(tx, tz)) treeSpots.push({ x: tx, z: tz, s: rng.float(0.9, 1.5) });
     }
   }
 
