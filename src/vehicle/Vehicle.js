@@ -12,6 +12,7 @@ export class Vehicle {
     this.forwardSpeed = 0;
     this.lateralSpeed = 0;
     this.steerSmooth = 0;
+    this._wheelAngle = 0;
     this.parkedDwell = 0;
     this.velocity = new THREE.Vector3();
     this.onCrash = null;
@@ -245,7 +246,8 @@ export class Vehicle {
     this.tiltNode.rotation.x += (pitch - this.tiltNode.rotation.x) * 0.12;
     const wheelSpin = (this.forwardSpeed / 0.38) * 0.016;
     for (const w of this.wheels) w.pivot.rotation.x += wheelSpin;
-    for (const p of this.frontWheelPivots) p.rotation.y = this.steerSmooth * 0.42;
+    this._wheelAngle += (this.steerSmooth - this._wheelAngle) * (1 - Math.exp(-6 * dt));
+    for (const p of this.frontWheelPivots) p.rotation.y = this._wheelAngle * 0.42;
   }
 
   setNightFactor(f) {
