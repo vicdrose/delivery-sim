@@ -14,6 +14,7 @@ export class Vehicle {
     this.steerSmooth = 0;
     this._wheelAngle = 0;
     this.parkedDwell = 0;
+    this.resolveNpc = null;
     this.velocity = new THREE.Vector3();
     this.onCrash = null;
     this.onSkid = null;
@@ -220,6 +221,17 @@ export class Vehicle {
       const impact = Math.hypot(preVx - vx, preVz - vz);
       if (impact > 3 && this.onCrash) this.onCrash(Math.min(1, impact / 20));
     }
+
+    if (this.resolveNpc) {
+      const npcPush = this.resolveNpc(pos.x, pos.z, V.collisionRadius);
+      if (npcPush) {
+        pos.x += npcPush.x;
+        pos.z += npcPush.z;
+        vx = 0;
+        vz = 0;
+      }
+    }
+
     this.velocity.set(vx, 0, vz);
 
     const newFs = vx * fx + vz * fz;
