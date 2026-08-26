@@ -251,7 +251,7 @@ export class Vehicle {
     const wheelSpin = (this.forwardSpeed / 0.38) * 0.016;
     for (const w of this.wheels) w.pivot.rotation.x += wheelSpin;
     this._wheelAngle += (this.steerSmooth - this._wheelAngle) * (1 - Math.exp(-6 * dt));
-    for (const s of this.steerGroups) s.rotation.y = this._wheelAngle * 0.42;
+    for (const s of this.steerGroups) s.rotation.y = -this._wheelAngle * 0.42;
   }
 
   setNightFactor(f) {
