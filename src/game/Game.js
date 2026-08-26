@@ -15,6 +15,7 @@ import { InteriorManager } from '../interiors/InteriorManager.js';
 import { DayNightCycle } from '../world/DayNightCycle.js';
 import { Sky } from '../world/Sky.js';
 import { createScenery } from '../world/Scenery.js';
+import { NPCTraffic } from '../world/NPCTraffic.js';
 import { DeliveryGenerator } from '../delivery/DeliveryGenerator.js';
 import { DeliveryStateMachine, DeliveryState } from '../delivery/DeliveryStateMachine.js';
 import { Progression } from '../progression/Progression.js';
@@ -116,6 +117,7 @@ export class Game {
     this.city = cityResult;
     this.scene.add(cityResult.group);
     this.scenery = createScenery(this.scene, this.collision);
+    this.npcTraffic = new NPCTraffic(this.scene);
 
     this.sky = new Sky(this.scene);
     this.dayCycle = new DayNightCycle(bus);
@@ -326,6 +328,10 @@ export class Game {
     this._applyEnvironment();
     this.sky.update(dt);
     this.scenery.update(dt);
+    if (this.npcTraffic) {
+      const playerPos = this.vehicle.group.position;
+      this.npcTraffic.update(dt, this.envState.name, playerPos);
+    }
 
     if (this.currentMode) {
       this.currentMode.update(dt, s);
