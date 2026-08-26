@@ -419,6 +419,7 @@ body {
 }
 
 .fuel-gauge {
+  position: fixed;
   bottom: 18px;
   right: 410px;
   background: rgba(29, 36, 48, 0.85);
