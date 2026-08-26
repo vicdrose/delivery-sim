@@ -239,6 +239,12 @@ export function generateCity(collision) {
       for (const q of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
         if (rng.chance(0.14)) continue;
         const face = facingOutward(col, row, q[0], q[1]);
+        face.fx = -face.fx;
+        face.fz = -face.fz;
+        if (face.fx > 0) face.ry = Math.PI / 2;
+        else if (face.fx < 0) face.ry = -Math.PI / 2;
+        else if (face.fz < 0) face.ry = Math.PI;
+        else face.ry = 0;
         const cx = bx + q[0] * inner * 0.52;
         const cz = bz + q[1] * inner * 0.52;
         const f = frameAt(cx, cz, face.ry);
@@ -318,8 +324,8 @@ export function generateCity(collision) {
     for (let s3 = 0; s3 < stalls; s3++) {
       if (!rng.chance(0.45)) continue;
       const sx = bx - lotW / 2 + ((s3 + 0.5) * lotW) / stalls;
-      carSpots.push({ x: sx, z: frontZ + 1.6, ry: mallRy + Math.PI / 2, color: rng.pick(CAR_COLORS) });
-      collision.addBox(sx, frontZ + 1.6, 2.15, 1.05);
+      carSpots.push({ x: sx, z: frontZ + 0.8, ry: mallRy, color: rng.pick(CAR_COLORS) });
+      collision.addBox(sx, frontZ + 0.8, 0.9, 2.15);
     }
 
     if (rng.chance(0.7)) {
