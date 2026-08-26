@@ -392,8 +392,15 @@ export function generateCity(collision) {
     }
   }
 
+  const gasSpots = [
+    { col: 0, row: 0 },
+    { col: N - 1, row: N - 1 }
+  ];
+  const gasSpotSet = new Set(gasSpots.map((s) => s.col + ',' + s.row));
+
   for (let row = 0; row < N; row++) {
     for (let col = 0; col < N; col++) {
+      if (gasSpotSet.has(col + ',' + row)) continue;
       const zone = cfg.zoneOf(col, row);
       if (zone === 'residential') buildResidential(col, row);
       else if (zone === 'commercial') buildCommercial(col, row);
@@ -402,10 +409,6 @@ export function generateCity(collision) {
     }
   }
 
-  const gasSpots = [
-    { col: 0, row: 0 },
-    { col: N - 1, row: N - 1 }
-  ];
   for (const { col, row } of gasSpots) {
     const bx = blockCenter(col);
     const bz = blockCenter(row);
