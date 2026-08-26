@@ -166,9 +166,8 @@ export class NPCTraffic {
 
       let colliding = false;
       if (playerPos) {
-        const lo = laneOffset(car.heading);
-        const cdx = car.x + lo.dx - playerPos.x;
-        const cdz = car.z + lo.dz - playerPos.z;
+        const cdx = car.x - playerPos.x;
+        const cdz = car.z - playerPos.z;
         colliding = cdx * cdx + cdz * cdz < COLLISION_R * COLLISION_R;
       }
 
@@ -254,11 +253,8 @@ export class NPCTraffic {
   resolveCircle(cx, cz, radius) {
     for (const car of this.cars) {
       if (!car.active) continue;
-      const lo = laneOffset(car.heading);
-      const nx = car.x + lo.dx;
-      const nz = car.z + lo.dz;
-      const dx = cx - nx;
-      const dz = cz - nz;
+      const dx = cx - car.x;
+      const dz = cz - car.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
       const minDist = radius + COLLISION_R * 0.6;
       if (dist < minDist && dist > 0.01) {
