@@ -336,6 +336,14 @@ export class Game {
     if (this.currentMode) {
       this.currentMode.update(dt, s);
     }
+    if (this.npcTraffic) {
+      const pos = this.vehicle.group.position;
+      const push = this.npcTraffic.resolveCircle(pos.x, pos.z, CONFIG.vehicle.collisionRadius);
+      if (push) {
+        pos.x += push.x;
+        pos.z += push.z;
+      }
+    }
   }
 
   render() {

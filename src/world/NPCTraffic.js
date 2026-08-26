@@ -15,6 +15,8 @@ const HORN_COOLDOWN = 6;
 const DESPAWN_MARGIN = 40;
 const LANE_OFFSET = R / 4;
 const MESH_TURN = Math.PI / 2;
+const COLLISION_R = 2.8;
+const RESUME_DELAY = 3;
 
 function lineCoord(i) { return -H + R / 2 + i * P; }
 
@@ -48,6 +50,9 @@ class NPCCar {
     this.colorIdx = 0;
     this.nextI = 0;
     this.nextJ = 0;
+    this.stopped = false;
+    this.stopTimer = 0;
+    this.honking = false;
   }
 
   reset(x, z, heading, colorIdx) {
@@ -159,6 +164,27 @@ export class NPCTraffic {
     for (const car of this.cars) {
       if (!car.active) continue;
 
+      let colliding = false;
+      if (playerPos) {
+        const cdx = car.x - playerPos.x;
+        const cdz = car.z - playerPos.z;
+        colliding = cdx * cdx + cdz * cdz < COLLISION_R * COLLISION_R;
+      }
+
+      if (colliding) {
+        car.stopped = true;
+        car.stopTimer = RESUME_DELAY;
+        car.honking = true;
+      } else if (car.stopped) {
+        car.stopTimer -= dt;
+        if (car.stopTimer <= 0) {
+          car.stopped = false;
+          car.honking = false;
+        }
+      }
+
+      if (car.stopped) continue;
+
       const targetX = lineCoord(car.nextJ);
       const targetZ = lineCoord(car.nextI);
       const dx = targetX - car.x;
@@ -222,6 +248,21 @@ export class NPCTraffic {
       this.bodies.instanceMatrix.needsUpdate = true;
       this.cabins.instanceMatrix.needsUpdate = true;
     }
+  }
+
+  resolveCircle(cx, cz, radius) {
+    for (const car of this.cars) {
+      if (!car.active) continue;
+      const dx = cx - car.x;
+      const dz = cz - car.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      const minDist = radius + COLLISION_R * 0.6;
+      if (dist < minDist && dist > 0.01) {
+        const overlap = minDist - dist;
+        return { x: (dx / dist) * overlap, z: (dz / dist) * overlap };
+      }
+    }
+    return null;
   }
 
   destroy() {
