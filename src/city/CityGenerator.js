@@ -403,10 +403,8 @@ export function generateCity(collision) {
   }
 
   const gasSpots = [
-    { col: 0, row: 0 },
-    { col: N - 1, row: 0 },
-    { col: 0, row: N - 1 },
-    { col: N - 1, row: N - 1 }
+    { col: 0, row: 2 },
+    { col: N - 1, row: 2 }
   ];
   for (const { col, row } of gasSpots) {
     const bx = blockCenter(col);
