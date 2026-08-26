@@ -2,6 +2,7 @@
   <div v-if="ui.offer" class="offer-card clickable">
     <div class="offer-head">
       <span class="offer-badge">NEW ORDER</span>
+      <span v-if="ui.offerExpiry > 0" class="offer-expiry">{{ ui.offerExpiry }}s</span>
       <span class="offer-food">{{ ui.offer.foodItem }}</span>
     </div>
     <div class="offer-row"><span class="k">PICKUP</span><span class="v">{{ ui.offer.pickupName }}</span></div>

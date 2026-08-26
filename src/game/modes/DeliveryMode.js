@@ -596,6 +596,7 @@ export class DeliveryMode {
     ui.day = g.dayCycle.day;
     ui.fuelLevel = g.vehicle.fuelLevel;
     ui.fuelMax = g.vehicle.fuelMax;
+    ui.offerExpiry = fsm.state === DeliveryState.OFFER ? Math.ceil(this._offerExpiry) : -1;
 
     if (this.playerMode === 'drive') {
       const frac = g.vehicle.fuelFraction;

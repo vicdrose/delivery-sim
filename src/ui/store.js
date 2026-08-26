@@ -17,6 +17,7 @@ export const ui = reactive({
 
   objective: null,
   offer: null,
+  offerExpiry: -1,
   prompt: null,
   payment: null,
   bagSecured: null,
