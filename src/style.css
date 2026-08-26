@@ -96,6 +96,7 @@ body {
 .order-card,
 .minimap,
 .speedo,
+.fuel-gauge,
 .radio-widget {
   position: absolute;
   backdrop-filter: blur(3px);
@@ -419,7 +420,6 @@ body {
 }
 
 .fuel-gauge {
-  position: fixed;
   bottom: 18px;
   right: 410px;
   background: rgba(29, 36, 48, 0.85);
