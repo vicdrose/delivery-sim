@@ -418,7 +418,9 @@ export function generateCity(collision) {
     const rot90 = Math.abs(Math.sin(face.ry)) > 0.5;
     const hw = rot90 ? meta.hd : meta.hw;
     const hd = rot90 ? meta.hw : meta.hd;
-    collision.addBox(bx, bz, hw, hd);
+    const storeWorldX = bx + (meta.storeCz || 0) * Math.sin(face.ry);
+    const storeWorldZ = bz + (meta.storeCz || 0) * Math.cos(face.ry);
+    collision.addBox(storeWorldX, storeWorldZ, hw, hd);
     const doorLocal = meta.doorOverride || l2wV(f, meta.doorLocal.dx, meta.doorLocal.dz);
     const parkX = THREE.MathUtils.clamp(doorLocal.x, bx - 12, bx + 12);
     const frontZ = bz + (face.fz <= 0 ? -10 : 10);
@@ -427,10 +429,10 @@ export function generateCity(collision) {
       category: 'gas',
       door: new THREE.Vector3(doorLocal.x, 0, doorLocal.z),
       parkPos: new THREE.Vector3(parkX, 0, frontZ),
-      buildingAABB: { cx: bx, cz: bz, hw, hd },
+      buildingAABB: { cx: storeWorldX, cz: storeWorldZ, hw, hd },
       block: [col, row]
     });
-    buildingBoxes.push({ cx: bx, cz: bz, hw: hw + 2.5, hd: hd + 2.5 });
+    buildingBoxes.push({ cx: storeWorldX, cz: storeWorldZ, hw: hw + 2.5, hd: hd + 2.5 });
   }
 
   for (const b of locations.pois) {
