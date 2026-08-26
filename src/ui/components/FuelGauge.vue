@@ -1,10 +1,12 @@
 <template>
   <div class="fuel-gauge" :class="{ low: fraction < 0.25, empty: fraction <= 0 }">
-    <div class="fuel-icon">⛽</div>
-    <div class="fuel-bar">
-      <div class="fuel-fill" :style="{ width: (fraction * 100) + '%' }"></div>
+    <div class="fuel-bar-track">
+      <div class="fuel-bar-fill" :style="{ height: (fraction * 100) + '%' }"></div>
     </div>
-    <div class="fuel-text">{{ Math.round(fraction * 100) }}%</div>
+    <div class="fuel-label">
+      <span class="fuel-pct">{{ Math.round(fraction * 100) }}</span>
+      <span class="fuel-unit">FUEL</span>
+    </div>
   </div>
 </template>
 
