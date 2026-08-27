@@ -198,6 +198,7 @@ export class NPCTraffic {
         if (this.rng.chance(0.35)) {
           const turn = this.rng.chance(0.5) ? 1 : -1;
           car.heading += turn * Math.PI / 2;
+          car.heading = ((car.heading + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
         }
         car._setNextIntersection();
       } else {
@@ -208,6 +209,7 @@ export class NPCTraffic {
           if (this.rng.chance(0.35)) {
             const turn = this.rng.chance(0.5) ? 1 : -1;
             car.heading += turn * Math.PI / 2;
+            car.heading = ((car.heading + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
           }
           car._setNextIntersection();
         } else {
