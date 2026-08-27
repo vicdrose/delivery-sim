@@ -71,6 +71,31 @@ class NPCCar {
     this.nextI = Math.round((this.z + H - R / 2) / P) + step.iz;
     this.nextJ = Math.round((this.x + H - R / 2) / P) + step.jx;
   }
+
+  _atEdge() {
+    const curI = Math.round((this.z + H - R / 2) / P);
+    const curJ = Math.round((this.x + H - R / 2) / P);
+    const step = headingStep(this.heading);
+    const ni = curI + step.iz;
+    const nj = curJ + step.jx;
+    return ni < 0 || ni >= N || nj < 0 || nj >= N;
+  }
+
+  _validTurns() {
+    const curI = Math.round((this.z + H - R / 2) / P);
+    const curJ = Math.round((this.x + H - R / 2) / P);
+    const dirs = [
+      { heading: 0, jx: 1, iz: 0 },
+      { heading: Math.PI / 2, jx: 0, iz: 1 },
+      { heading: Math.PI, jx: -1, iz: 0 },
+      { heading: -Math.PI / 2, jx: 0, iz: -1 }
+    ];
+    return dirs.filter(d => {
+      const ni = curI + d.iz;
+      const nj = curJ + d.jx;
+      return ni >= 0 && ni < N && nj >= 0 && nj < N;
+    });
+  }
 }
 
 function headingStep(h) {
@@ -211,7 +236,15 @@ export class NPCTraffic {
         car.x = targetX;
         car.z = targetZ;
 
-        if (this.rng.chance(0.35)) {
+        if (car._atEdge()) {
+          const valid = car._validTurns();
+          if (valid.length === 0) {
+            car.active = false;
+            continue;
+          }
+          const pick = valid[this.rng.int(0, valid.length - 1)];
+          car.heading = pick.heading;
+        } else if (this.rng.chance(0.35)) {
           const turn = this.rng.chance(0.5) ? 1 : -1;
           car.heading += turn * Math.PI / 2;
           car.heading = ((car.heading + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
@@ -222,7 +255,15 @@ export class NPCTraffic {
         if (moveStep >= dist) {
           car.x = targetX;
           car.z = targetZ;
-          if (this.rng.chance(0.35)) {
+          if (car._atEdge()) {
+            const valid = car._validTurns();
+            if (valid.length === 0) {
+              car.active = false;
+              continue;
+            }
+            const pick = valid[this.rng.int(0, valid.length - 1)];
+            car.heading = pick.heading;
+          } else if (this.rng.chance(0.35)) {
             const turn = this.rng.chance(0.5) ? 1 : -1;
             car.heading += turn * Math.PI / 2;
             car.heading = ((car.heading + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
