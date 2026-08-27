@@ -128,7 +128,6 @@ export class Game {
     this.vehicle = new Vehicle(this.scene, this.collision);
     this.vehicle.resolveNpc = (x, z, r) => this.npcTraffic.resolveCircle(x, z, r);
     this.player = new Player(this.scene);
-    this.player.onStep = (i) => this.foley.step(i);
     this.interaction = new InteractionSystem();
     this.interiors = new InteriorManager(this.scene, this.collision);
 

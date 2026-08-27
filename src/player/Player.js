@@ -6,9 +6,7 @@ const P = CONFIG.player;
 export class Player {
   constructor(scene) {
     this.scene = scene;
-    this.onStep = null;
-    this._stepPrevPhase = 0;
-    this._stepIntensity = 0.5;    this.group = new THREE.Group();
+    this.group = new THREE.Group();
     this.pos = new THREE.Vector3();
     this.yaw = 0;
     this.walkPhase = 0;
@@ -86,17 +84,8 @@ export class Player {
       while (d < -Math.PI) d += Math.PI * 2;
       this.yaw += d * Math.min(1, P.turnLerp * dt);
       this.walkPhase += speed * dt * 2.6;
-      const stepCycle = Math.PI / 2.2;
-      const prev = Math.floor(this._stepPrevPhase / stepCycle);
-      const cur = Math.floor(this.walkPhase / stepCycle);
-      if (cur !== prev && this.onStep) {
-        this._stepIntensity = this._stepIntensity * 0.7 + (sprint ? 1 : 0.55) * 0.3;
-        this.onStep(this._stepIntensity);
-      }
-      this._stepPrevPhase = this.walkPhase;
     } else {
       this.walkPhase *= Math.exp(-8 * dt);
-      this._stepPrevPhase = this.walkPhase;
     }
     this.syncMesh();
     return mx !== 0 || mz !== 0;

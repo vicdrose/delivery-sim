@@ -45,13 +45,6 @@ export class FoleySystem {
     this.dogSynth = new Tone.MembraneSynth({ pitchDecay: 0.08, octaves: 6, volume: -16 })
       .connect(this.bus);
 
-    this.stepNoise = new Tone.Noise('brown');
-    this.stepFilter = new Tone.Filter(380, 'bandpass');
-    this.stepFilter.Q.value = 1.2;
-    this.stepGain = new Tone.Gain(0);
-    this.stepNoise.chain(this.stepFilter, this.stepGain, this.bus);
-    this.stepNoise.start();
-
     this.ready = true;
   }
 
@@ -138,19 +131,9 @@ export class FoleySystem {
     this.dogSynth.triggerAttackRelease('C2', '32n', t, 0.8);
   }
 
-  step(intensity) {
-    if (!this.ready || this.muted) return;
-    const t = Tone.now();
-    this.stepGain.gain.cancelScheduledValues(t);
-    this.stepGain.gain.rampTo(0.5 * intensity, 0.01);
-    this.stepGain.gain.rampTo(0, t + 0.12);
-    this.stepFilter.frequency.value = 300 + intensity * 160;
-  }
-
   dispose() {
     this.stop();
     if (this.trafficGain) this.trafficGain.dispose();
     if (this.waveGain) this.waveGain.dispose();
-    if (this.stepGain) this.stepGain.dispose();
   }
 }
