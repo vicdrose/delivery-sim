@@ -159,7 +159,7 @@ export class Vehicle {
       if (fs > 0.4) {
         fs -= V.brakeForce * brake * dt;
         if (fs < 0) fs = 0;
-      } else {
+      } else if (this.fuelLevel > 0) {
         fs -= V.accel * 0.55 * brake * dt;
         if (fs < -V.maxReverse) fs = -V.maxReverse;
       }
