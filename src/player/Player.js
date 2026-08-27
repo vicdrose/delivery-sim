@@ -85,7 +85,7 @@ export class Player {
       while (d > Math.PI) d -= Math.PI * 2;
       while (d < -Math.PI) d += Math.PI * 2;
       this.yaw += d * Math.min(1, P.turnLerp * dt);
-      this.walkPhase += speed * dt * 2.6;
+      this.walkPhase += speed * dt * 3.8;
       const stepCycle = Math.PI;
       const stepInterval = stepCycle / 2.6;
       const prev = Math.floor(this._stepPrevPhase / stepCycle);
