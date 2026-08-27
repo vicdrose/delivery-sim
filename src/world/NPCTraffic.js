@@ -114,7 +114,14 @@ export class NPCTraffic {
     this.wheels.frustumCulled = false;
     this.wheels.count = 0;
 
-    this.scene.add(this.bodies, this.cabins, this.wheels);
+    const rimGeo = new THREE.CylinderGeometry(0.17, 0.17, 0.32, 8);
+    rimGeo.rotateZ(Math.PI / 2);
+    const rimMat = new THREE.MeshLambertMaterial({ color: '#d8d8d8' });
+    this.rims = new THREE.InstancedMesh(rimGeo, rimMat, this.maxCars * 4);
+    this.rims.frustumCulled = false;
+    this.rims.count = 0;
+
+    this.scene.add(this.bodies, this.cabins, this.wheels, this.rims);
     this._m = new THREE.Matrix4();
     this._q = new THREE.Quaternion();
     this._pos = new THREE.Vector3();
@@ -264,6 +271,7 @@ export class NPCTraffic {
         pos.set(cx + lx * cos - lz * sin, wy, cz + lx * sin + lz * cos);
         m.compose(pos, q, one);
         this.wheels.setMatrixAt(visCount * 4 + c, m);
+        this.rims.setMatrixAt(visCount * 4 + c, m);
       }
 
       visCount++;
@@ -272,11 +280,13 @@ export class NPCTraffic {
     this.bodies.count = visCount;
     this.cabins.count = visCount;
     this.wheels.count = visCount * 4;
+    this.rims.count = visCount * 4;
     if (this.bodies.instanceColor) this.bodies.instanceColor.needsUpdate = true;
     if (visCount > 0) {
       this.bodies.instanceMatrix.needsUpdate = true;
       this.cabins.instanceMatrix.needsUpdate = true;
       this.wheels.instanceMatrix.needsUpdate = true;
+      this.rims.instanceMatrix.needsUpdate = true;
     }
   }
 

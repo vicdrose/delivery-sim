@@ -522,6 +522,12 @@ function buildPropCars(spots) {
   const wheels = new THREE.InstancedMesh(wheelGeo, wheelMat, spots.length * 4);
   wheels.frustumCulled = false;
 
+  const rimGeo = new THREE.CylinderGeometry(0.17, 0.17, 0.32, 8);
+  rimGeo.rotateZ(Math.PI / 2);
+  const rimMat = new THREE.MeshLambertMaterial({ color: '#d8d8d8' });
+  const rims = new THREE.InstancedMesh(rimGeo, rimMat, spots.length * 4);
+  rims.frustumCulled = false;
+
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const pos = new THREE.Vector3();
@@ -550,10 +556,11 @@ function buildPropCars(spots) {
       pos.set(s.x + lx * cos - lz * sin, wy, s.z + lx * sin + lz * cos);
       m.compose(pos, q, one);
       wheels.setMatrixAt(i * 4 + c, m);
+      rims.setMatrixAt(i * 4 + c, m);
     }
   }
   if (bodies.instanceColor) bodies.instanceColor.needsUpdate = true;
-  g.add(bodies, cabins, wheels);
+  g.add(bodies, cabins, wheels, rims);
   return g;
 }
 
