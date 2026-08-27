@@ -515,23 +515,45 @@ function buildPropCars(spots) {
   bodies.castShadow = true;
   bodies.frustumCulled = false;
   cabins.frustumCulled = false;
+
+  const wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.3, 10);
+  wheelGeo.rotateZ(Math.PI / 2);
+  const wheelMat = new THREE.MeshLambertMaterial({ color: '#1a1a1a' });
+  const wheels = new THREE.InstancedMesh(wheelGeo, wheelMat, spots.length * 4);
+  wheels.frustumCulled = false;
+
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const pos = new THREE.Vector3();
   const one = new THREE.Vector3(1, 1, 1);
   const yAxis = new THREE.Vector3(0, 1, 0);
   const col = new THREE.Color();
+  const wx = 0.85;
+  const wz = 1.24;
+  const wy = 0.38;
+  const corners = [[-wx, wz], [wx, wz], [-wx, -wz], [wx, -wz]];
   for (let i = 0; i < spots.length; i++) {
     const s = spots[i];
-    q.setFromAxisAngle(yAxis, s.ry || 0);
+    const ry = s.ry || 0;
+    q.setFromAxisAngle(yAxis, ry);
     m.compose(pos.set(s.x, 0.03, s.z), q, one);
     bodies.setMatrixAt(i, m);
     cabins.setMatrixAt(i, m);
     col.set(s.color || '#cccccc');
     bodies.setColorAt(i, col);
+
+    const cos = Math.cos(ry);
+    const sin = Math.sin(ry);
+    for (let c = 0; c < 4; c++) {
+      const lx = corners[c][0];
+      const lz = corners[c][1];
+      pos.set(s.x + lx * cos - lz * sin, wy, s.z + lx * sin + lz * cos);
+      m.compose(pos, q, one);
+      wheels.setMatrixAt(i * 4 + c, m);
+    }
   }
   if (bodies.instanceColor) bodies.instanceColor.needsUpdate = true;
-  g.add(bodies, cabins);
+  g.add(bodies, cabins, wheels);
   return g;
 }
 

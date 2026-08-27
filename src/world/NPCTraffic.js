@@ -106,7 +106,15 @@ export class NPCTraffic {
     this.cabins.frustumCulled = false;
     this.bodies.count = 0;
     this.cabins.count = 0;
-    this.scene.add(this.bodies, this.cabins);
+
+    const wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.3, 10);
+    wheelGeo.rotateZ(Math.PI / 2);
+    const wheelMat = new THREE.MeshLambertMaterial({ color: '#1a1a1a' });
+    this.wheels = new THREE.InstancedMesh(wheelGeo, wheelMat, this.maxCars * 4);
+    this.wheels.frustumCulled = false;
+    this.wheels.count = 0;
+
+    this.scene.add(this.bodies, this.cabins, this.wheels);
     this._m = new THREE.Matrix4();
     this._q = new THREE.Quaternion();
     this._pos = new THREE.Vector3();
@@ -234,22 +242,41 @@ export class NPCTraffic {
       }
 
       const lo = laneOffset(car.heading);
+      const cx = car.x + lo.dx;
+      const cz = car.z + lo.dz;
       q.setFromAxisAngle(this._yAxis, car.heading + MESH_TURN);
-      pos.set(car.x + lo.dx, 0.03, car.z + lo.dz);
+      pos.set(cx, 0.03, cz);
       m.compose(pos, q, one);
       this.bodies.setMatrixAt(visCount, m);
       this.cabins.setMatrixAt(visCount, m);
       this._col.set(COLORS[car.colorIdx % COLORS.length]);
       this.bodies.setColorAt(visCount, this._col);
+
+      const wx = 0.85;
+      const wz = 1.24;
+      const wy = 0.38;
+      const cos = Math.cos(car.heading);
+      const sin = Math.sin(car.heading);
+      const corners = [[-wx, wz], [wx, wz], [-wx, -wz], [wx, -wz]];
+      for (let c = 0; c < 4; c++) {
+        const lx = corners[c][0];
+        const lz = corners[c][1];
+        pos.set(cx + lx * cos - lz * sin, wy, cz + lx * sin + lz * cos);
+        m.compose(pos, q, one);
+        this.wheels.setMatrixAt(visCount * 4 + c, m);
+      }
+
       visCount++;
     }
 
     this.bodies.count = visCount;
     this.cabins.count = visCount;
+    this.wheels.count = visCount * 4;
     if (this.bodies.instanceColor) this.bodies.instanceColor.needsUpdate = true;
     if (visCount > 0) {
       this.bodies.instanceMatrix.needsUpdate = true;
       this.cabins.instanceMatrix.needsUpdate = true;
+      this.wheels.instanceMatrix.needsUpdate = true;
     }
   }
 
