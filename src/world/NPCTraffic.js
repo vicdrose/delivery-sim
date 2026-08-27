@@ -15,7 +15,7 @@ const HORN_COOLDOWN = 6;
 const DESPAWN_MARGIN = 40;
 const LANE_OFFSET = R / 4;
 const MESH_TURN = Math.PI / 2;
-const COLLISION_R = 2.8;
+const COLLISION_R = 2.0;
 const RESUME_DELAY = 3;
 
 function lineCoord(i) { return -H + R / 2 + i * P; }
@@ -260,7 +260,7 @@ export class NPCTraffic {
       const dx = cx - (car.x + lo.dx);
       const dz = cz - (car.z + lo.dz);
       const dist = Math.sqrt(dx * dx + dz * dz);
-      const minDist = radius + COLLISION_R * 0.6;
+      const minDist = radius + COLLISION_R * 0.5;
       if (dist < minDist && dist > 0.01) {
         const overlap = minDist - dist;
         return { x: (dx / dist) * overlap, z: (dz / dist) * overlap };
