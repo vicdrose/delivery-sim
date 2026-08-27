@@ -17,6 +17,7 @@ export class DeliveryMode {
     this.camYawFoot = 0;
     this.offerTimer = this._nextOfferWait();
     this._offerExpiry = -1;
+    this._shiftActive = false;
     this.completeTimer = -1;
     this.lastPickupId = null;
     this._unsubs = [];
@@ -453,7 +454,7 @@ export class DeliveryMode {
         }
       }
     } else if (this.playerMode === 'foot') {
-      const forward = s.throttle - s.brake;
+      const forward = s.moveForward;
       const strafe = s.steer;
       const camYaw = this.camYawFoot + g.cameraRig.orbitYaw;
       g.player.update(dt, strafe, forward, s.sprint, camYaw, g.collision, 'city');
@@ -475,7 +476,7 @@ export class DeliveryMode {
       }
       this._checkWalkingArrival();
     } else {
-      const forward = s.throttle - s.brake;
+      const forward = s.moveForward;
       const strafe = s.steer;
       const camYaw = this.camYawFoot + g.cameraRig.orbitYaw;
       g.player.update(dt, strafe, forward, s.sprint, camYaw, g.collision, 'interior');
@@ -510,13 +511,24 @@ export class DeliveryMode {
     }
 
     g.fsm.update(dt);
-    this._scheduleOffers(dt);
+    this._scheduleOffers(dt, s);
     this._updateBeacon(dt);
     this._updateHud(dt, s);
   }
 
-  _scheduleOffers(dt) {
+  _scheduleOffers(dt, s) {
     const fsm = this.g.fsm;
+    const wasShift = this._shiftActive;
+    this._shiftActive = s.shiftHeld;
+    if (this._shiftActive && !wasShift) {
+      toast('SHIFT START', 'success');
+    } else if (!this._shiftActive && wasShift) {
+      toast('SHIFT OVER', 'info');
+      if (fsm.state === DeliveryState.OFFER) {
+        fsm.decline();
+        this._offerExpiry = -1;
+      }
+    }
     if (fsm.state === DeliveryState.COMPLETE) {
       this.completeTimer -= dt;
       if (this.completeTimer <= 0) {
@@ -535,7 +547,7 @@ export class DeliveryMode {
       }
       return;
     }
-    if (fsm.state === DeliveryState.IDLE && !fsm.delivery) {
+    if (fsm.state === DeliveryState.IDLE && !fsm.delivery && this._shiftActive) {
       this.offerTimer -= dt;
       if (this.offerTimer <= 0) {
         const d = this.g.generator.create(this.lastPickupId);

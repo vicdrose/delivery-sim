@@ -57,6 +57,7 @@ export class InputManager {
       steer: dz(pad.axes[0] || 0),
       throttle: val(7),
       brake: val(6),
+      moveForward: dz(-(pad.axes[1] || 0)),
       interact: btn(0),
       decline: btn(1),
       horn: btn(2),
@@ -64,7 +65,8 @@ export class InputManager {
       handbrake: btn(5),
       radio: btn(4),
       pause: btn(9),
-      sprint: btn(10)
+      sprint: btn(10),
+      shiftHeld: btn(1)
     };
   }
 
@@ -84,6 +86,8 @@ export class InputManager {
       mutePressed: false,
       radioHeld: false,
       radioPressed: false,
+      shiftHeld: false,
+      moveForward: 0,
       anyInput: false,
       usingGamepad: false
     };
@@ -97,9 +101,12 @@ export class InputManager {
     if (this._down('KeyD', 'ArrowRight')) state.steer += 1;
     if (this._down('KeyW', 'ArrowUp')) state.throttle = 1;
     if (this._down('KeyS', 'ArrowDown')) state.brake = 1;
+    if (this._down('KeyW', 'ArrowUp')) state.moveForward = 1;
+    if (this._down('KeyS', 'ArrowDown')) state.moveForward = -1;
     state.handbrake = this._down('Space');
     state.sprint = this._down('ShiftLeft', 'ShiftRight');
     state.horn = this._down('KeyH');
+    state.shiftHeld = this._down('KeyN');
 
     state.interactPressed = this._edge('KeyE');
     state.enterExitPressed = this._edge('KeyF');
@@ -116,9 +123,11 @@ export class InputManager {
       if (Math.abs(pad.steer) > Math.abs(state.steer)) state.steer = pad.steer;
       state.throttle = Math.max(state.throttle, pad.throttle);
       state.brake = Math.max(state.brake, pad.brake);
+      if (Math.abs(pad.moveForward) > Math.abs(state.moveForward)) state.moveForward = pad.moveForward;
       state.handbrake = state.handbrake || pad.handbrake;
       state.sprint = state.sprint || pad.sprint;
       state.horn = state.horn || pad.horn;
+      state.shiftHeld = state.shiftHeld || pad.shiftHeld;
       state.interactPressed = state.interactPressed || (pad.horn && !this._padPrev[2]) || (pad.interact && !this._padPrev[0]);
       state.acceptPressed = state.acceptPressed || (pad.interact && !this._padPrev[0]) || (pad.horn && !this._padPrev[2]);
       state.declinePressed = state.declinePressed || (pad.decline && !this._padPrev[1]);
