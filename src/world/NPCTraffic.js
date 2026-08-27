@@ -236,18 +236,20 @@ export class NPCTraffic {
         car.x = targetX;
         car.z = targetZ;
 
-        if (car._atEdge()) {
-          const valid = car._validTurns();
-          if (valid.length === 0) {
+        if (this.rng.chance(0.35) || car._atEdge()) {
+          const valid = car._validTurns().filter(d => {
+            const step = headingStep(d.heading);
+            const curI = Math.round((car.z + H - R / 2) / P);
+            const curJ = Math.round((car.x + H - R / 2) / P);
+            return curI + step.iz >= 0 && curI + step.iz < N && curJ + step.jx >= 0 && curJ + step.jx < N;
+          });
+          if (valid.length > 1) {
+            const pick = valid[this.rng.int(0, valid.length - 1)];
+            car.heading = pick.heading;
+          } else if (valid.length === 0) {
             car.active = false;
             continue;
           }
-          const pick = valid[this.rng.int(0, valid.length - 1)];
-          car.heading = pick.heading;
-        } else if (this.rng.chance(0.35)) {
-          const turn = this.rng.chance(0.5) ? 1 : -1;
-          car.heading += turn * Math.PI / 2;
-          car.heading = ((car.heading + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
         }
         car._setNextIntersection();
       } else {
@@ -255,18 +257,20 @@ export class NPCTraffic {
         if (moveStep >= dist) {
           car.x = targetX;
           car.z = targetZ;
-          if (car._atEdge()) {
-            const valid = car._validTurns();
-            if (valid.length === 0) {
+          if (this.rng.chance(0.35) || car._atEdge()) {
+            const valid = car._validTurns().filter(d => {
+              const step = headingStep(d.heading);
+              const curI = Math.round((car.z + H - R / 2) / P);
+              const curJ = Math.round((car.x + H - R / 2) / P);
+              return curI + step.iz >= 0 && curI + step.iz < N && curJ + step.jx >= 0 && curJ + step.jx < N;
+            });
+            if (valid.length > 1) {
+              const pick = valid[this.rng.int(0, valid.length - 1)];
+              car.heading = pick.heading;
+            } else if (valid.length === 0) {
               car.active = false;
               continue;
             }
-            const pick = valid[this.rng.int(0, valid.length - 1)];
-            car.heading = pick.heading;
-          } else if (this.rng.chance(0.35)) {
-            const turn = this.rng.chance(0.5) ? 1 : -1;
-            car.heading += turn * Math.PI / 2;
-            car.heading = ((car.heading + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
           }
           car._setNextIntersection();
         } else {
