@@ -31,7 +31,8 @@ function addPlinth(S, f, w, d) {
 
 function addDoor(S, f, dx, dz, w = 1.3, h = 2.4) {
   const p = l2w(f, dx, dz);
-  S.wallQuad(w, h, p.x, h / 2 + 0.22, p.z, f.ry, PALETTES.doorDark);
+  const out = 0.05;
+  S.wallQuad(w, h, p.x + f.s * out, h / 2 + 0.22, p.z + f.c * out, f.ry, PALETTES.doorDark);
   S.box(w + 0.5, 0.16, 1.0, p.x - f.s * 0.5 * 0, 0.28, p.z, PALETTES.concrete, f.ry);
 }
 
