@@ -13,8 +13,18 @@ const NPC_SPEED = 10;
 const HORN_DIST = 18;
 const HORN_COOLDOWN = 6;
 const DESPAWN_MARGIN = 40;
+const LANE_OFFSET = R / 4;
+const MESH_TURN = Math.PI / 2;
 
 function lineCoord(i) { return -H + R / 2 + i * P; }
+
+function laneOffset(heading) {
+  const s = Math.round(heading / (Math.PI / 2)) * (Math.PI / 2);
+  if (Math.abs(s) < 0.1) return { dx: 0, dz: LANE_OFFSET };
+  if (Math.abs(s - Math.PI / 2) < 0.1) return { dx: -LANE_OFFSET, dz: 0 };
+  if (Math.abs(s + Math.PI / 2) < 0.1) return { dx: LANE_OFFSET, dz: 0 };
+  return { dx: 0, dz: -LANE_OFFSET };
+}
 
 const DENSITY = {
   Dawn: 0.4, Morning: 1.0, Midday: 0.7, Afternoon: 1.0,
@@ -194,8 +204,9 @@ export class NPCTraffic {
         }
       }
 
-      q.setFromAxisAngle(this._yAxis, car.heading);
-      pos.set(car.x, 0.03, car.z);
+      const lo = laneOffset(car.heading);
+      q.setFromAxisAngle(this._yAxis, car.heading + MESH_TURN);
+      pos.set(car.x + lo.dx, 0.03, car.z + lo.dz);
       m.compose(pos, q, one);
       this.bodies.setMatrixAt(visCount, m);
       this.cabins.setMatrixAt(visCount, m);
