@@ -329,7 +329,7 @@ export class Game {
     this._applyEnvironment();
     this.sky.update(dt);
     this.scenery.update(dt);
-    if (this.npcTraffic) {
+    if (this.npcTraffic && this.ui.trafficEnabled) {
       const playerPos = this.vehicle.group.position;
       this.npcTraffic.update(dt, this.envState.name, playerPos);
     }

@@ -6,6 +6,7 @@ export const ui = reactive({
   screen: 'title',
   paused: false,
   muted: false,
+  trafficEnabled: JSON.parse(localStorage.getItem('snackrun_traffic') ?? 'true'),
   padConnected: false,
 
   money: 0,
@@ -69,4 +70,9 @@ export function showShiftFlash(text) {
   setTimeout(() => {
     if (ui.shiftFlash && Date.now() - ui.shiftFlash.key >= 800) ui.shiftFlash = null;
   }, 900);
+}
+
+export function toggleTraffic() {
+  ui.trafficEnabled = !ui.trafficEnabled;
+  localStorage.setItem('snackrun_traffic', JSON.stringify(ui.trafficEnabled));
 }

@@ -18,6 +18,7 @@
       <h2>PAUSED</h2>
       <button class="btn primary" @click="resume">RESUME</button>
       <button class="btn ghost" @click="toggleMute">{{ ui.muted ? 'SOUND: OFF' : 'SOUND: ON' }}</button>
+      <button class="btn ghost" @click="handleToggleTraffic">TRAFFIC: {{ ui.trafficEnabled ? 'ON' : 'OFF' }}</button>
       <div class="controls-panel small">
         <div v-for="row in controls" :key="row[0]" class="ctrl-row">
           <kbd>{{ row[0] }}</kbd><span>{{ row[1] }}</span>
@@ -29,7 +30,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import { ui } from '../store.js';
+import { ui, toggleTraffic } from '../store.js';
 import { bus } from '../../core/bus.js';
 import { CONFIG } from '../../config.js';
 
@@ -44,5 +45,8 @@ function resume() {
 }
 function toggleMute() {
   bus.emit('ui:mute');
+}
+function handleToggleTraffic() {
+  toggleTraffic();
 }
 </script>
