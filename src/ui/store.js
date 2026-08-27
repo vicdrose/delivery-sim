@@ -6,7 +6,7 @@ export const ui = reactive({
   screen: 'title',
   paused: false,
   muted: false,
-  trafficEnabled: JSON.parse(localStorage.getItem('snackrun_traffic') ?? 'true'),
+  trafficEnabled: JSON.parse(localStorage.getItem('snackrun_traffic') ?? 'false'),
   padConnected: false,
 
   money: 0,
