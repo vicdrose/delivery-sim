@@ -525,7 +525,7 @@ export class DeliveryMode {
         this._shiftActive = !this._shiftActive;
         this._shiftHoldTimer = 0;
         if (this._shiftActive) {
-          showShiftFlash('SHIFT ON');
+          showShiftFlash('SHIFT STARTED');
         } else {
           toast('Shift ended.', 'info');
         }
@@ -655,7 +655,11 @@ export class DeliveryMode {
         obj = { title: 'HAND IT OVER', sub: d.dropoff.name, distM: ref.distanceTo(d.dropoff.pos) };
       }
     } else if (st === DeliveryState.IDLE || st === DeliveryState.COMPLETE) {
-      obj = { title: 'CRUISE AROUND', sub: 'New order incoming...', distM: null };
+      if (this._shiftActive) {
+        obj = { title: 'CRUISE AROUND', sub: 'New order incoming...', distM: null };
+      } else {
+        obj = { title: 'HOLD B TO BEGIN SHIFT', sub: '', distM: null };
+      }
     }
 
     if (obj) {
