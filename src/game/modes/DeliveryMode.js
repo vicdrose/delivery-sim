@@ -455,7 +455,7 @@ export class DeliveryMode {
         }
       }
     } else if (this.playerMode === 'foot') {
-      const forward = s.moveForward || s.throttle - s.brake;
+      const forward = s.moveForward;
       const strafe = s.steer;
       const camYaw = this.camYawFoot + g.cameraRig.orbitYaw;
       g.player.update(dt, strafe, forward, s.sprint, camYaw, g.collision, 'city');
@@ -477,7 +477,7 @@ export class DeliveryMode {
       }
       this._checkWalkingArrival();
     } else {
-      const forward = s.moveForward || s.throttle - s.brake;
+      const forward = s.moveForward;
       const strafe = s.steer;
       const camYaw = this.camYawFoot + g.cameraRig.orbitYaw;
       g.player.update(dt, strafe, forward, s.sprint, camYaw, g.collision, 'interior');
