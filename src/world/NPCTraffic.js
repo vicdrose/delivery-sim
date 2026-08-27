@@ -251,7 +251,8 @@ export class NPCTraffic {
       const lo = laneOffset(car.heading);
       const cx = car.x + lo.dx;
       const cz = car.z + lo.dz;
-      q.setFromAxisAngle(this._yAxis, car.heading + MESH_TURN);
+      const bodyAngle = car.heading + MESH_TURN;
+      q.setFromAxisAngle(this._yAxis, bodyAngle);
       pos.set(cx, 0.03, cz);
       m.compose(pos, q, one);
       this.bodies.setMatrixAt(visCount, m);
@@ -262,8 +263,8 @@ export class NPCTraffic {
       const wx = 0.85;
       const wz = 1.24;
       const wy = 0.38;
-      const cos = Math.cos(car.heading);
-      const sin = Math.sin(car.heading);
+      const cos = Math.cos(bodyAngle);
+      const sin = Math.sin(bodyAngle);
       const corners = [[-wx, wz], [wx, wz], [-wx, -wz], [wx, -wz]];
       for (let c = 0; c < 4; c++) {
         const lx = corners[c][0];
