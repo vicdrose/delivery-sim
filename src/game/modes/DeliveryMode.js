@@ -18,6 +18,7 @@ export class DeliveryMode {
     this.offerTimer = this._nextOfferWait();
     this._offerExpiry = -1;
     this._shiftActive = false;
+    this._shiftHoldTimer = 0;
     this.completeTimer = -1;
     this.lastPickupId = null;
     this._unsubs = [];
@@ -518,16 +519,19 @@ export class DeliveryMode {
 
   _scheduleOffers(dt, s) {
     const fsm = this.g.fsm;
-    const wasShift = this._shiftActive;
-    this._shiftActive = s.shiftHeld;
-    if (this._shiftActive && !wasShift) {
-      toast('SHIFT START', 'success');
-    } else if (!this._shiftActive && wasShift) {
-      toast('SHIFT OVER', 'info');
-      if (fsm.state === DeliveryState.OFFER) {
-        fsm.decline();
-        this._offerExpiry = -1;
+    if (s.shiftHeld) {
+      this._shiftHoldTimer += dt;
+      if (this._shiftHoldTimer >= 1.5) {
+        this._shiftActive = !this._shiftActive;
+        this._shiftHoldTimer = 0;
+        toast(this._shiftActive ? 'SHIFT START' : 'SHIFT OVER', this._shiftActive ? 'success' : 'info');
+        if (!this._shiftActive && fsm.state === DeliveryState.OFFER) {
+          fsm.decline();
+          this._offerExpiry = -1;
+        }
       }
+    } else {
+      this._shiftHoldTimer = 0;
     }
     if (fsm.state === DeliveryState.COMPLETE) {
       this.completeTimer -= dt;
