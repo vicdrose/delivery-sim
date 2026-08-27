@@ -5,6 +5,7 @@ import { bus } from '../core/bus.js';
 import { InputManager } from '../input/InputManager.js';
 import { AudioSystem } from '../audio/AudioSystem.js';
 import { MusicManager } from '../audio/MusicManager.js';
+import { FoleySystem } from '../audio/FoleySystem.js';
 import { CollisionWorld } from '../physics/CollisionWorld.js';
 import { CameraRig } from '../camera/CameraRig.js';
 import { generateCity } from '../city/CityGenerator.js';
@@ -111,6 +112,7 @@ export class Game {
     this.input = new InputManager();
     this.audio = new AudioSystem();
     this.music = new MusicManager();
+    this.foley = new FoleySystem();
     this.progression = new Progression();
 
     const cityResult = generateCity(this.collision);
@@ -126,6 +128,7 @@ export class Game {
     this.vehicle = new Vehicle(this.scene, this.collision);
     this.vehicle.resolveNpc = (x, z, r) => this.npcTraffic.resolveCircle(x, z, r);
     this.player = new Player(this.scene);
+    this.player.onStep = (i) => this.foley.step(i);
     this.interaction = new InteractionSystem();
     this.interiors = new InteriorManager(this.scene, this.collision);
 
@@ -157,6 +160,7 @@ export class Game {
       bus.on('ui:mute', () => {
         ui.muted = this.audio.toggleMute();
         this.music.setMuted(ui.muted);
+        this.foley.setMuted(ui.muted);
       }),
       bus.on('ui:accept', () => {
         if (this.fsm.state === DeliveryState.OFFER) this.fsm.accept();
@@ -213,6 +217,8 @@ export class Game {
     ui.screen = 'playing';
     ui.paused = false;
     this.music.enterGame();
+    this._ensureAudio();
+    if (this.foley.ready) this.foley.start();
   }
 
   _ensureAudio() {
@@ -222,6 +228,10 @@ export class Game {
     const start = () => {
       this.audio.init().then(() => {
         this.music.setMuted(this.audio.muted);
+        return this.foley.init();
+      }).then(() => {
+        this.foley.setMuted(this.audio.muted);
+        if (ui.screen === 'playing' && !ui.paused) this.foley.start();
       });
     };
     start();
@@ -266,9 +276,11 @@ export class Game {
     }
     if (v) {
       this.music.pauseGame();
+      this.foley.stop();
     } else {
       const inCar = !this.currentMode || this.currentMode.playerMode === 'drive';
       this.music.resumeGame(inCar);
+      this.foley.start();
     }
   }
 
@@ -322,8 +334,10 @@ export class Game {
     if (s.mutePressed) {
       ui.muted = this.audio.toggleMute();
       this.music.setMuted(ui.muted);
+      this.foley.setMuted(ui.muted);
     }
     this._updateRadio(dt, s);
+    this.foley.update(dt);
 
     this.dayCycle.update(dt);
     this._applyEnvironment();
@@ -359,6 +373,7 @@ export class Game {
     window.removeEventListener('pointerdown', this._onFirstGesture);
     window.removeEventListener('keydown', this._onFirstGesture);
     this.music.dispose();
+    this.foley.dispose();
     this.input.dispose();
     this.audio.dispose();
     this.city.dispose();
