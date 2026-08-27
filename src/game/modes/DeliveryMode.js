@@ -3,7 +3,7 @@ import { CONFIG } from '../../config.js';
 import { bus } from '../../core/bus.js';
 import { DeliveryState } from '../../delivery/DeliveryStateMachine.js';
 import { makeMarkerMaterial } from '../../city/materials.js';
-import { ui, toast, showPayment, showBagSecured } from '../../ui/store.js';
+import { ui, toast, showPayment, showBagSecured, showShiftFlash } from '../../ui/store.js';
 
 const fmtTime = (sec) => {
   const s = Math.max(0, Math.round(sec));
@@ -17,7 +17,7 @@ export class DeliveryMode {
     this.camYawFoot = 0;
     this.offerTimer = this._nextOfferWait();
     this._offerExpiry = -1;
-    this._shiftActive = false;
+    this._shiftActive = true;
     this._shiftHoldTimer = 0;
     this.completeTimer = -1;
     this.lastPickupId = null;
@@ -524,7 +524,11 @@ export class DeliveryMode {
       if (this._shiftHoldTimer >= 1.5) {
         this._shiftActive = !this._shiftActive;
         this._shiftHoldTimer = 0;
-        toast(this._shiftActive ? 'SHIFT START' : 'SHIFT OVER', this._shiftActive ? 'success' : 'info');
+        if (this._shiftActive) {
+          showShiftFlash('SHIFT ON');
+        } else {
+          toast('Shift ended.', 'info');
+        }
         if (!this._shiftActive && fsm.state === DeliveryState.OFFER) {
           fsm.decline();
           this._offerExpiry = -1;

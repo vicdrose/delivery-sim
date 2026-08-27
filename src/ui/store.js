@@ -21,6 +21,7 @@ export const ui = reactive({
   prompt: null,
   payment: null,
   bagSecured: null,
+  shiftFlash: null,
   insideName: null,
   toasts: [],
 
@@ -61,4 +62,11 @@ export function showBagSecured(foodItem) {
   setTimeout(() => {
     if (ui.bagSecured && Date.now() - ui.bagSecured.key >= 500) ui.bagSecured = null;
   }, 600);
+}
+
+export function showShiftFlash(text) {
+  ui.shiftFlash = { text, key: Date.now() };
+  setTimeout(() => {
+    if (ui.shiftFlash && Date.now() - ui.shiftFlash.key >= 800) ui.shiftFlash = null;
+  }, 900);
 }
