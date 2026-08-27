@@ -458,7 +458,7 @@ export class DeliveryMode {
       const forward = s.moveForward;
       const strafe = s.steer;
       const camYaw = this.camYawFoot + g.cameraRig.orbitYaw;
-      g.player.update(dt, strafe, forward, s.sprint, camYaw, g.collision, 'city');
+      g.player.update(dt, strafe, forward, s.sprint || s.sprintRT, camYaw, g.collision, 'city');
       const moving = forward !== 0 || strafe !== 0;
       if (moving) {
         let diff = g.player.yaw - this.camYawFoot;
@@ -480,7 +480,7 @@ export class DeliveryMode {
       const forward = s.moveForward;
       const strafe = s.steer;
       const camYaw = this.camYawFoot + g.cameraRig.orbitYaw;
-      g.player.update(dt, strafe, forward, s.sprint, camYaw, g.collision, 'interior');
+      g.player.update(dt, strafe, forward, s.sprint || s.sprintRT, camYaw, g.collision, 'interior');
       let diff = g.player.yaw - this.camYawFoot;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;

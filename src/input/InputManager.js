@@ -66,6 +66,7 @@ export class InputManager {
       radio: btn(4),
       pause: btn(9),
       sprint: btn(10),
+      sprintRT: val(7) > 0.5,
       shiftHeld: btn(1)
     };
   }
@@ -77,6 +78,7 @@ export class InputManager {
       brake: 0,
       handbrake: false,
       sprint: false,
+      sprintRT: false,
       horn: false,
       interactPressed: false,
       enterExitPressed: false,
@@ -126,6 +128,7 @@ export class InputManager {
       if (Math.abs(pad.moveForward) > Math.abs(state.moveForward)) state.moveForward = pad.moveForward;
       state.handbrake = state.handbrake || pad.handbrake;
       state.sprint = state.sprint || pad.sprint;
+      state.sprintRT = pad.sprintRT;
       state.horn = state.horn || pad.horn;
       state.shiftHeld = state.shiftHeld || pad.shiftHeld;
       state.interactPressed = state.interactPressed || (pad.horn && !this._padPrev[2]) || (pad.interact && !this._padPrev[0]);
