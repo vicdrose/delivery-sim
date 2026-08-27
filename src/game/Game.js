@@ -124,6 +124,7 @@ export class Game {
     this.envState = {};
 
     this.vehicle = new Vehicle(this.scene, this.collision);
+    this.vehicle.resolveNpc = (x, z, r) => this.npcTraffic.resolveCircle(x, z, r);
     this.player = new Player(this.scene);
     this.interaction = new InteractionSystem();
     this.interiors = new InteriorManager(this.scene, this.collision);
@@ -335,14 +336,6 @@ export class Game {
 
     if (this.currentMode) {
       this.currentMode.update(dt, s);
-    }
-    if (this.npcTraffic) {
-      const pos = this.vehicle.group.position;
-      const push = this.npcTraffic.resolveCircle(pos.x, pos.z, CONFIG.vehicle.collisionRadius);
-      if (push) {
-        pos.x += push.x;
-        pos.z += push.z;
-      }
     }
   }
 
