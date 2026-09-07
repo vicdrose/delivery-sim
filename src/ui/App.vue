@@ -13,6 +13,7 @@
     <PaymentFlash />
     <BagSecuredFlash />
     <ShiftFlash />
+    <TouchControls />
   </div>
   <Screens />
 </template>
@@ -33,6 +34,7 @@ import ToastStack from './components/ToastStack.vue';
 import PaymentFlash from './components/PaymentFlash.vue';
 import BagSecuredFlash from './components/BagSecuredFlash.vue';
 import ShiftFlash from './components/ShiftFlash.vue';
+import TouchControls from './components/TouchControls.vue';
 import Screens from './components/Screens.vue';
 
 const inGame = computed(() => ui.screen === 'playing');

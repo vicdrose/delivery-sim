@@ -1,6 +1,11 @@
+import { ui } from '../ui/store.js';
+
 export class InputManager {
   constructor(target = window) {
     this.target = target;
+    this._actionPrev = false;
+    this._declinePrev = false;
+    this._pausePrev = false;
     this._keys = new Set();
     this._edges = new Set();
     this._padPrev = new Array(20).fill(false);
@@ -43,6 +48,34 @@ export class InputManager {
     return false;
   }
 
+  _mergeTouch(state, ui) {
+    const mx = Math.abs(ui.moveX) > 0.08 ? ui.moveX : 0;
+    const my = Math.abs(ui.moveY) > 0.08 ? ui.moveY : 0;
+    if (mx !== 0) state.steer = mx;
+    if (my !== 0) {
+      if (my > 0) {
+        state.throttle = Math.max(state.throttle, my);
+        state.moveForward = Math.max(state.moveForward, my);
+      } else {
+        state.brake = Math.max(state.brake, -my);
+        state.moveForward = Math.min(state.moveForward, my);
+      }
+    }
+    state.handbrake = state.handbrake || ui.handbrakePressed;
+    state.sprint = state.sprint || ui.sprintPressed;
+
+    const actionEdge = ui.actionPressed && !this._actionPrev;    state.actionPressed = state.actionPressed || actionEdge;
+    state.interactPressed = state.interactPressed || actionEdge;
+    state.acceptPressed = state.acceptPressed || actionEdge;
+    state.enterExitPressed = state.enterExitPressed || actionEdge;
+    state.declinePressed = (state.declinePressed || (ui.declinePressed && !this._declinePrev));
+    state.pausePressed = (state.pausePressed || (ui.pausePressed && !this._pausePrev));
+
+    this._actionPrev = !!ui.actionPressed;
+    this._declinePrev = !!ui.declinePressed;
+    this._pausePrev = !!ui.pausePressed;
+  }
+
   _pollPad() {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     let pad = null;
@@ -82,6 +115,7 @@ export class InputManager {
       horn: false,
       interactPressed: false,
       enterExitPressed: false,
+      actionPressed: false,
       pausePressed: false,
       acceptPressed: false,
       declinePressed: false,
@@ -145,6 +179,8 @@ export class InputManager {
       this._padPrev[4] = pad.radio;
       this._padPrev[9] = pad.pause;
     }
+
+    this._mergeTouch(state, ui);
 
     state.anyInput =
       state.steer !== 0 ||

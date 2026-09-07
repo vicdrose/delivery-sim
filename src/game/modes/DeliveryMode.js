@@ -3,7 +3,7 @@ import { CONFIG } from '../../config.js';
 import { bus } from '../../core/bus.js';
 import { DeliveryState } from '../../delivery/DeliveryStateMachine.js';
 import { makeMarkerMaterial } from '../../city/materials.js';
-import { ui, toast, showPayment, showBagSecured, showShiftFlash } from '../../ui/store.js';
+import { ui, toast, showPayment, showBagSecured, showShiftFlash, isMobileUI } from '../../ui/store.js';
 
 const fmtTime = (sec) => {
   const s = Math.max(0, Math.round(sec));
@@ -412,6 +412,8 @@ export class DeliveryMode {
   update(dt, s) {
     const g = this.g;
     this._time += dt;
+    const isAction = !!s.actionPressed;
+    const promptPrefix = isMobileUI() ? '' : '[E] ';
 
     if ((s.interactPressed || s.acceptPressed) && g.fsm.state === DeliveryState.OFFER) {
       g.fsm.accept();
@@ -425,6 +427,7 @@ export class DeliveryMode {
     if (this.playerMode === 'drive') {
       veh.setBrakeLights(s.brake > 0 || s.handbrake);
       veh.update(dt, { steer: s.steer, throttle: s.throttle, brake: s.brake, handbrake: s.handbrake });
+      ui.prompt = null;
       g.audio.horn(s.horn);
       g.audio.setEngine(
         Math.min(1, Math.abs(veh.speed) / CONFIG.vehicle.maxSpeed),
@@ -469,9 +472,26 @@ export class DeliveryMode {
       g.audio.horn(false);
       g.audio.setEngine(0, 0, false);
       g.audio.setSkid(0);
-      if (s.enterExitPressed) {
-        const dp = g.player.pos.distanceTo(veh.position);
-        if (dp < CONFIG.interaction.vehicleEnterRadius && Math.abs(veh.speed) < 1.6) {
+      const item = g.interaction.update(g.player.pos);
+      const label = item ? item.label() : null;
+      ui.prompt = label ? promptPrefix + label : null;
+      const hasInteraction = !!(item && label);
+      const nearVehicle =
+        g.player.pos.distanceTo(veh.position) < CONFIG.interaction.vehicleEnterRadius &&
+        Math.abs(veh.speed) < 1.6;
+      if (isAction) {
+        if (hasInteraction) {
+          g.audio.play('ui');
+          item.action();
+        } else if (nearVehicle) {
+          this._enterVehicle();
+        }
+      } else {
+        if (s.interactPressed && item && label) {
+          g.audio.play('ui');
+          item.action();
+        }
+        if (s.enterExitPressed && nearVehicle) {
           this._enterVehicle();
         }
       }
@@ -486,18 +506,13 @@ export class DeliveryMode {
       while (diff < -Math.PI) diff += Math.PI * 2;
       if (forward !== 0 || strafe !== 0) this.camYawFoot += diff * Math.min(1, 2.2 * dt);
       g.interiors.update(dt);
-    }
-
-    if (this.playerMode !== 'drive') {
       const item = g.interaction.update(g.player.pos);
       const label = item ? item.label() : null;
-      ui.prompt = label ? '[E] ' + label : null;
+      ui.prompt = label ? promptPrefix + label : null;
       if (s.interactPressed && item && label) {
         g.audio.play('ui');
         item.action();
       }
-    } else {
-      ui.prompt = null;
     }
 
     if (this.playerMode === 'drive') {
@@ -610,6 +625,7 @@ export class DeliveryMode {
     const fsm = g.fsm;
     const d = fsm.delivery;
 
+    ui.playerMode = this.playerMode;
     ui.speedMph =
       this.playerMode === 'drive' ? Math.round(Math.abs(g.vehicle.speed) * 2.23694) : 0;
     ui.hasFood = fsm.hasFood;

@@ -19,6 +19,7 @@
       <button class="btn primary" @click="resume">RESUME</button>
       <button class="btn ghost" @click="toggleMute">{{ ui.muted ? 'SOUND: OFF' : 'SOUND: ON' }}</button>
       <button class="btn ghost" @click="handleToggleTraffic">TRAFFIC (BETA): {{ ui.trafficEnabled ? 'ON' : 'OFF' }}</button>
+      <button class="btn ghost" @click="handleToggleMobile">TOUCH CONTROLS: {{ ui.mobileOverride === null ? (detectedMobile ? 'AUTO (ON)' : 'AUTO (OFF)') : (ui.mobileOverride ? 'ON' : 'OFF') }}</button>
       <div class="controls-panel small">
         <div v-for="row in controls" :key="row[0]" class="ctrl-row">
           <kbd>{{ row[0] }}</kbd><span>{{ row[1] }}</span>
@@ -30,12 +31,13 @@
 
 <script setup>
 import { computed } from 'vue';
-import { ui, toggleTraffic } from '../store.js';
+import { ui, toggleTraffic, setMobile, detectMobile } from '../store.js';
 import { bus } from '../../core/bus.js';
 import { CONFIG } from '../../config.js';
 
 const controls = CONFIG.controlsHelp;
 const padConnected = computed(() => ui.padConnected);
+const detectedMobile = detectMobile();
 
 function start() {
   bus.emit('ui:start');
@@ -48,5 +50,9 @@ function toggleMute() {
 }
 function handleToggleTraffic() {
   toggleTraffic();
+}
+function handleToggleMobile() {
+  const next = ui.mobileOverride === null ? !detectedMobile : !ui.mobileOverride;
+  setMobile(next);
 }
 </script>

@@ -2,12 +2,36 @@ import { reactive } from 'vue';
 
 let toastId = 1;
 
+export function detectMobile() {
+  const ua = (navigator.userAgent || '');
+  const coarse =
+    (typeof window.matchMedia === 'function' &&
+      window.matchMedia('(pointer: coarse)').matches) ||
+    (window.matchMedia && window.matchMedia('(any-pointer: coarse)').matches);
+  const width = window.innerWidth <= 1024;
+  const regex = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini|Mobile/i;
+  const viaUA = regex.test(ua) || /Tablet|iPad/i.test(ua);
+  return Boolean(coarse || width || viaUA);
+}
+
 export const ui = reactive({
   screen: 'title',
   paused: false,
   muted: false,
   trafficEnabled: JSON.parse(localStorage.getItem('snackrun_traffic') ?? 'false'),
   padConnected: false,
+
+  mobileOverride: null,
+  playerMode: 'drive',
+
+  moveX: 0,
+  moveY: 0,
+  joystickActive: false,
+  actionPressed: false,
+  declinePressed: false,
+  pausePressed: false,
+  handbrakePressed: false,
+  sprintPressed: false,
 
   money: 0,
   todayEarned: 0,
@@ -75,4 +99,18 @@ export function showShiftFlash(text) {
 export function toggleTraffic() {
   ui.trafficEnabled = !ui.trafficEnabled;
   localStorage.setItem('snackrun_traffic', JSON.stringify(ui.trafficEnabled));
+}
+
+export function setMobile(force) {
+  if (force === null || force === undefined) {
+    const stored = localStorage.getItem('snackrun_mobile');
+    ui.mobileOverride = stored === null ? null : stored === '1';
+  } else {
+    ui.mobileOverride = force;
+    localStorage.setItem('snackrun_mobile', force ? '1' : '0');
+  }
+}
+
+export function isMobileUI() {
+  return ui.mobileOverride !== null ? ui.mobileOverride : detectMobile();
 }
