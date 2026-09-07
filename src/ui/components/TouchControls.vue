@@ -173,8 +173,8 @@ function shortPrompt(p) {
 .stick-base {
   pointer-events: auto;
   position: fixed;
-  left: 78px;
-  bottom: 120px;
+  left: 14px;
+  bottom: 66px;
   width: 148px;
   height: 148px;
   border-radius: 50%;
