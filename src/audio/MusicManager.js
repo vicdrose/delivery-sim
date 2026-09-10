@@ -5,11 +5,6 @@ const titleFiles = import.meta.glob('./tracks/title/*.{mp3,ogg,wav,m4a,flac}', {
   query: '?url',
   import: 'default'
 });
-const pauseFiles = import.meta.glob('./tracks/pause/*.{mp3,ogg,wav,m4a,flac}', {
-  eager: true,
-  query: '?url',
-  import: 'default'
-});
 const radioFiles = import.meta.glob('./tracks/radio/*.{mp3,ogg,wav,m4a,flac}', {
   eager: true,
   query: '?url',
@@ -21,7 +16,7 @@ const ambientFiles = import.meta.glob('./tracks/ambient/*.{mp3,ogg,wav,m4a,flac}
   import: 'default'
 });
 
-const VOLUMES = { title: 0.65, pause: 0.65, radio: 0.55, ambient: 0.30 };
+const VOLUMES = { title: 0.65, radio: 0.55, ambient: 0.30 };
 
 const trackName = (path) =>
   decodeURIComponent(path.split('/').pop() || '').replace(/\.[^.]+$/, '');
@@ -30,7 +25,6 @@ export class MusicManager {
   constructor() {
     this.groups = {
       title: this._list(titleFiles),
-      pause: this._list(pauseFiles),
       radio: this._list(radioFiles),
       ambient: this._list(ambientFiles)
     };
@@ -90,7 +84,6 @@ export class MusicManager {
     if (!g.length) return;
     if (this.ambient === 'title' && !g[0].el.paused) return;
     this.ambient = 'title';
-    this._stopGroup('pause');
     this._radioElsPause();
     this._playEl(g[0], 'title');
   }
@@ -109,7 +102,7 @@ export class MusicManager {
   unlock() {
     if (this._unlocked) return;
     this._unlocked = true;
-    for (const group of ['title', 'pause', 'radio', 'ambient']) {
+    for (const group of ['title', 'radio', 'ambient']) {
       for (const entry of this.groups[group]) entry.el.muted = false;
     }
   }
@@ -117,7 +110,6 @@ export class MusicManager {
   enterGame() {
     this.ambient = null;
     this._stopGroup('title');
-    this._stopGroup('pause');
     const n = this.groups.radio.length;
     if (n > 1) this.radioIndex = Math.floor(Math.random() * n);
     this.startAmbient();
@@ -142,13 +134,10 @@ export class MusicManager {
     this.ambient = 'pause';
     this._radioElsPause();
     this.stopAmbient();
-    const g = this.groups.pause;
-    if (g.length) this._playEl(g[0], 'pause');
   }
 
   resumeGame(inCar = true) {
     this.ambient = null;
-    this._stopGroup('pause');
     this.startAmbient();
     if (inCar && this.radioOn && this.groups.radio.length) this._startRadioCurrent(true);
     this._syncUi();
@@ -210,7 +199,7 @@ export class MusicManager {
 
   setMuted(m) {
     this.muted = m;
-    for (const group of ['title', 'pause', 'radio', 'ambient']) {
+    for (const group of ['title', 'radio', 'ambient']) {
       for (const entry of this.groups[group]) {
         entry.el.volume = m ? 0 : VOLUMES[group];
       }
@@ -218,7 +207,7 @@ export class MusicManager {
   }
 
   dispose() {
-    for (const group of ['title', 'pause', 'radio', 'ambient']) this._stopGroup(group);
+    for (const group of ['title', 'radio', 'ambient']) this._stopGroup(group);
   }
 
   _syncUi() {

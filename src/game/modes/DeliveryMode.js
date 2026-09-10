@@ -194,7 +194,7 @@ export class DeliveryMode {
             const veh = g.vehicle;
             const nearCar = veh.position.distanceTo(poi.door) <= CONFIG.parking.arriveRadius * 0.9;
             const parts = [];
-            if (veh.fuelLevel < veh.fuelMax) parts.push(this._keyHint('E') + 'Refuel');
+            if (veh.fuelLevel < veh.fuelMax) parts.push('Refuel');
             if (veh.health < veh.healthMax && nearCar) parts.push(this._keyHint('G') + 'Repair');
             return parts.length ? parts.join(' · ') : null;
           },

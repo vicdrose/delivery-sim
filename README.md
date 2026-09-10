@@ -113,7 +113,6 @@ matching folder and they are picked up automatically on the next dev reload or b
 ```
 src/audio/tracks/
   title/    Loops on the main menu
-  pause/    Plays while the game is paused (radio freezes where it is)
   radio/    In-game station; plays as a looping playlist during deliveries
 ```
 
@@ -126,8 +125,8 @@ Behavior:
   looping the playlist.
 - The radio only plays while you are driving. Leave the car and it pauses exactly
   where it was; get back in and it picks up mid-song.
-- Pausing the game freezes the radio in place and starts the pause music;
-  resuming swaps back (radio resumes only if you were driving).
+- Pausing the game freezes the radio where it is and keeps everything silent until
+  you resume (radio resumes only if you were driving).
 
 Radio controls: tap LB (or R) to skip to the next song, hold LB / R for about half a
 second to switch the radio on or off. A HUD widget top-right shows the current track
