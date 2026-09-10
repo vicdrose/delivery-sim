@@ -6,6 +6,7 @@ export class InputManager {
     this._actionPrev = false;
     this._declinePrev = false;
     this._pausePrev = false;
+    this._repairPrev = false;
     this._keys = new Set();
     this._edges = new Set();
     this._padPrev = new Array(20).fill(false);
@@ -70,10 +71,12 @@ export class InputManager {
     state.enterExitPressed = state.enterExitPressed || actionEdge;
     state.declinePressed = (state.declinePressed || (ui.declinePressed && !this._declinePrev));
     state.pausePressed = (state.pausePressed || (ui.pausePressed && !this._pausePrev));
+    state.repairPressed = state.repairPressed || (ui.repairPressed && !this._repairPrev);
 
     this._actionPrev = !!ui.actionPressed;
     this._declinePrev = !!ui.declinePressed;
     this._pausePrev = !!ui.pausePressed;
+    this._repairPrev = !!ui.repairPressed;
   }
 
   _pollPad() {
@@ -116,6 +119,7 @@ export class InputManager {
       interactPressed: false,
       enterExitPressed: false,
       actionPressed: false,
+      repairPressed: false,
       pausePressed: false,
       acceptPressed: false,
       declinePressed: false,
@@ -149,6 +153,7 @@ export class InputManager {
     state.pausePressed = this._edge('Escape');
     state.acceptPressed = this._edge('Enter', 'NumpadEnter');
     state.declinePressed = this._edge('KeyN');
+    state.repairPressed = this._edge('KeyG');
     state.mutePressed = this._edge('KeyM');
     state.radioHeld = this._down('KeyR');
     state.radioPressed = this._edge('KeyR');

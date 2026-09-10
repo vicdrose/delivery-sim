@@ -24,6 +24,8 @@
     >{{ actionLabel }}</button>
 
     <button class="touch-btn decline-btn" @pointerdown="decline">✕</button>
+
+    <button v-if="showRepair" class="touch-btn wrench-btn" @pointerdown="repair">⚙</button>
   </div>
 </template>
 
@@ -99,6 +101,12 @@ function pause() {
   pulse('pausePressed');
 }
 
+function repair() {
+  pulse('repairPressed');
+}
+
+const showRepair = computed(() => ui.nearGasStation && ui.playerMode === 'foot' && ui.healthLevel < ui.healthMax);
+
 const actionLabel = computed(() => {
   if (ui.offer) return 'ACCEPT';
   if (ui.playerMode === 'inside') return ui.prompt ? shortPrompt(ui.prompt) : 'LEAVE';
@@ -168,6 +176,16 @@ function shortPrompt(p) {
   height: 56px;
   font-size: 20px;
   background: rgba(29, 36, 48, 0.6);
+}
+
+.wrench-btn {
+  right: 26px;
+  bottom: 216px;
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+  background: rgba(242, 165, 65, 0.85);
+  border-color: rgba(255, 255, 255, 0.85);
 }
 
 .stick-base {

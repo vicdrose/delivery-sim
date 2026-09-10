@@ -30,6 +30,7 @@ export const ui = reactive({
   actionPressed: false,
   declinePressed: false,
   pausePressed: false,
+  repairPressed: false,
   handbrakePressed: false,
   sprintPressed: false,
 
@@ -57,6 +58,8 @@ export const ui = reactive({
   timeCritical: false,
   fuelLevel: 40,
   fuelMax: 40,
+  healthLevel: 100,
+  healthMax: 100,
   nearGasStation: false,
 
   radio: { on: true, track: null, hasTracks: false },

@@ -63,13 +63,18 @@ export class AudioSystem {
     return this.muted;
   }
 
-  setEngine(speed01, throttle01, active) {
+  setEngine(speed01, throttle01, active, health01 = 1) {
     if (!this.ready) return;
     const f = CONFIG.audio;
+    const dmg01 = 1 - Math.max(0, Math.min(1, health01 || 1));
     const wobble = Math.sin(performance.now() * 0.02) * (2 + throttle01 * 5);
-    this.engineOsc.frequency.value = f.engineBaseFreq + speed01 * f.engineFreqRange + wobble;
-    this.engineFilter.frequency.value = 260 + speed01 * 1500 + throttle01 * 400;
-    const target = active ? f.engineMaxGain * (0.35 + 0.65 * Math.max(speed01 * 0.7, throttle01)) : 0;
+    const sputter = (Math.random() - 0.5) * dmg01 * 18;
+    const miss = dmg01 > 0.6 && Math.random() < (dmg01 - 0.6) * 0.5 ? f.engineFreqRange * 0.5 : 0;
+    this.engineOsc.frequency.value = f.engineBaseFreq + speed01 * f.engineFreqRange + wobble + sputter + miss;
+    this.engineFilter.frequency.value = 260 + speed01 * 1500 + throttle01 * 400 - dmg01 * 220;
+    const target = active
+      ? f.engineMaxGain * (0.35 + 0.65 * Math.max(speed01 * 0.7, throttle01)) * (1 - dmg01 * 0.4)
+      : 0;
     this.engineGain.gain.rampTo(target, 0.09);
   }
 

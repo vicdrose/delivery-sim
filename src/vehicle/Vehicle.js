@@ -24,6 +24,10 @@ export class Vehicle {
     const saved = parseFloat(localStorage.getItem('snackrun_fuel'));
     this.fuelLevel = Number.isFinite(saved) ? saved : G.tankSize;
 
+    this.healthMax = V.healthMax;
+    const savedHealth = parseFloat(localStorage.getItem('snackrun_health'));
+    this.health = Number.isFinite(savedHealth) ? Math.min(V.healthMax, Math.max(0, savedHealth)) : V.healthMax;
+
     this.group = new THREE.Group();
     this.tiltNode = new THREE.Group();
 
@@ -107,7 +111,27 @@ export class Vehicle {
     }
 
     this.group.add(this.tiltNode);
+    this.smoke = this._buildSmoke();
+    this.group.add(this.smoke);
     scene.add(this.group);
+  }
+
+  _buildSmoke() {
+    const cv = document.createElement('canvas');
+    cv.width = 64;
+    cv.height = 64;
+    const ctx = cv.getContext('2d');
+    const grad = ctx.createRadialGradient(32, 32, 4, 32, 32, 30);
+    grad.addColorStop(0, 'rgba(120,120,125,0.9)');
+    grad.addColorStop(1, 'rgba(120,120,125,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+    const tex = new THREE.CanvasTexture(cv);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false });
+    const spr = new THREE.Sprite(mat);
+    spr.position.set(0, 0.6, -V.bodyLength * 0.52);
+    spr.scale.setScalar(1.4);
+    return spr;
   }
 
   reset(x, z, heading) {
@@ -150,17 +174,20 @@ export class Vehicle {
     let fs = this.forwardSpeed;
     const throttle = controls.throttle || 0;
     const brake = controls.brake || 0;
+    const perf = this.performance;
+    const accel = V.accel * perf;
+    const maxSpeed = V.maxSpeed * perf;
 
     if (throttle > 0 && this.fuelLevel > 0) {
-      const headroom = Math.max(0, 1 - Math.max(0, fs) / V.maxSpeed);
-      fs += V.accel * throttle * headroom * dt;
+      const headroom = Math.max(0, 1 - Math.max(0, fs) / maxSpeed);
+      fs += accel * throttle * headroom * dt;
     }
     if (brake > 0) {
       if (fs > 0.4) {
         fs -= V.brakeForce * brake * dt;
         if (fs < 0) fs = 0;
       } else if (this.fuelLevel > 0) {
-        fs -= V.accel * 0.55 * brake * dt;
+        fs -= accel * 0.55 * brake * dt;
         if (fs < -V.maxReverse) fs = -V.maxReverse;
       }
     }
@@ -179,7 +206,8 @@ export class Vehicle {
 
     const absFs = Math.abs(fs);
     const steerFade = THREE.MathUtils.clamp(absFs / V.steerFadeSpeed, 0, 1);
-    const steerRate = THREE.MathUtils.lerp(V.steerRateLow, V.steerRateHigh, steerFade);
+    let steerRate = THREE.MathUtils.lerp(V.steerRateLow, V.steerRateHigh, steerFade);
+    steerRate *= 0.6 + 0.4 * perf;
     const turnAuth = THREE.MathUtils.clamp(absFs / 2.2, 0, 1);
     this.heading -= this.steerSmooth * steerRate * turnAuth * dt * Math.sign(fs || 1) * (controls.handbrake ? 1.35 : 1);
 
@@ -219,7 +247,16 @@ export class Vehicle {
 
     if (hitNormal) {
       const impact = Math.hypot(preVx - vx, preVz - vz);
-      if (impact > 3 && this.onCrash) this.onCrash(Math.min(1, impact / 20));
+      if (impact > 3) {
+        const dmg = THREE.MathUtils.clamp(
+          V.collisionDamageExtra + impact * V.collisionDamagePerSpeed,
+          V.minCollisionDamage,
+          V.maxCollisionDamage
+        );
+        this.addDamage(dmg);
+        this._lastImpact = impact;
+        if (this.onCrash) this.onCrash(Math.min(1, impact / 20), dmg);
+      }
     }
 
     if (this.resolveNpc) {
@@ -250,6 +287,11 @@ export class Vehicle {
       this._saveFuel();
     }
 
+    if (Math.abs(newFs) > 1 && !this.broken) {
+      const speedFrac = Math.min(1, Math.abs(newFs) / V.maxSpeed);
+      this.health = Math.max(0, this.health - V.driveWearPerSec * dt * (0.3 + 0.7 * speedFrac));
+    }
+
     this.syncMesh(dt);
   }
 
@@ -264,6 +306,17 @@ export class Vehicle {
     for (const w of this.wheels) w.pivot.rotation.x += wheelSpin;
     this._wheelAngle += (this.steerSmooth - this._wheelAngle) * (1 - Math.exp(-6 * dt));
     for (const s of this.steerGroups) s.rotation.y = -this._wheelAngle * 0.42;
+
+    const dmg01 = 1 - this.healthFrac;
+    const smokeMat = this.smoke.material;
+    if (dmg01 > 0.25) {
+      smokeMat.opacity = Math.min(0.6, (dmg01 - 0.25) * 0.9) * (0.65 + 0.35 * Math.sin(performance.now() * 0.013));
+      smokeMat.rotation += dt * (0.4 + dmg01 * 1.6);
+      const s = 1.3 + dmg01 * 1.6;
+      this.smoke.scale.setScalar(s);
+    } else if (smokeMat.opacity > 0) {
+      smokeMat.opacity = Math.max(0, smokeMat.opacity - dt * 0.8);
+    }
   }
 
   setNightFactor(f) {
@@ -290,6 +343,38 @@ export class Vehicle {
 
   get fuelFraction() {
     return this.fuelLevel / this.fuelMax;
+  }
+
+  get healthFrac() {
+    return Math.max(0, this.health) / this.healthMax;
+  }
+
+  get healthPct() {
+    return this.healthFrac * 100;
+  }
+
+  get broken() {
+    return this.health <= 0;
+  }
+
+  get performance() {
+    const f = Math.max(0, Math.min(1, this.healthFrac));
+    return V.limpMaxSpeedFrac + (1 - V.limpMaxSpeedFrac) * f;
+  }
+
+  addDamage(n) {
+    this.health = Math.max(0, this.health - n);
+    localStorage.setItem('snackrun_health', this.health);
+  }
+
+  repair(n) {
+    this.health = Math.min(this.healthMax, this.health + n);
+    localStorage.setItem('snackrun_health', this.health);
+  }
+
+  repairFull() {
+    this.health = this.healthMax;
+    localStorage.setItem('snackrun_health', this.health);
   }
 
   _saveFuel() {

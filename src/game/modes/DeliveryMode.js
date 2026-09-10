@@ -29,6 +29,7 @@ export class DeliveryMode {
     this.targetPos = null;
     this._showCarBeacon = false;
     this._fuelWarned = false;
+    this._brokenWarned = false;
 
     const beamMat = makeMarkerMaterial('#ffd23f', 0.20);
     const ringMat = makeMarkerMaterial('#ffd23f', 0.5);
@@ -190,10 +191,22 @@ export class DeliveryMode {
           radius: CONFIG.gas.refillRadius,
           label: () => {
             if (this.playerMode !== 'foot') return null;
-            if (g.vehicle.fuelLevel >= g.vehicle.fuelMax) return null;
-            return 'Refuel Car';
+            const veh = g.vehicle;
+            const nearCar = veh.position.distanceTo(poi.door) <= CONFIG.parking.arriveRadius * 0.9;
+            const parts = [];
+            if (veh.fuelLevel < veh.fuelMax) parts.push(this._keyHint('E') + 'Refuel');
+            if (veh.health < veh.healthMax && nearCar) parts.push(this._keyHint('G') + 'Repair');
+            return parts.length ? parts.join(' · ') : null;
           },
-          action: () => this._refuelAtStation(poi)
+          action: () => {
+            const veh = g.vehicle;
+            const carHere = veh.position.distanceTo(poi.door) <= CONFIG.parking.arriveRadius * 0.9;
+            if (veh.health < veh.healthMax && veh.fuelLevel >= veh.fuelMax && carHere) {
+              this._repairAtStation(poi);
+            } else {
+              this._refuelAtStation(poi);
+            }
+          }
         });
       }
     }
@@ -313,6 +326,18 @@ export class DeliveryMode {
     fsm.complete(payout);
   }
 
+  _keyHint(k) {
+    return isMobileUI() ? '' : `[${k}] `;
+  }
+
+  _nearGasPump() {
+    const g = this.g;
+    for (const poi of g.city.locations.pois) {
+      if (poi.category === 'gas' && g.player.pos.distanceTo(poi.door) <= CONFIG.gas.refillRadius) return poi;
+    }
+    return null;
+  }
+
   _refuelAtStation() {
     const g = this.g;
     const veh = g.vehicle;
@@ -331,6 +356,30 @@ export class DeliveryMode {
     veh.refuel(missing);
     g.audio.play('cash');
     toast(`Refueled! -$${cost.toFixed(2)}`, 'success');
+  }
+
+  _repairAtStation(poi) {
+    const g = this.g;
+    const veh = g.vehicle;
+    if (poi && veh.position.distanceTo(poi.door) > CONFIG.parking.arriveRadius * 0.9) {
+      toast('Drive the car over to the pump first!', 'info');
+      return;
+    }
+    const missing = veh.healthMax - veh.health;
+    if (missing <= 0) {
+      toast('Car is already in great shape!', 'info');
+      return;
+    }
+    const cost = Math.ceil(missing * CONFIG.gas.repairCostPerUnit);
+    if (g.progression.profile.bank < cost) {
+      toast(`Not enough money to repair!`, 'danger');
+      return;
+    }
+    g.progression.addMoney(-cost);
+    ui.money = g.progression.profile.bank;
+    veh.repairFull();
+    g.audio.play('cash');
+    toast(`Repaired! -$${cost.toFixed(2)}`, 'success');
   }
 
   _clearTempItems() {
@@ -432,7 +481,8 @@ export class DeliveryMode {
       g.audio.setEngine(
         Math.min(1, Math.abs(veh.speed) / CONFIG.vehicle.maxSpeed),
         s.throttle,
-        true
+        true,
+        veh.healthFrac
       );
       if (s.enterExitPressed && Math.abs(veh.speed) < 1.6) {
         this._exitVehicle();
@@ -493,6 +543,10 @@ export class DeliveryMode {
         }
         if (s.enterExitPressed && nearVehicle) {
           this._enterVehicle();
+        }
+        if (s.repairPressed) {
+          const pump = this._nearGasPump();
+          if (pump) this._repairAtStation(pump);
         }
       }
       this._checkWalkingArrival();
@@ -632,6 +686,9 @@ export class DeliveryMode {
     ui.day = g.dayCycle.day;
     ui.fuelLevel = g.vehicle.fuelLevel;
     ui.fuelMax = g.vehicle.fuelMax;
+    ui.healthLevel = g.vehicle.health;
+    ui.healthMax = g.vehicle.healthMax;
+    ui.nearGasStation = this.playerMode === 'foot' && !!this._nearGasPump();
     ui.offerExpiry = fsm.state === DeliveryState.OFFER ? Math.ceil(this._offerExpiry) : -1;
 
     if (this.playerMode === 'drive') {
@@ -644,6 +701,14 @@ export class DeliveryMode {
         this._fuelWarned = true;
       } else if (frac > 0.25) {
         this._fuelWarned = false;
+      }
+
+      const hp = g.vehicle.health;
+      if (hp <= 0 && !this._brokenWarned) {
+        toast('Car broke down! It can barely crawl — limp it to a pump.', 'danger', 6000);
+        this._brokenWarned = true;
+      } else if (hp > 0) {
+        this._brokenWarned = false;
       }
     }
 

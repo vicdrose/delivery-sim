@@ -47,7 +47,15 @@ export const CONFIG = {
     bodyLength: 4.3,
     collisionRadius: 1.25,
     parkedSpeedThreshold: 0.6,
-    parkedDwellTime: 0.7
+    parkedDwellTime: 0.7,
+
+    healthMax: 100,
+    driveWearPerSec: 0.03,
+    collisionDamageExtra: 1.5,
+    collisionDamagePerSpeed: 0.13,
+    minCollisionDamage: 2,
+    maxCollisionDamage: 6,
+    limpMaxSpeedFrac: 0.12
   },
 
   player: {
@@ -114,7 +122,8 @@ export const CONFIG = {
     tankSize: 40,
     consumptionRate: 0.18,
     refillRadius: 4.5,
-    refillCostPerUnit: 0.85
+    refillCostPerUnit: 0.85,
+    repairCostPerUnit: 42
   },
 
   audio: {
