@@ -127,6 +127,8 @@ Behavior:
   where it was; get back in and it picks up mid-song.
 - Pausing the game freezes the radio where it is and keeps everything silent until
   you resume (radio resumes only if you were driving).
+- Pause → Settings → Song Choice lets you mute individual songs so they never play;
+  choices are saved per browser and survive reloads.
 
 Radio controls: tap LB (or R) to skip to the next song, hold LB / R for about half a
 second to switch the radio on or off. A HUD widget top-right shows the current track

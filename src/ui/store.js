@@ -17,6 +17,7 @@ export function detectMobile() {
 export const ui = reactive({
   screen: 'title',
   paused: false,
+  pauseMenu: 'main',
   muted: false,
   trafficEnabled: JSON.parse(localStorage.getItem('snackrun_traffic') ?? 'false'),
   padConnected: false,

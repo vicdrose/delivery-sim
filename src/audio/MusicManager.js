@@ -23,6 +23,15 @@ const trackName = (path) =>
 
 export class MusicManager {
   constructor() {
+    this.radioDisabled = new Set(
+      (() => {
+        try {
+          return JSON.parse(localStorage.getItem('snackrun_radio_off') || '[]');
+        } catch {
+          return [];
+        }
+      })()
+    );
     this.groups = {
       title: this._list(titleFiles),
       radio: this._list(radioFiles),
@@ -50,8 +59,24 @@ export class MusicManager {
         const el = new Audio();
         el.src = files[path];
         el.preload = 'auto';
-        return { el, name: trackName(path) };
+        const name = trackName(path);
+        return { el, name, disabled: this.radioDisabled.has(name) };
       });
+  }
+
+  _radioEnabledList() {
+    return this.groups.radio.filter((e) => !e.disabled);
+  }
+
+  _nextRadioIndex(exclude) {
+    const enabled = this._radioEnabledList();
+    if (!enabled.length) return null;
+    if (enabled.length === 1) return this.groups.radio.indexOf(enabled[0]);
+    let pick;
+    do {
+      pick = enabled[Math.floor(Math.random() * enabled.length)];
+    } while (pick === exclude);
+    return this.groups.radio.indexOf(pick);
   }
 
   currentRadioName() {
@@ -70,7 +95,10 @@ export class MusicManager {
         void 0;
       }
     }
-    el.loop = this.groups[group].length === 1;
+    const single =
+      this.groups[group].length === 1 ||
+      (group === 'radio' && this._radioEnabledList().length === 1);
+    el.loop = single;
     el.volume = this.muted ? 0 : VOLUMES[group];
     el.play().catch(() => void 0);
   }
@@ -110,8 +138,8 @@ export class MusicManager {
   enterGame() {
     this.ambient = null;
     this._stopGroup('title');
-    const n = this.groups.radio.length;
-    if (n > 1) this.radioIndex = Math.floor(Math.random() * n);
+    const next = this._nextRadioIndex();
+    if (next !== null) this.radioIndex = next;
     this.startAmbient();
     this._syncUi();
   }
@@ -119,6 +147,14 @@ export class MusicManager {
   _startRadioCurrent(resume) {
     const g = this.groups.radio;
     if (!g.length || !this.radioOn) return;
+    if (g[this.radioIndex % g.length].disabled) {
+      const next = this._nextRadioIndex(this.radioIndex);
+      if (next === null) {
+        this.radioPlaying = false;
+        return;
+      }
+      this.radioIndex = next;
+    }
     this._playEl(g[this.radioIndex % g.length], 'radio', !resume);
     this.radioPlaying = true;
   }
@@ -172,10 +208,12 @@ export class MusicManager {
   radioNext(auto = false) {
     const g = this.groups.radio;
     if (g.length < 2) return;
-    let next;
-    do {
-      next = Math.floor(Math.random() * g.length);
-    } while (next === this.radioIndex);
+    const next = this._nextRadioIndex(this.radioIndex);
+    if (next === null) {
+      this._radioElsPause();
+      this._syncUi();
+      return;
+    }
     this.radioIndex = next;
     if (auto ? this.radioPlaying : this.radioOn && !this.ambient) {
       for (const [i, entry] of g.entries()) {
@@ -185,6 +223,27 @@ export class MusicManager {
       this.radioPlaying = true;
     }
     this._syncUi();
+  }
+
+  setRadioEnabled(name, enabled) {
+    const entry = this.groups.radio.find((e) => e.name === name);
+    if (!entry) return;
+    entry.disabled = !enabled;
+    if (entry.disabled) {
+      this.radioDisabled.add(name);
+    } else {
+      this.radioDisabled.delete(name);
+    }
+    try {
+      localStorage.setItem('snackrun_radio_off', JSON.stringify([...this.radioDisabled]));
+    } catch {
+      void 0;
+    }
+    if (entry.disabled && this.groups.radio[this.radioIndex] === entry) {
+      this.radioNext(true);
+    } else {
+      this._syncUi();
+    }
   }
 
   toggleRadio() {
@@ -214,7 +273,8 @@ export class MusicManager {
     ui.radio = {
       on: this.radioOn,
       track: this.radioOn ? this.currentRadioName() : null,
-      hasTracks: this.groups.radio.length > 0
+      hasTracks: this.groups.radio.length > 0,
+      tracks: this.groups.radio.map((e) => ({ name: e.name, enabled: !e.disabled }))
     };
   }
 }

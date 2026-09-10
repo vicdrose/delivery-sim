@@ -166,6 +166,9 @@ export class Game {
       }),
       bus.on('ui:decline', () => {
         if (this.fsm.state === DeliveryState.OFFER) this.fsm.decline();
+      }),
+      bus.on('ui:song', ({ name, enabled }) => {
+        this.music.setRadioEnabled(name, enabled);
       })
     ];
 
