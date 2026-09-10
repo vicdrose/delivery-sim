@@ -28,7 +28,6 @@ export const ui = reactive({
   moveY: 0,
   joystickActive: false,
   actionPressed: false,
-  declinePressed: false,
   pausePressed: false,
   repairPressed: false,
   handbrakePressed: false,

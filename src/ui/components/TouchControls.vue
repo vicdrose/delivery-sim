@@ -23,8 +23,6 @@
       @pointerdown="action"
     >{{ actionLabel }}</button>
 
-    <button class="touch-btn decline-btn" @pointerdown="decline">✕</button>
-
     <button v-if="showRepair" class="touch-btn wrench-btn" @pointerdown="repair">⚙</button>
   </div>
 </template>
@@ -91,10 +89,6 @@ function pulse(key) {
 
 function action() {
   pulse('actionPressed');
-}
-
-function decline() {
-  pulse('declinePressed');
 }
 
 function pause() {
@@ -167,15 +161,6 @@ function shortPrompt(p) {
 
 .action-btn.pulse {
   transform: scale(0.92);
-}
-
-.decline-btn {
-  right: 22px;
-  bottom: 146px;
-  width: 56px;
-  height: 56px;
-  font-size: 20px;
-  background: rgba(29, 36, 48, 0.6);
 }
 
 .wrench-btn {

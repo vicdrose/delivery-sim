@@ -4,7 +4,6 @@ export class InputManager {
   constructor(target = window) {
     this.target = target;
     this._actionPrev = false;
-    this._declinePrev = false;
     this._pausePrev = false;
     this._repairPrev = false;
     this._keys = new Set();
@@ -65,16 +64,15 @@ export class InputManager {
     state.handbrake = state.handbrake || ui.handbrakePressed;
     state.sprint = state.sprint || ui.sprintPressed;
 
-    const actionEdge = ui.actionPressed && !this._actionPrev;    state.actionPressed = state.actionPressed || actionEdge;
+    const actionEdge = ui.actionPressed && !this._actionPrev;
+    state.actionPressed = state.actionPressed || actionEdge;
     state.interactPressed = state.interactPressed || actionEdge;
     state.acceptPressed = state.acceptPressed || actionEdge;
     state.enterExitPressed = state.enterExitPressed || actionEdge;
-    state.declinePressed = (state.declinePressed || (ui.declinePressed && !this._declinePrev));
-    state.pausePressed = (state.pausePressed || (ui.pausePressed && !this._pausePrev));
+    state.pausePressed = state.pausePressed || (ui.pausePressed && !this._pausePrev);
     state.repairPressed = state.repairPressed || (ui.repairPressed && !this._repairPrev);
 
     this._actionPrev = !!ui.actionPressed;
-    this._declinePrev = !!ui.declinePressed;
     this._pausePrev = !!ui.pausePressed;
     this._repairPrev = !!ui.repairPressed;
   }
