@@ -50,7 +50,7 @@ export const CONFIG = {
     parkedDwellTime: 0.7,
 
     healthMax: 100,
-    driveWearPerSec: 0.03,
+    driveWearPerSec: 0.001,
     collisionDamageExtra: 1.5,
     collisionDamagePerSpeed: 0.13,
     minCollisionDamage: 2,
