@@ -246,6 +246,17 @@ export class MusicManager {
     }
   }
 
+  resetRadioPlaylist() {
+    this.radioDisabled.clear();
+    try {
+      localStorage.removeItem('snackrun_radio_off');
+    } catch {
+      void 0;
+    }
+    for (const entry of this.groups.radio) entry.disabled = false;
+    this._syncUi();
+  }
+
   toggleRadio() {
     this.radioOn = !this.radioOn;
     if (this.radioOn && this.groups.radio.length && !this.ambient) {

@@ -22,7 +22,7 @@ import { DeliveryStateMachine, DeliveryState } from '../delivery/DeliveryStateMa
 import { Progression } from '../progression/Progression.js';
 import { DeliveryMode } from './modes/DeliveryMode.js';
 import { registerRhythmModes } from '../rhythm/index.js';
-import { ui } from '../ui/store.js';
+import { ui, toast } from '../ui/store.js';
 
 const MINIMAP_ZONE_COLORS = {
   residential: '#79a860',
@@ -169,6 +169,9 @@ export class Game {
       }),
       bus.on('ui:song', ({ name, enabled }) => {
         this.music.setRadioEnabled(name, enabled);
+      }),
+      bus.on('ui:reset-data', () => {
+        this.resetAllData();
       })
     ];
 
@@ -284,6 +287,29 @@ export class Game {
       this.music.resumeGame(inCar);
       this.foley.start();
     }
+  }
+
+  resetAllData() {
+    for (const key of [
+      'snackrun_health',
+      'snackrun_fuel',
+      'snackrun_traffic',
+      'snackrun_mobile',
+      'snackrun_radio_off',
+      'snackrun.profile.v1'
+    ]) {
+      localStorage.removeItem(key);
+    }
+    this.progression = new Progression();
+    this.vehicle.repairFull();
+    this.vehicle.refuel(this.vehicle.fuelMax);
+    this.music.resetRadioPlaylist();
+    ui.trafficEnabled = false;
+    ui.mobileOverride = null;
+    ui.money = 0;
+    ui.todayEarned = 0;
+    ui.deliveriesToday = 0;
+    toast('Game data reset to factory settings.', 'success');
   }
 
   _applyEnvironment() {

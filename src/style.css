@@ -83,6 +83,12 @@ body {
   box-shadow: 0 4px 0 #b9b5aa;
 }
 
+.btn.danger {
+  background: #c84b3f;
+  color: #fff;
+  box-shadow: 0 4px 0 #96382f;
+}
+
 .btn.big {
   font-size: 22px;
   padding: 16px 42px;

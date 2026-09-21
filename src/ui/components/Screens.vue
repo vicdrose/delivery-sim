@@ -31,6 +31,7 @@
       <button class="btn ghost" @click="toggleMute">{{ ui.muted ? 'SOUND: OFF' : 'SOUND: ON' }}</button>
       <button class="btn ghost" @click="handleToggleTraffic">TRAFFIC (BETA): {{ ui.trafficEnabled ? 'ON' : 'OFF' }}</button>
       <button class="btn ghost" @click="handleToggleMobile">TOUCH CONTROLS: {{ ui.mobileOverride === null ? (detectedMobile ? 'AUTO (ON)' : 'AUTO (OFF)') : (ui.mobileOverride ? 'ON' : 'OFF') }}</button>
+      <button class="btn danger" @click="handleReset">{{ resetArmed ? 'CONFIRM RESET?' : 'RESET GAME DATA' }}</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'main'">BACK</button>
     </div>
 
@@ -49,7 +50,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { ui, toggleTraffic, setMobile, detectMobile } from '../store.js';
 import { bus } from '../../core/bus.js';
 import { CONFIG } from '../../config.js';
@@ -81,5 +82,20 @@ function handleToggleMobile() {
 function toggleSong(t) {
   ui.pauseMenu = 'songs';
   bus.emit('ui:song', { name: t.name, enabled: !t.enabled });
+}
+const resetArmed = ref(false);
+let resetTimer = null;
+function handleReset() {
+  if (!resetArmed.value) {
+    resetArmed.value = true;
+    if (resetTimer) clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => {
+      resetArmed.value = false;
+    }, 4000);
+    return;
+  }
+  if (resetTimer) clearTimeout(resetTimer);
+  resetArmed.value = false;
+  bus.emit('ui:reset-data');
 }
 </script>
