@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { CONFIG } from '../config.js';
 import { RNG } from '../core/RNG.js';
 import { GeoBucket, frameAt } from './GeoUtil.js';
 import { makeSharedMaterials } from './materials.js';
@@ -8,23 +7,27 @@ import {
   smallHouse, townhouseRow, apartmentBlock, restaurant, shopUnit,
   stripMall, officeTower, campusHall, gasStation
 } from './Buildings.js';
+import { buildStorageFacility } from './StorageFacility.js';
+import { gridMetrics } from './gridMath.js';
 import { FOOD_NAMES, HOME_NAMES, HOUSE_STREETS } from './names.js';
 
 const ZONE_LOT = {
   residential: '#86c06a',
   commercial: '#cfc9bd',
   business: '#c4c0b6',
-  campus: '#79b56b'
+  campus: '#79b56b',
+  industrial: '#8d8578'
 };
 
 export const CAR_COLORS = ['#e8615a', '#f2a541', '#2a9d8f', '#457b9d', '#b56576', '#e8e6df', '#576066'];
 
 export class CityWorld {
-  constructor(group, locations, minimapData, spawn, materials) {
+  constructor(group, locations, minimapData, spawn, materials, storage = null) {
     this.group = group;
     this.locations = locations;
     this.minimapData = minimapData;
     this.spawn = spawn;
+    this.storage = storage;
     this._materials = materials;
     this.windowsMaterial = materials.windows;
   }
@@ -38,20 +41,21 @@ export class CityWorld {
   }
 }
 
-export function generateCity(collision) {
-  const cfg = CONFIG.city;
-  const rng = new RNG(cfg.seed);
-  const N = cfg.gridN;
-  const B = cfg.blockSize;
-  const R = cfg.roadWidth;
-  const SW = cfg.sidewalkWidth;
-  const P = B + R;
-  const T = N * P + R;
-  const H = T / 2;
+export function generateCity(collision, level) {
+  const cfg = level.grid;
+  const rng = new RNG(level.seed);
+  const m = gridMetrics(cfg);
+  const N = m.N;
+  const B = m.B;
+  const R = m.R;
+  const SW = m.SW;
+  const P = m.P;
+  const T = m.T;
+  const H = m.H;
 
-  const lineCoord = (i) => -H + R / 2 + i * P;
-  const blockMin = (i) => -H + R + i * P;
-  const blockCenter = (i) => blockMin(i) + B / 2;
+  const lineCoord = m.lineCoord;
+  const blockMin = m.blockMin;
+  const blockCenter = m.blockCenter;
 
   const S = new GeoBucket();
   const W = new GeoBucket();
@@ -239,7 +243,7 @@ export function generateCity(collision) {
         placeBuilding(smallHouse, f, [], (cat) =>
           cat === 'food' ? `${num} ${streetName} Kitchen` : `${num} ${streetName}`
         , 'home');
-        if (rng.chance(CONFIG.city.treeChance)) {
+        if (rng.chance(cfg.treeChance)) {
           const tx = cx + rng.float(-5, 5);
           const tz = cz + q[1] * rng.float(7, 10);
           if (!treeOverlapsBuilding(tx, tz)) treeSpots.push({ x: tx, z: tz, s: rng.float(0.8, 1.3) });
@@ -381,15 +385,15 @@ export function generateCity(collision) {
     }
   }
 
-  const gasSpots = [
-    { col: 0, row: 0 },
-    { col: N - 1, row: N - 1 }
-  ];
+  const gasSpots = level.gasSpots;
   const gasSpotSet = new Set(gasSpots.map((s) => s.col + ',' + s.row));
+  const storageBlock = level.storageBlock;
+  const storageKey = storageBlock ? storageBlock.col + ',' + storageBlock.row : null;
 
   for (let row = 0; row < N; row++) {
     for (let col = 0; col < N; col++) {
       if (gasSpotSet.has(col + ',' + row)) continue;
+      if (col + ',' + row === storageKey) continue;
       const zone = cfg.zoneOf(col, row);
       if (zone === 'residential') buildResidential(col, row);
       else if (zone === 'commercial') buildCommercial(col, row);
@@ -427,6 +431,25 @@ export function generateCity(collision) {
     minimapBlocks.push({ x: bx, z: bz, w: B, d: B, zone: 'residential' });
   }
 
+  let storage = null;
+  if (storageBlock) {
+    const bx = blockCenter(storageBlock.col);
+    const bz = blockCenter(storageBlock.row);
+    const face = facingOutward(storageBlock.col, storageBlock.row);
+    const f = frameAt(bx, bz, face.ry);
+    f.col = storageBlock.col;
+    f.row = storageBlock.row;
+    storage = buildStorageFacility(S, W, rng, f, collision, storageBlock);
+    lampSpots.push(...storage.lampSpots);
+    for (let i = 0; i < 4; i++) {
+      const tz = -H + 12 + rng.float(0, T - 24);
+      const tx = bx + (i % 2 === 0 ? -1 : 1) * rng.float(6, 15);
+      if (!treeOverlapsBuilding(tx, tz)) treeSpots.push({ x: tx, z: tz, s: rng.float(0.8, 1.2) });
+    }
+    buildingBoxes.push({ cx: bx, cz: bz, hw: B / 2 + 2, hd: B / 2 + 2 });
+    minimapBlocks.push({ x: bx, z: bz, w: B, d: B, zone: 'industrial' });
+  }
+
   for (const b of locations.pois) {
     minimapPois.push({ x: b.door.x, z: b.door.z, category: b.category });
   }
@@ -449,7 +472,10 @@ export function generateCity(collision) {
   group.add(buildPropCars(carSpots));
   group.add(buildLamps(lampSpots));
 
-  const spawn = new THREE.Vector3(lineCoord(N / 2), 0, H - R / 2);
+  const spawn =
+    level.spawn.kind === 'storage' && storage
+      ? new THREE.Vector3(storage.footSlot.x, 0, storage.footSlot.z)
+      : new THREE.Vector3(lineCoord(N / 2), 0, H - R / 2);
 
   const minimapData = {
     span: T,
@@ -461,7 +487,7 @@ export function generateCity(collision) {
     pois: minimapPois
   };
 
-  return new CityWorld(group, locations, minimapData, spawn, materials);
+  return new CityWorld(group, locations, minimapData, spawn, materials, storage);
 }
 
 function buildTrees(spots) {

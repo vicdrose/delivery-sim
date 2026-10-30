@@ -7,8 +7,9 @@ const DEFAULT_PROFILE = {
   daysWorked: 0,
   bank: 0,
   unlocks: {
-    vehicles: ['hatch'],
+    vehicles: ['car', 'van'],
     cities: ['metro'],
+    levels: ['1-1', '1-2'],
     songs: [],
     upgrades: []
   }

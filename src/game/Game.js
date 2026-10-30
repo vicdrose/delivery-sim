@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CONFIG } from '../config.js';
+import { CONFIG, VEHICLE_PROFILES } from '../config.js';
 import { Loop } from '../core/Loop.js';
 import { bus } from '../core/bus.js';
 import { InputManager } from '../input/InputManager.js';
@@ -9,6 +9,7 @@ import { FoleySystem } from '../audio/FoleySystem.js';
 import { CollisionWorld } from '../physics/CollisionWorld.js';
 import { CameraRig } from '../camera/CameraRig.js';
 import { generateCity } from '../city/CityGenerator.js';
+import { getLevel, DEFAULT_LEVEL_ID, levelList } from '../levels/index.js';
 import { Vehicle } from '../vehicle/Vehicle.js';
 import { Player } from '../player/Player.js';
 import { InteractionSystem } from '../interaction/InteractionSystem.js';
@@ -28,7 +29,8 @@ const MINIMAP_ZONE_COLORS = {
   residential: '#79a860',
   commercial: '#b8b2a4',
   business: '#9aa4ad',
-  campus: '#6ba06b'
+  campus: '#6ba06b',
+  industrial: '#7d7466'
 };
 
 function buildMinimapStatic(minimapData) {
@@ -115,21 +117,20 @@ export class Game {
     this.foley = new FoleySystem();
     this.progression = new Progression();
 
-    const cityResult = generateCity(this.collision);
-    this.city = cityResult;
-    this.scene.add(cityResult.group);
-    this.scenery = createScenery(this.scene, this.collision);
-    this.npcTraffic = new NPCTraffic(this.scene);
+    this.level = getLevel(DEFAULT_LEVEL_ID);
+    ui.levelId = this.level.id;
+    ui.levels = levelList(this.progression);
 
     this.sky = new Sky(this.scene);
     this.dayCycle = new DayNightCycle(bus);
     this.envState = {};
 
-    this.vehicle = new Vehicle(this.scene, this.collision);
-    this.vehicle.resolveNpc = (x, z, r) => this.npcTraffic.resolveCircle(x, z, r);
     this.player = new Player(this.scene);
     this.interaction = new InteractionSystem();
     this.interiors = new InteriorManager(this.scene, this.collision);
+
+    this._buildWorld();
+    this._buildFleet();
 
     this.generator = new DeliveryGenerator(this.city.locations);
     this.fsm = new DeliveryStateMachine(bus);
@@ -137,11 +138,97 @@ export class Game {
     this._modeFactories = new Map();
     this.currentMode = null;
 
-    this._buildMinimap();
     this._bindEvents();
 
     this._titleT = 0;
     this.loop = new Loop((dt) => this.update(dt), () => this.render());
+  }
+
+  _buildWorld() {
+    const level = this.level;
+    this.city = generateCity(this.collision, level);
+    this.scene.add(this.city.group);
+    this.scenery = createScenery(this.scene, this.collision, level);
+    this.npcTraffic = new NPCTraffic(this.scene, level);
+    ui.minimapHalf = this.city.minimapData.half;
+    this._buildMinimap();
+  }
+
+  _buildFleet() {
+    this.vehicles = {};
+    const slots = this.city.storage;
+    for (const id of this.level.vehicles) {
+      const profile = VEHICLE_PROFILES[id];
+      if (!profile) continue;
+      const v = new Vehicle(this.scene, this.collision, profile);
+      v.resolveNpc = (x, z, r) => this.npcTraffic.resolveCircle(x, z, r);
+      const slot = slots ? slots[id + 'Slot'] : null;
+      if (slot) v.reset(slot.x, slot.z, slot.heading);
+      else v.reset(this.city.spawn.x + 6, this.city.spawn.z - 5, Math.PI);
+      this.vehicles[id] = v;
+    }
+    this.activeVehicleId = this.level.vehicles[0] || 'car';
+    ui.vehicleId = this.activeVehicleId;
+  }
+
+  get vehicle() {
+    return this.vehicles[this.activeVehicleId] || null;
+  }
+
+  setActiveVehicle(id) {
+    if (!this.vehicles[id] || id === this.activeVehicleId) return false;
+    this.activeVehicleId = id;
+    ui.vehicleId = id;
+    return true;
+  }
+
+  loadLevel(id) {
+    if (id === this.level.id) return;
+    const next = getLevel(id);
+    if (!next) return;
+
+    const wasPlaying = ui.screen === 'playing';
+    if (this.currentMode) {
+      this.currentMode.exit();
+      this.currentMode = null;
+    }
+    if (this.interiors.isInside) this.interiors.exit();
+
+    for (const v of Object.values(this.vehicles)) v.dispose();
+    this.vehicles = {};
+    if (this.city) {
+      this.scene.remove(this.city.group);
+      this.city.dispose();
+      this.city = null;
+    }
+    if (this.scenery) {
+      this.scene.remove(this.scenery.group);
+      this.scenery = null;
+    }
+    if (this.npcTraffic) {
+      this.npcTraffic.destroy();
+      this.npcTraffic = null;
+    }
+    this.collision.clear('city');
+    this.interaction.clear();
+
+    this.level = next;
+    ui.levelId = next.id;
+    this.fsm.reset();
+    this._buildWorld();
+    this._buildFleet();
+    this.generator = new DeliveryGenerator(this.city.locations);
+
+    this.audio.horn(false);
+    this.audio.setEngine(0, 0, false);
+    this.audio.setSkid(0);
+    ui.offer = null;
+    ui.objective = null;
+    ui.prompt = null;
+
+    if (wasPlaying) {
+      this.setMode('delivery');
+    }
   }
 
   registerModes() {
@@ -172,6 +259,9 @@ export class Game {
       }),
       bus.on('ui:reset-data', () => {
         this.resetAllData();
+      }),
+      bus.on('ui:level', (id) => {
+        this.loadLevel(id);
       })
     ];
 
@@ -290,19 +380,14 @@ export class Game {
   }
 
   resetAllData() {
-    for (const key of [
-      'snackrun_health',
-      'snackrun_fuel',
-      'snackrun_traffic',
-      'snackrun_mobile',
-      'snackrun_radio_off',
-      'snackrun.profile.v1'
-    ]) {
-      localStorage.removeItem(key);
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('snackrun')) localStorage.removeItem(key);
     }
     this.progression = new Progression();
-    this.vehicle.repairFull();
-    this.vehicle.refuel(this.vehicle.fuelMax);
+    for (const veh of Object.values(this.vehicles)) {
+      veh.repairFull();
+      veh.refuel(veh.fuelMax);
+    }
     this.music.resetRadioPlaylist();
     ui.trafficEnabled = false;
     ui.mobileOverride = null;
@@ -329,7 +414,8 @@ export class Game {
 
     const cityMats = this.city.windowsMaterial;
     cityMats.emissiveIntensity = st.windowGlow * 1.5;
-    this.vehicle.setNightFactor(Math.max(st.windowGlow, st.starAlpha));
+    const night = Math.max(st.windowGlow, st.starAlpha);
+    for (const veh of Object.values(this.vehicles)) veh.setNightFactor(night);
 
     ui.clock = st.clock;
     ui.phase = st.name;
@@ -345,7 +431,8 @@ export class Game {
       this.dayCycle.update(dt);
       this._applyEnvironment();
       const t = this._titleT;
-      this.camera.position.set(Math.cos(t) * 165, 62, Math.sin(t) * 165);
+      const orbit = this.city.minimapData.half * 0.92;
+      this.camera.position.set(Math.cos(t) * orbit, orbit * 0.38, Math.sin(t) * orbit);
       this.camera.lookAt(0, 0, 0);
       this.sky.update(dt);
       this.scenery.update(dt);

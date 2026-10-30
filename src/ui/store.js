@@ -64,9 +64,15 @@ export const ui = reactive({
 
   radio: { on: true, track: null, hasTracks: false },
 
+  levelId: '1-1',
+  levels: [],
+  vehicleId: 'car',
+
   minimapStatic: null,
+  minimapHalf: 180,
   blipsPlayer: { x: 0, z: 0, yaw: 0 },
   blipsCar: null,
+  blipsOther: [],
   blipsTarget: null
 });
 

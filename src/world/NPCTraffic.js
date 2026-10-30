@@ -1,26 +1,17 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { RNG } from '../core/RNG.js';
+import { gridMetrics } from '../city/gridMath.js';
 
-const cfg = CONFIG.city;
-const N = cfg.gridN;
-const B = cfg.blockSize;
-const R = cfg.roadWidth;
-const P = B + R;
-const T = N * P + R;
-const H = T / 2;
 const NPC_SPEED = 10;
 const HORN_DIST = 18;
 const HORN_COOLDOWN = 6;
 const DESPAWN_MARGIN = 40;
-const LANE_OFFSET = R / 4;
 const MESH_TURN = Math.PI / 2;
 const COLLISION_R = 2.0;
 const RESUME_DELAY = 3;
 
-function lineCoord(i) { return -H + R / 2 + i * P; }
-
-function laneOffset(heading) {
+function laneOffset(heading, LANE_OFFSET) {
   const s = Math.round(heading / (Math.PI / 2)) * (Math.PI / 2);
   if (Math.abs(s) < 0.1) return { dx: 0, dz: LANE_OFFSET };
   if (Math.abs(s - Math.PI / 2) < 0.1) return { dx: -LANE_OFFSET, dz: 0 };
@@ -40,7 +31,8 @@ const COLORS = [
 ];
 
 class NPCCar {
-  constructor() {
+  constructor(metrics) {
+    this.m = metrics;
     this.x = 0;
     this.z = 0;
     this.heading = 0;
@@ -66,34 +58,43 @@ class NPCCar {
     this._setNextIntersection();
   }
 
+  get laneOffset() {
+    return laneOffset(this.heading, this.m.R / 4);
+  }
+
+  _cell() {
+    const { H, R, P } = this.m;
+    return {
+      i: Math.round((this.z + H - R / 2) / P),
+      j: Math.round((this.x + H - R / 2) / P)
+    };
+  }
+
   _setNextIntersection() {
     const step = headingStep(this.heading);
-    this.nextI = Math.round((this.z + H - R / 2) / P) + step.iz;
-    this.nextJ = Math.round((this.x + H - R / 2) / P) + step.jx;
+    const c = this._cell();
+    this.nextI = c.i + step.iz;
+    this.nextJ = c.j + step.jx;
   }
 
   _atEdge() {
-    const curI = Math.round((this.z + H - R / 2) / P);
-    const curJ = Math.round((this.x + H - R / 2) / P);
+    const c = this._cell();
     const step = headingStep(this.heading);
-    const ni = curI + step.iz;
-    const nj = curJ + step.jx;
-    return ni < 0 || ni >= N || nj < 0 || nj >= N;
+    return c.i + step.iz < 0 || c.i + step.iz >= this.m.N || c.j + step.jx < 0 || c.j + step.jx >= this.m.N;
   }
 
   _validTurns() {
-    const curI = Math.round((this.z + H - R / 2) / P);
-    const curJ = Math.round((this.x + H - R / 2) / P);
+    const c = this._cell();
     const dirs = [
       { heading: 0, jx: 1, iz: 0 },
       { heading: Math.PI / 2, jx: 0, iz: 1 },
       { heading: Math.PI, jx: -1, iz: 0 },
       { heading: -Math.PI / 2, jx: 0, iz: -1 }
     ];
-    return dirs.filter(d => {
-      const ni = curI + d.iz;
-      const nj = curJ + d.jx;
-      return ni >= 0 && ni < N && nj >= 0 && nj < N;
+    return dirs.filter((d) => {
+      const ni = c.i + d.iz;
+      const nj = c.j + d.jx;
+      return ni >= 0 && ni < this.m.N && nj >= 0 && nj < this.m.N;
     });
   }
 }
@@ -107,12 +108,14 @@ function headingStep(h) {
 }
 
 export class NPCTraffic {
-  constructor(scene) {
+  constructor(scene, level) {
     this.scene = scene;
-    this.rng = new RNG(cfg.seed + 3333);
+    const grid = level ? level.grid : CONFIG.city;
+    this.m = gridMetrics(grid);
+    this.rng = new RNG((level ? level.seed : CONFIG.city.seed) + 3333);
     this.cars = [];
     this.maxCars = 20;
-    for (let i = 0; i < this.maxCars; i++) this.cars.push(new NPCCar());
+    for (let i = 0; i < this.maxCars; i++) this.cars.push(new NPCCar(this.m));
     this._buildMeshes();
     this._spawnTimer = 0;
   }
@@ -170,12 +173,12 @@ export class NPCTraffic {
     if (!car) return;
     const edge = this.rng.int(0, 3);
     let x, z, heading;
-    const li = this.rng.int(0, N);
-    const lc = lineCoord(li);
-    if (edge === 0) { x = -H; z = lc; heading = 0; }
-    else if (edge === 1) { x = H; z = lc; heading = Math.PI; }
-    else if (edge === 2) { x = lc; z = -H; heading = Math.PI / 2; }
-    else { x = lc; z = H; heading = -Math.PI / 2; }
+    const li = this.rng.int(0, this.m.N);
+    const lc = this.m.lineCoord(li);
+    if (edge === 0) { x = -this.m.H; z = lc; heading = 0; }
+    else if (edge === 1) { x = this.m.H; z = lc; heading = Math.PI; }
+    else if (edge === 2) { x = lc; z = -this.m.H; heading = Math.PI / 2; }
+    else { x = lc; z = this.m.H; heading = -Math.PI / 2; }
     car.reset(x, z, heading, this.rng.int(0, COLORS.length - 1));
   }
 
@@ -206,7 +209,7 @@ export class NPCTraffic {
 
       let colliding = false;
       if (playerPos) {
-        const lo = laneOffset(car.heading);
+        const lo = car.laneOffset;
         const cdx = (car.x + lo.dx) - playerPos.x;
         const cdz = (car.z + lo.dz) - playerPos.z;
         colliding = cdx * cdx + cdz * cdz < COLLISION_R * COLLISION_R;
@@ -226,8 +229,8 @@ export class NPCTraffic {
 
       if (car.stopped) continue;
 
-      const targetX = lineCoord(car.nextJ);
-      const targetZ = lineCoord(car.nextI);
+      const targetX = this.m.lineCoord(car.nextJ);
+      const targetZ = this.m.lineCoord(car.nextI);
       const dx = targetX - car.x;
       const dz = targetZ - car.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
@@ -239,9 +242,9 @@ export class NPCTraffic {
         if (this.rng.chance(0.35) || car._atEdge()) {
           const valid = car._validTurns().filter(d => {
             const step = headingStep(d.heading);
-            const curI = Math.round((car.z + H - R / 2) / P);
-            const curJ = Math.round((car.x + H - R / 2) / P);
-            return curI + step.iz >= 0 && curI + step.iz < N && curJ + step.jx >= 0 && curJ + step.jx < N;
+            const cur = car._cell();
+            return cur.i + step.iz >= 0 && cur.i + step.iz < this.m.N
+              && cur.j + step.jx >= 0 && cur.j + step.jx < this.m.N;
           });
           if (valid.length > 1) {
             const pick = valid[this.rng.int(0, valid.length - 1)];
@@ -260,9 +263,9 @@ export class NPCTraffic {
           if (this.rng.chance(0.35) || car._atEdge()) {
             const valid = car._validTurns().filter(d => {
               const step = headingStep(d.heading);
-              const curI = Math.round((car.z + H - R / 2) / P);
-              const curJ = Math.round((car.x + H - R / 2) / P);
-              return curI + step.iz >= 0 && curI + step.iz < N && curJ + step.jx >= 0 && curJ + step.jx < N;
+              const cur = car._cell();
+              return cur.i + step.iz >= 0 && cur.i + step.iz < this.m.N
+                && cur.j + step.jx >= 0 && cur.j + step.jx < this.m.N;
             });
             if (valid.length > 1) {
               const pick = valid[this.rng.int(0, valid.length - 1)];
@@ -279,7 +282,7 @@ export class NPCTraffic {
         }
       }
 
-      if (Math.abs(car.x) > H + DESPAWN_MARGIN || Math.abs(car.z) > H + DESPAWN_MARGIN) {
+      if (Math.abs(car.x) > this.m.H + DESPAWN_MARGIN || Math.abs(car.z) > this.m.H + DESPAWN_MARGIN) {
         car.active = false;
         continue;
       }
@@ -293,7 +296,7 @@ export class NPCTraffic {
         }
       }
 
-      const lo = laneOffset(car.heading);
+      const lo = car.laneOffset;
       const cx = car.x + lo.dx;
       const cz = car.z + lo.dz;
       const bodyAngle = car.heading + MESH_TURN;
@@ -339,7 +342,7 @@ export class NPCTraffic {
   resolveCircle(cx, cz, radius) {
     for (const car of this.cars) {
       if (!car.active) continue;
-      const lo = laneOffset(car.heading);
+      const lo = car.laneOffset;
       const dx = cx - (car.x + lo.dx);
       const dz = cz - (car.z + lo.dz);
       const dist = Math.sqrt(dx * dx + dz * dz);

@@ -5,7 +5,7 @@ export class InteractionSystem {
     this._nextId = 1;
   }
 
-  add({ position, radius, label, action, enabled }) {
+  add({ position, radius, label, action, enabled, priority }) {
     const id = this._nextId++;
     const item = {
       id,
@@ -13,7 +13,8 @@ export class InteractionSystem {
       radius: radius ?? 2.8,
       label: label || null,
       action: action || null,
-      enabled: enabled || (() => true)
+      enabled: enabled || (() => true),
+      priority: priority ?? 0
     };
     this.items.set(id, item);
     return () => this.remove(id);
@@ -31,7 +32,7 @@ export class InteractionSystem {
 
   update(playerPos) {
     let best = null;
-    let bestD = Infinity;
+    let bestScore = -Infinity;
     for (const item of this.items.values()) {
       if (!item.enabled() || !item.label || !item.action) continue;
       const dx = playerPos.x - item.position.x;
@@ -39,8 +40,10 @@ export class InteractionSystem {
       if (Math.abs(item.position.y - playerPos.y) > 3) continue;
       const d2 = dx * dx + dz * dz;
       const r = item.radius;
-      if (d2 <= r * r && d2 < bestD) {
-        bestD = d2;
+      if (d2 > r * r) continue;
+      const score = item.priority * 1e6 - d2;
+      if (score > bestScore) {
+        bestScore = score;
         best = item;
       }
     }

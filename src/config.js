@@ -133,6 +133,15 @@ export const CONFIG = {
     engineMaxGain: 0.0225
   },
 
+  storage: {
+    aisleHalfWidth: 10,
+    unitsPerSide: 4,
+    unitWallHeight: 3.8,
+    unitMouthHeight: 3.3,
+    pierWidth: 0.5,
+    fenceHeight: 2.6
+  },
+
   controlsHelp: [
     ['W / ↑', 'Accelerate'],
     ['S / ↓', 'Brake / Reverse'],
@@ -147,6 +156,41 @@ export const CONFIG = {
     ['Esc', 'Pause'],
     ['Gamepad', 'RT gas · LT brake · Stick steer · A interact / accept · Y vehicle · RB handbrake · X horn · LB radio']
   ]
+};
+
+export const VEHICLE_PROFILES = {
+  car: {
+    ...CONFIG.vehicle,
+    id: 'car',
+    label: 'Car',
+    style: 'car',
+    tankSize: CONFIG.gas.tankSize,
+    bodyColor: '#e8615a',
+    fuelKey: 'snackrun_fuel',
+    healthKey: 'snackrun_health',
+    wheelRadius: 0.38,
+    deliveries: true
+  },
+  van: {
+    ...CONFIG.vehicle,
+    id: 'van',
+    label: 'Van',
+    style: 'van',
+    tankSize: 56,
+    bodyWidth: 2.3,
+    bodyLength: 5.6,
+    collisionRadius: 1.5,
+    maxSpeed: 36,
+    maxReverse: 7,
+    accel: 11.5,
+    healthMax: 140,
+    driveWearPerSec: 0.0007,
+    bodyColor: '#3f6d8f',
+    fuelKey: 'snackrun_van_fuel',
+    healthKey: 'snackrun_van_health',
+    wheelRadius: 0.46,
+    deliveries: false
+  }
 };
 
 export function metersToMiles(m) {

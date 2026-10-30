@@ -63,13 +63,19 @@ src/
     CityGenerator.js      Block orchestration, roads, sidewalks, props, spawn point
     Buildings.js          Building archetypes with door metadata per zone type
     Locations.js          POI registry (food + home categories) for delivery targets
+    StorageFacility.js    Drive-in storage block: gated aisle, roll-door units, slots
+    gridMath.js           gridMetrics(grid) — derived street arithmetic per level
     names.js              Procedural street / venue naming
     materials.js          Shared vertex-color materials
     GeoUtil.js            Geometry helpers (box, prism, cylinder batching)
+  levels/
+    index.js              Level registry: grid, seed, gas spots, storage, spawn, fleet
   world/
     DayNightCycle.js      Time-of-day state machine driving sun/fog/sky colors
     Sky.js                Gradient dome + sun/moon sprites
-  vehicle/Vehicle.js      Arcade car model + mesh
+    Scenery.js            Beach, ocean, mountains, wing walls (level-sized)
+    NPCTraffic.js         Grid-bound NPC car traffic (level-sized)
+  vehicle/Vehicle.js      Arcade vehicle: car + van profiles, mesh, fuel, damage
   player/Player.js        On-foot character controller + capsule mesh
   physics/CollisionWorld.js Circle-vs-AABB solver, separate static sets
   interiors/
@@ -82,7 +88,7 @@ src/
   rhythm/index.js         Stub seam where the rhythm mode will plug in
   audio/AudioSystem.js    Tone.js engine: engine drone, skid, horn, UI stingers
   game/
-    Game.js               Composition root: renderer, modes, environment sync
+    Game.js               Composition root: renderer, levels, fleet, environment sync
     modes/DeliveryMode.js The playable mode wiring everything together
   ui/
     store.js              Reactive HUD state singleton

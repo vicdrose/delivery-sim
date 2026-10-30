@@ -53,12 +53,12 @@ export class DeliveryMode {
   enter() {
     const g = this.g;
     const sp = g.city.spawn;
-    g.vehicle.reset(sp.x + 6, sp.z - 5, Math.PI);
-    g.vehicle.onCrash = (i) => {
+    const veh = g.vehicle;
+    veh.onCrash = (i) => {
       g.cameraRig.shake(i);
       g.audio.play('crash');
     };
-    g.vehicle.onSkid = (a) => g.audio.setSkid(a);
+    veh.onSkid = (a) => g.audio.setSkid(a);
     g.player.teleport(sp.x, sp.z, Math.PI);
     g.player.setVisible(true);
     this.playerMode = 'foot';
@@ -68,6 +68,8 @@ export class DeliveryMode {
     this.offerTimer = 1.2;
     this.lastPickupId = null;
     this._showCarBeacon = true;
+    this._registerDoorItems();
+    this._registerVehicleItems();
 
     this._registerDoorItems();
 
@@ -141,6 +143,34 @@ export class DeliveryMode {
 
   get fsmDelivery() {
     return this.g.fsm.delivery || {};
+  }
+
+  get deliveryVehicle() {
+    const g = this.g;
+    for (const veh of Object.values(g.vehicles)) {
+      if (veh.canDeliver) return veh;
+    }
+    return g.vehicle;
+  }
+
+  _registerVehicleItems() {
+    const g = this.g;
+    for (const [id, veh] of Object.entries(g.vehicles)) {
+      g.interaction.add({
+        position: veh.group.position,
+        radius: CONFIG.interaction.vehicleEnterRadius,
+        priority: -1,
+        label: () => {
+          if (this.playerMode !== 'foot') return null;
+          if (Math.abs(veh.speed) >= 1.6) return null;
+          return `Drive the ${veh.label}`;
+        },
+        action: () => {
+          if (g.setActiveVehicle(id)) g.audio.play('enter');
+          this._enterVehicle();
+        }
+      });
+    }
   }
 
   _short(name) {
@@ -429,7 +459,7 @@ export class DeliveryMode {
     g.cameraRig.snapBehind(g.vehicle.position, g.vehicle.heading);
     g.audio.play('enter');
     g.music.resumeInCar();
-    g.fsm.boardVehicle();
+    if (g.vehicle.canDeliver) g.fsm.boardVehicle();
   }
 
   _checkWalkingArrival() {
@@ -437,7 +467,7 @@ export class DeliveryMode {
     const fsm = g.fsm;
     const d = fsm.delivery;
     if (!d) return;
-    const vp = g.vehicle.position;
+    const vp = this.deliveryVehicle.position;
     const pp = g.player.pos;
     if (fsm.state === DeliveryState.TO_PICKUP) {
       const nearPark = vp.distanceTo(d.pickup.parkPos) < CONFIG.parking.arriveRadius;
@@ -489,7 +519,7 @@ export class DeliveryMode {
       }
       const fsm = g.fsm;
       const d = fsm.delivery;
-      if (d && veh.isParkedStill) {
+      if (d && veh.canDeliver && veh.isParkedStill) {
         const vp = veh.position;
         if (
           fsm.state === DeliveryState.TO_PICKUP &&
@@ -624,6 +654,7 @@ export class DeliveryMode {
       }
       return;
     }
+    if (!this.g.vehicle.canDeliver) return;
     if (fsm.state === DeliveryState.IDLE && !fsm.delivery && this._shiftActive) {
       this.offerTimer -= dt;
       if (this.offerTimer <= 0) {
@@ -642,15 +673,16 @@ export class DeliveryMode {
     void dt;
     const fsm = this.g.fsm;
     const d = fsm.delivery;
+    const car = this.deliveryVehicle;
     let pos = null;
     let hex = '#ffd23f';
 
     if (this.playerMode !== 'inside') {
       if (this._showCarBeacon && !fsm.isActive) {
-        pos = this.g.vehicle.position;
+        pos = car.position;
         hex = '#4cc9f0';
       } else if (fsm.state === DeliveryState.RETURNING && d) {
-        pos = this.g.vehicle.position;
+        pos = car.position;
         hex = '#4cc9f0';
       } else if (fsm.isActive && d) {
         pos = fsm.hasFood ? d.dropoff.pos : d.pickup.pos;
@@ -729,7 +761,7 @@ export class DeliveryMode {
       } else if (st === DeliveryState.COLLECTING) {
         obj = { title: 'GRAB THE ORDER', sub: d.pickup.name, distM: 0 };
       } else if (st === DeliveryState.RETURNING) {
-        obj = { title: 'BACK TO YOUR CAR', sub: '', distM: ref.distanceTo(g.vehicle.position) };
+        obj = { title: 'BACK TO YOUR CAR', sub: '', distM: ref.distanceTo(this.deliveryVehicle.position) };
       } else if (st === DeliveryState.TO_CUSTOMER || st === DeliveryState.PARKED_CUSTOMER) {
         obj = { title: 'DELIVER TO', sub: d.dropoff.name, distM: ref.distanceTo(d.dropoff.pos) };
       } else if (st === DeliveryState.ON_FOOT_CUSTOMER) {
@@ -745,6 +777,14 @@ export class DeliveryMode {
 
     if (obj) {
       obj.distM = obj.distM != null ? Math.max(0, obj.distM) : null;
+    }
+    if (this.playerMode === 'drive' && !g.vehicle.canDeliver) {
+      const car = this.deliveryVehicle;
+      obj = {
+        title: `THE ${g.vehicle.label.toUpperCase()} IS NOT FOR DELIVERIES`,
+        sub: `Get back in the ${car.label} to work your shift.`,
+        distM: g.vehicle.position.distanceTo(car.position)
+      };
     }
     ui.objective = obj;
 
@@ -766,7 +806,11 @@ export class DeliveryMode {
         z: this.playerMode === 'drive' ? g.vehicle.position.z : g.player.pos.z,
         yaw: this.playerMode === 'drive' ? g.vehicle.heading : g.player.yaw
       };
-      ui.blipsCar = this.playerMode === 'drive' ? null : { x: g.vehicle.position.x, z: g.vehicle.position.z };
+      ui.blipsCar =
+        this.playerMode === 'drive' ? null : { x: this.deliveryVehicle.position.x, z: this.deliveryVehicle.position.z };
+      ui.blipsOther = Object.values(g.vehicles)
+        .filter((v) => v !== this.deliveryVehicle)
+        .map((v) => ({ x: v.position.x, z: v.position.z }));
       ui.blipsTarget = this.targetPos ? { x: this.targetPos.x, z: this.targetPos.z, food: fsm.hasFood } : null;
     }
   }
@@ -775,10 +819,23 @@ export class DeliveryMode {
     for (const off of this._unsubs) off();
     this._unsubs = [];
     this._clearTempItems();
+    const g = this.g;
+    g.scene.remove(this.beaconGroup);
+    g.scene.remove(this.doorstepBag);
+    this.beam.geometry.dispose();
+    this.ring.geometry.dispose();
+    this.beamMat.dispose();
+    this.ringMat.dispose();
+    this.doorstepBag.traverse((o) => {
+      if (o.isMesh) {
+        o.geometry.dispose();
+        o.material.dispose();
+      }
+    });
     this.beaconGroup.visible = false;
-    this.g.audio.horn(false);
-    this.g.audio.setEngine(0, 0, false);
-    this.g.audio.setSkid(0);
+    g.audio.horn(false);
+    g.audio.setEngine(0, 0, false);
+    g.audio.setSkid(0);
   }
 
   _nextOfferWait() {

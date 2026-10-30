@@ -3,6 +3,19 @@
     <div class="title-inner">
       <h1 class="game-title">SNACK<span>RUN</span></h1>
       <p class="tagline">drive · dash · deliver · repeat</p>
+      <div class="level-picker">
+        <button
+          v-for="lv in ui.levels"
+          :key="lv.id"
+          class="btn level-chip"
+          :class="{ 'level-active': lv.id === ui.levelId }"
+          :disabled="!lv.unlocked"
+          @click="pickLevel(lv.id)"
+        >
+          <span class="level-code">{{ lv.id }}</span>
+          <span class="level-name">{{ lv.name }}</span>
+        </button>
+      </div>
       <button class="btn primary big" @click="start">START SHIFT</button>
       <div class="controls-panel">
         <div v-for="row in controls" :key="row[0]" class="ctrl-row">
@@ -17,6 +30,7 @@
     <div v-if="ui.pauseMenu === 'main'" class="pause-card">
       <h2>PAUSED</h2>
       <button class="btn primary" @click="resume">RESUME</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'levels'">LEVELS</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">SETTINGS</button>
       <div class="controls-panel small">
         <div v-for="row in controls" :key="row[0]" class="ctrl-row">
@@ -46,6 +60,22 @@
       </div>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
+
+    <div v-else-if="ui.pauseMenu === 'levels'" class="pause-card">
+      <h2>LEVELS</h2>
+      <button
+        v-for="lv in ui.levels"
+        :key="lv.id"
+        class="btn ghost level-chip"
+        :class="{ 'level-active': lv.id === ui.levelId }"
+        :disabled="!lv.unlocked"
+        @click="pickLevel(lv.id)"
+      >
+        <span class="level-code">{{ lv.id }}</span>
+        <span class="level-name">{{ lv.name }}</span>
+      </button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'main'">BACK</button>
+    </div>
   </div>
 </template>
 
@@ -65,6 +95,11 @@ watch(() => ui.paused, (v) => {
 
 function start() {
   bus.emit('ui:start');
+}
+function pickLevel(id) {
+  if (id === ui.levelId) return;
+  ui.levelId = id;
+  bus.emit('ui:level', id);
 }
 function resume() {
   bus.emit('ui:pause', false);

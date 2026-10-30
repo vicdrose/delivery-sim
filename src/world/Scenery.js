@@ -2,11 +2,8 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { CONFIG } from '../config.js';
 import { RNG } from '../core/RNG.js';
+import { gridMetrics } from '../city/gridMath.js';
 
-const cfg = CONFIG.city;
-const T = cfg.gridN * (cfg.blockSize + cfg.roadWidth) + cfg.roadWidth;
-const H = T / 2;
-const SHORE_X = -(H + 95);
 const OPEN_HALF_DEG = 42;
 
 function paint(geo, hex, tint = 1) {
@@ -54,7 +51,7 @@ function makeMountain(rng, radius, height, tint) {
   return geo;
 }
 
-function buildMountains(rng) {
+function buildMountains(rng, H) {
   const parts = [];
   const steps = 34;
   for (let i = 0; i < steps; i++) {
@@ -116,7 +113,7 @@ function makePalmGeometry() {
   return merged;
 }
 
-function buildPalms(rng) {
+function buildPalms(rng, H, SHORE_X) {
   const spots = [];
   for (let z = -H + 10; z < H - 6; z += 11) {
     spots.push({ x: -H - rng.float(3.5, 9), z: z + rng.float(-3, 3), s: rng.float(0.85, 1.25) });
@@ -162,8 +159,13 @@ function flatPlane(w, d, x, y, z, hex, opacity = 1) {
   return mesh;
 }
 
-export function createScenery(scene, collision) {
-  const rng = new RNG(cfg.seed + 77);
+export function createScenery(scene, collision, level) {
+  const grid = level ? level.grid : CONFIG.city;
+  const seed = level ? level.seed : CONFIG.city.seed;
+  const m = gridMetrics(grid);
+  const H = m.H;
+  const SHORE_X = -(H + 95);
+  const rng = new RNG(seed + 77);
   const group = new THREE.Group();
 
   group.add(flatPlane(175, 1400, -H - 86, -0.045, 0, '#e6d5a4'));
@@ -183,8 +185,8 @@ export function createScenery(scene, collision) {
   foamB.position.set(SHORE_X - 22, 0.004, 0);
   group.add(foamA, foamB);
 
-  group.add(buildMountains(rng));
-  group.add(buildPalms(rng));
+  group.add(buildMountains(rng, H));
+  group.add(buildPalms(rng, H, SHORE_X));
 
   const wingLen = H - SHORE_X;
   const wingGeoV = new THREE.BoxGeometry(wingLen, 1.2, 1);

@@ -19,7 +19,7 @@ function draw() {
     ctx.clearRect(0, 0, 220, 220);
     ctx.drawImage(ui.minimapStatic, 0, 0);
 
-    const half = 180;
+    const half = ui.minimapHalf || 180;
     const toPx = (v) => (v + half) * (220 / (half * 2));
 
     if (ui.blipsCar) {
@@ -27,6 +27,13 @@ function draw() {
       ctx.fillRect(toPx(ui.blipsCar.x) - 3, toPx(ui.blipsCar.z) - 3, 6, 6);
       ctx.strokeStyle = '#ffffff';
       ctx.strokeRect(toPx(ui.blipsCar.x) - 3, toPx(ui.blipsCar.z) - 3, 6, 6);
+    }
+
+    if (ui.blipsOther) {
+      ctx.fillStyle = '#4cc9f0';
+      for (const b of ui.blipsOther) {
+        ctx.fillRect(toPx(b.x) - 2.5, toPx(b.z) - 2.5, 5, 5);
+      }
     }
 
     if (ui.blipsTarget) {

@@ -54,6 +54,14 @@ export class DeliveryStateMachine {
     return ACTIVE_STATES.has(this.state);
   }
 
+  reset() {
+    this.state = DeliveryState.IDLE;
+    this.delivery = null;
+    this.hasFood = false;
+    this.timeLeft = 0;
+    this.timeLimit = 1;
+  }
+
   get isOnFootStage() {
     return (
       this.state === DeliveryState.ON_FOOT_PICKUP ||
