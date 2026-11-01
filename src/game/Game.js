@@ -23,7 +23,7 @@ import { DeliveryStateMachine, DeliveryState } from '../delivery/DeliveryStateMa
 import { Progression } from '../progression/Progression.js';
 import { DeliveryMode } from './modes/DeliveryMode.js';
 import { registerRhythmModes } from '../rhythm/index.js';
-import { ui, toast } from '../ui/store.js';
+import { ui, toast, applyUiScale } from '../ui/store.js';
 
 const MINIMAP_ZONE_COLORS = {
   residential: '#79a860',
@@ -391,6 +391,7 @@ export class Game {
     this.music.resetRadioPlaylist();
     ui.trafficEnabled = false;
     ui.mobileOverride = null;
+    applyUiScale();
     ui.money = 0;
     ui.todayEarned = 0;
     ui.deliveriesToday = 0;

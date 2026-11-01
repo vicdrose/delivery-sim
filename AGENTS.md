@@ -98,8 +98,20 @@ Current behavior worth remembering (all landed and stable):
   at all, which no game code can fix.
 - **Settings** = pause menu is a four-page stack (`ui.pauseMenu` =
   `main` | `levels` | `settings` | `songs`): level picker, sound, traffic, touch
-  controls, per-song radio on/off, and **RESET GAME DATA** (wipes every
+  controls, UI size, per-song radio on/off, and **RESET GAME DATA** (wipes every
   `snackrun*` localStorage key and rebuilds the profile; `Game.resetAllData()`).
+- **HUD size is resolution-relative**, not fixed pixels. Every HUD length in
+  `src/style.css` is `calc(N * var(--u))`, where `--u` is `--ui` × 1px. `--ui`
+  is set by `applyUiScale()` in `src/ui/store.js` on load and on
+  resize/orientationchange (`App.vue`). Auto value: desktop/landscape
+  `clamp(min(vw/1920, vh/1080) * 0.6, 0.45, 1.2)`, portrait
+  `clamp(vw/1080 * 0.6, 0.45, 1.2)`, touch/mobile
+  `clamp(min(vw, vh)/430, 0.8, 1.1)`. The settings page cycles
+  `[auto, 1, 0.85, 0.7, 0.55, 0.45, 0.35]`, persisted in `snackrun_uiscale`;
+  `RESET GAME DATA` returns it to auto. The minimap is deliberately smaller than
+  the rest (`180u` landscape, `150u` portrait), and the speedo / fuel gauge /
+  toast offsets are keyed to that width (`216u` / `370u` / `216u`). Menus and
+  overlays stay at fixed px on purpose, as do the touch controls.
 - **Touch controls** auto-enable on coarse-pointer/UA detection but are
   forceable from settings; override persisted in `snackrun_mobile`. Key hints
   render as empty strings on mobile (`_keyHint` in `DeliveryMode.js`).

@@ -19,8 +19,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { ui } from './store.js';
+import { computed, onMounted, onBeforeUnmount } from 'vue';
+import { ui, applyUiScale } from './store.js';
 import MoneyDisplay from './components/MoneyDisplay.vue';
 import ClockWidget from './components/ClockWidget.vue';
 import ObjectiveBanner from './components/ObjectiveBanner.vue';
@@ -38,4 +38,14 @@ import TouchControls from './components/TouchControls.vue';
 import Screens from './components/Screens.vue';
 
 const inGame = computed(() => ui.screen === 'playing');
+
+onMounted(() => {
+  applyUiScale();
+  window.addEventListener('resize', applyUiScale);
+  window.addEventListener('orientationchange', applyUiScale);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', applyUiScale);
+  window.removeEventListener('orientationchange', applyUiScale);
+});
 </script>

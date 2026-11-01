@@ -26,6 +26,9 @@ export const ui = reactive({
   mobileOverride: null,
   playerMode: 'drive',
 
+  uiScale: 1,
+  uiScaleOverride: null,
+
   moveX: 0,
   moveY: 0,
   joystickActive: false,
@@ -119,8 +122,45 @@ export function setMobile(force) {
     ui.mobileOverride = force;
     localStorage.setItem('snackrun_mobile', force ? '1' : '0');
   }
+  applyUiScale();
 }
 
 export function isMobileUI() {
   return ui.mobileOverride !== null ? ui.mobileOverride : detectMobile();
 }
+
+const UI_SCALE_STEPS = [null, 1, 0.85, 0.7, 0.55, 0.45, 0.35];
+
+export function computeUiScale() {
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const vw = window.innerWidth || 1280;
+  const vh = window.innerHeight || 720;
+  if (isMobileUI()) return clamp(Math.min(vw, vh) / 430, 0.8, 1.1);
+  const base = vh > vw ? vw / 1080 : Math.min(vw / 1920, vh / 1080);
+  return clamp(base * 0.6, 0.45, 1.2);
+}
+
+export function applyUiScale() {
+  const stored = localStorage.getItem('snackrun_uiscale');
+  const parsed = stored === null ? null : Number(stored);
+  ui.uiScaleOverride = parsed !== null && parsed > 0 ? parsed : null;
+  ui.uiScale = ui.uiScaleOverride ?? computeUiScale();
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.style.setProperty('--ui', ui.uiScale.toFixed(3));
+  }
+}
+
+export function cycleUiScale() {
+  const idx = UI_SCALE_STEPS.findIndex((s) => s === ui.uiScaleOverride);
+  const next = UI_SCALE_STEPS[(idx + 1) % UI_SCALE_STEPS.length];
+  if (next === null) localStorage.removeItem('snackrun_uiscale');
+  else localStorage.setItem('snackrun_uiscale', String(next));
+  applyUiScale();
+}
+
+export function uiScaleLabel() {
+  const pct = Math.round(ui.uiScale * 100);
+  return ui.uiScaleOverride === null ? `UI SIZE: AUTO (${pct}%)` : `UI SIZE: ${pct}%`;
+}
+
+applyUiScale();
