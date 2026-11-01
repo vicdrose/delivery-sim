@@ -21,6 +21,7 @@ export const ui = reactive({
   muted: false,
   trafficEnabled: JSON.parse(localStorage.getItem('snackrun_traffic') ?? 'false'),
   padConnected: false,
+  padName: '',
 
   mobileOverride: null,
   playerMode: 'drive',

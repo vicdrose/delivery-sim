@@ -21,7 +21,7 @@
         <div v-for="row in controls" :key="row[0]" class="ctrl-row">
           <kbd>{{ row[0] }}</kbd><span>{{ row[1] }}</span>
         </div>
-        <div v-if="padConnected" class="pad-note">Gamepad detected</div>
+        <div v-if="padConnected" class="pad-note">Gamepad: {{ padName || 'detected' }}</div>
       </div>
     </div>
   </div>
@@ -87,6 +87,7 @@ import { CONFIG } from '../../config.js';
 
 const controls = CONFIG.controlsHelp;
 const padConnected = computed(() => ui.padConnected);
+const padName = computed(() => ui.padName);
 const detectedMobile = detectMobile();
 
 watch(() => ui.paused, (v) => {

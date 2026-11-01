@@ -9,7 +9,10 @@ export class InputManager {
     this._keys = new Set();
     this._edges = new Set();
     this._padPrev = new Array(20).fill(false);
+    this._padProfiles = new Map();
+    this._padIndex = null;
     this.padConnected = false;
+    this.padName = '';
     this.enabled = true;
 
     this._onKeyDown = (e) => {
@@ -77,21 +80,168 @@ export class InputManager {
     this._repairPrev = !!ui.repairPressed;
   }
 
-  _pollPad() {
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-    let pad = null;
-    for (const p of pads) {
-      if (p && p.connected) { pad = p; break; }
+  _padButton(pad, index) {
+    const b = pad.buttons ? pad.buttons[index] : null;
+    if (!b) return 0;
+    const value = Number.isFinite(b.value) ? b.value : 0;
+    if (value > 0) return value;
+    return b.pressed ? 1 : 0;
+  }
+
+  _padActivity(pad) {
+    let score = 0;
+    const buttons = pad.buttons || [];
+    const axes = pad.axes || [];
+    for (let i = 0; i < buttons.length; i++) {
+      const b = buttons[i];
+      if (b && (b.pressed || (b.value || 0) > 0.25)) score += 1;
     }
-    if (!pad) return null;
+    for (let i = 0; i < axes.length; i++) {
+      if (Math.abs(axes[i] || 0) > 0.3) score += 1;
+    }
+    return score;
+  }
+
+  _selectPad() {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    let chosen = null;
+    let best = -1;
+    for (let i = 0; i < pads.length; i++) {
+      const pad = pads[i];
+      if (!pad || !pad.connected) continue;
+      const score = this._padActivity(pad);
+      if (score > best) {
+        best = score;
+        chosen = pad;
+      }
+    }
+    if (!chosen) {
+      this._padIndex = null;
+      return null;
+    }
+    if (best === 0 && this._padIndex !== null) {
+      for (let i = 0; i < pads.length; i++) {
+        const pad = pads[i];
+        if (pad && pad.connected && pad.index === this._padIndex) return pad;
+      }
+    }
+    return chosen;
+  }
+
+  _padProfile(pad) {
+    const axes = pad.axes || [];
+    const buttons = pad.buttons || [];
+    const sig = `${pad.id}|${pad.mapping}|${axes.length}|${buttons.length}`;
+    let profile = this._padProfiles.get(pad.index);
+    if (!profile || profile.sig !== sig) {
+      profile = {
+        sig,
+        standard: pad.mapping === 'standard',
+        rest: Array.from(axes, (v) => (Number.isFinite(v) ? v : 0))
+      };
+      this._padProfiles.set(pad.index, profile);
+    }
+    return profile;
+  }
+
+  _calibratePad(pad, profile) {
+    const axes = pad.axes || [];
+    const buttons = pad.buttons || [];
+    for (let i = 0; i < buttons.length; i++) {
+      const b = buttons[i];
+      if (b && (b.pressed || (b.value || 0) > 0.3)) return;
+    }
+    for (let i = 0; i < axes.length && i < profile.rest.length; i++) {
+      const v = axes[i] || 0;
+      if (Math.abs(v - profile.rest[i]) < 0.35) profile.rest[i] += (v - profile.rest[i]) * 0.1;
+    }
+  }
+
+  _axisTravel(value, rest) {
+    const span = 1 + Math.abs(rest);
+    return Math.min(1, Math.max(0, Math.abs(value - rest) / span));
+  }
+
+  _padTriggers(pad, profile) {
+    const axes = pad.axes || [];
+    const found = { brake: null, throttle: null, combined: null };
+    const combinedFrom = axes.length <= 3 ? 2 : 4;
+    for (let i = 2; i < axes.length; i++) {
+      const rest = profile.rest[i] || 0;
+      if (Math.abs(rest) >= 0.6) {
+        const entry = { index: i, rest };
+        if (!found.brake) found.brake = entry;
+        else if (!found.throttle) found.throttle = entry;
+      } else if (i >= combinedFrom && Math.abs(rest) < 0.2 && !found.combined) {
+        found.combined = { index: i };
+      }
+    }
+    return found;
+  }
+
+  _pollPad() {
+    const pad = this._selectPad();
+    if (!pad) {
+      this.padConnected = false;
+      this.padName = '';
+      return null;
+    }
+    this.padConnected = true;
+    this.padName = pad.id || '';
+    if (this._padIndex !== pad.index) {
+      this._padPrev.fill(false);
+      this._padIndex = pad.index;
+    }
+    const profile = this._padProfile(pad);
+    this._calibratePad(pad, profile);
+    const axes = pad.axes || [];
+    const buttons = pad.buttons || [];
     const dz = (v) => (Math.abs(v) < 0.12 ? 0 : v);
-    const btn = (i) => !!(pad.buttons[i] && pad.buttons[i].pressed);
-    const val = (i) => (pad.buttons[i] ? pad.buttons[i].value : 0);
+    const btn = (i) => !!(buttons[i] && buttons[i].pressed);
+    const val = (i) => this._padButton(pad, i);
+
+    let steer = dz(axes[0] || 0);
+    let moveForward = dz(-(axes[1] || 0));
+    let throttle = val(7);
+    let brake = val(6);
+
+    if (!profile.standard) {
+      const triggers = this._padTriggers(pad, profile);
+      if (triggers.combined) {
+        const v = axes[triggers.combined.index] || 0;
+        throttle = Math.max(throttle, Math.min(1, Math.max(0, v)));
+        brake = Math.max(brake, Math.min(1, Math.max(0, -v)));
+      }
+      if (triggers.throttle) {
+        throttle = Math.max(throttle, this._axisTravel(axes[triggers.throttle.index] || 0, triggers.throttle.rest));
+      }
+      if (triggers.brake) {
+        brake = Math.max(brake, this._axisTravel(axes[triggers.brake.index] || 0, triggers.brake.rest));
+      }
+    }
+
+    const up = btn(12);
+    const down = btn(13);
+    const left = btn(14);
+    const right = btn(15);
+    if (steer === 0) {
+      if (left) steer = -1;
+      else if (right) steer = 1;
+    }
+    if (moveForward === 0) {
+      if (up) moveForward = 1;
+      else if (down) moveForward = -1;
+    }
+    if (throttle < 0.05 && brake < 0.05) {
+      if (up) throttle = 1;
+      else if (down) brake = 1;
+    }
+
     return {
-      steer: dz(pad.axes[0] || 0),
-      throttle: val(7),
-      brake: val(6),
-      moveForward: dz(-(pad.axes[1] || 0)),
+      steer,
+      throttle,
+      brake,
+      moveForward,
       interact: btn(0),
       decline: btn(1),
       horn: btn(2),
@@ -100,7 +250,7 @@ export class InputManager {
       radio: btn(4),
       pause: btn(9),
       sprint: btn(10),
-      sprintRT: val(7) > 0.5,
+      sprintRT: throttle > 0.5,
       shiftHeld: btn(1)
     };
   }

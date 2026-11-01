@@ -421,6 +421,7 @@ export class Game {
     ui.phase = st.name;
     ui.day = this.dayCycle.day;
     ui.padConnected = this.input.padConnected;
+    ui.padName = this.input.padName;
   }
 
   update(dt) {

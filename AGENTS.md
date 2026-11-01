@@ -88,6 +88,14 @@ Current behavior worth remembering (all landed and stable):
   toast; when off, banner reads "HOLD B TO BEGIN SHIFT". B also maps to decline.
 - **RT = gas** when driving and **sprint on foot**; LT = brake. Left stick /
   W,A,S,D move and steer.
+- **Controllers**: `src/input/InputManager.js` accepts any browser-exposed pad,
+  not just `mapping: "standard"` Xbox ones. It picks the pad with the most
+  activity (so multiple connected pads don't fight), and for non-standard pads
+  it also reads triggers off resting axes (single-ended or one combined axis),
+  accepts digital trigger buttons that report `value: 0`, and falls back to the
+  D-pad when there is no stick. The title screen prints the detected pad name
+  (`ui.padName`) — if nothing shows there, the browser is not exposing the pad
+  at all, which no game code can fix.
 - **Settings** = pause menu is a four-page stack (`ui.pauseMenu` =
   `main` | `levels` | `settings` | `songs`): level picker, sound, traffic, touch
   controls, per-song radio on/off, and **RESET GAME DATA** (wipes every
