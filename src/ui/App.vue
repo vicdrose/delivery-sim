@@ -9,6 +9,7 @@
     <FuelGauge />
     <Minimap />
     <RadioWidget />
+    <VolumeOverlay />
     <ToastStack />
     <PaymentFlash />
     <BagSecuredFlash />
@@ -30,6 +31,7 @@ import Speedometer from './components/Speedometer.vue';
 import FuelGauge from './components/FuelGauge.vue';
 import Minimap from './components/Minimap.vue';
 import RadioWidget from './components/RadioWidget.vue';
+import VolumeOverlay from './components/VolumeOverlay.vue';
 import ToastStack from './components/ToastStack.vue';
 import PaymentFlash from './components/PaymentFlash.vue';
 import BagSecuredFlash from './components/BagSecuredFlash.vue';

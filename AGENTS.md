@@ -96,10 +96,18 @@ Current behavior worth remembering (all landed and stable):
   D-pad when there is no stick. The title screen prints the detected pad name
   (`ui.padName`) — if nothing shows there, the browser is not exposing the pad
   at all, which no game code can fix.
-- **Settings** = pause menu is a four-page stack (`ui.pauseMenu` =
-  `main` | `levels` | `settings` | `songs`): level picker, sound, traffic, touch
-  controls, UI size, per-song radio on/off, and **RESET GAME DATA** (wipes every
-  `snackrun*` localStorage key and rebuilds the profile; `Game.resetAllData()`).
+- **Settings** = pause menu is a five-page stack (`ui.pauseMenu` =
+  `main` | `levels` | `settings` | `sound` | `songs`): level picker, sound, traffic,
+  touch controls, UI size, per-song radio on/off + volume, and **RESET GAME DATA**
+  (wipes every `snackrun*` localStorage key and rebuilds the profile;
+  `Game.resetAllData()`). The SOUND page holds master mute and the overall radio
+  volume (0-200%); Song Choice gives every track its own 0-200% volume. Both
+  persist in `snackrun_radio_volume` / `snackrun_song_volumes`.
+- **Radio volume on the controller** = R3 toggles a radio-volume slider overlay;
+  rotating the right stick clockwise raises it, counterclockwise lowers it (a full
+  turn spans 0-200%). The slider stays open until R3 is pressed again. The Web Audio
+  gain stage is what allows values above 100% (`MusicManager`), and each song's
+  volume multiplies on top of the global radio volume.
 - **HUD size is resolution-relative**, not fixed pixels. Every HUD length in
   `src/style.css` is `calc(N * var(--u))`, where `--u` is `--ui` × 1px. `--ui`
   is set by `applyUiScale()` in `src/ui/store.js` on load and on
@@ -131,7 +139,7 @@ Current behavior worth remembering (all landed and stable):
 - **Cars** (NPC + parked) have four wheels with white rims.
 - **Doors** are pushed 0.05 outward from walls to fix z-fighting.
 - **Levels**: title screen has a level picker; the pause menu has a LEVELS page
-  (`ui.pauseMenu` = `main` | `levels` | `settings` | `songs`). Picking a level
+  (`ui.pauseMenu` = `main` | `levels` | `settings` | `sound` | `songs`). Picking a level
   calls `Game.loadLevel(id)`, which tears down the city, clears the `city`
   collision layer, and rebuilds scenery / traffic / minimap / fleet. **1-1 must
   stay byte-identical** — its generator hash is

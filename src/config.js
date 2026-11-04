@@ -154,7 +154,7 @@ export const CONFIG = {
     ['M', 'Mute sound'],
     ['R', 'Radio: tap next · hold power'],
     ['Esc', 'Pause'],
-    ['Gamepad', 'RT gas · LT brake · Stick steer · A interact / accept · Y vehicle · RB handbrake · X horn · LB radio']
+    ['Gamepad', 'RT gas · LT brake · Stick steer · A interact / accept · Y vehicle · RB handbrake · X horn · LB radio · R3 volume']
   ]
 };
 

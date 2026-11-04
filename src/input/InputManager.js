@@ -8,7 +8,7 @@ export class InputManager {
     this._repairPrev = false;
     this._keys = new Set();
     this._edges = new Set();
-    this._padPrev = new Array(20).fill(false);
+    this._padPrev = new Array(24).fill(false);
     this._padProfiles = new Map();
     this._padIndex = null;
     this.padConnected = false;
@@ -251,7 +251,10 @@ export class InputManager {
       pause: btn(9),
       sprint: btn(10),
       sprintRT: throttle > 0.5,
-      shiftHeld: btn(1)
+      shiftHeld: btn(1),
+      musicVolume: btn(11),
+      rightStickX: dz(axes[2] || 0),
+      rightStickY: dz(axes[3] || 0)
     };
   }
 
@@ -275,6 +278,9 @@ export class InputManager {
       radioHeld: false,
       radioPressed: false,
       shiftHeld: false,
+      musicVolumePressed: false,
+      rightStickX: 0,
+      rightStickY: 0,
       moveForward: 0,
       anyInput: false,
       usingGamepad: false
@@ -325,12 +331,16 @@ export class InputManager {
       state.pausePressed = state.pausePressed || (pad.pause && !this._padPrev[9]);
       if (pad.radio) state.radioHeld = true;
       if (pad.radio && !this._padPrev[4]) state.radioPressed = true;
+      state.musicVolumePressed = state.musicVolumePressed || (pad.musicVolume && !this._padPrev[11]);
+      state.rightStickX = pad.rightStickX;
+      state.rightStickY = pad.rightStickY;
       this._padPrev[0] = pad.interact;
       this._padPrev[1] = pad.decline;
       this._padPrev[2] = pad.horn;
       this._padPrev[3] = pad.enterExit;
       this._padPrev[4] = pad.radio;
       this._padPrev[9] = pad.pause;
+      this._padPrev[11] = pad.musicVolume;
     }
 
     this._mergeTouch(state, ui);

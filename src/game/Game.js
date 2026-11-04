@@ -238,6 +238,7 @@ export class Game {
   }
 
   _bindEvents() {
+    this._volumeAngle = null;
     this._uiSubs = [
       bus.on('ui:start', () => {
         this.beginRun();
@@ -256,6 +257,12 @@ export class Game {
       }),
       bus.on('ui:song', ({ name, enabled }) => {
         this.music.setRadioEnabled(name, enabled);
+      }),
+      bus.on('ui:radio-volume', (volume) => {
+        this.music.setRadioVolume(volume);
+      }),
+      bus.on('ui:song-volume', ({ name, volume }) => {
+        this.music.setSongVolume(name, volume);
       }),
       bus.on('ui:reset-data', () => {
         this.resetAllData();
@@ -351,6 +358,35 @@ export class Game {
     this._lbPrev = held;
   }
 
+  _updateMusicVolume(s) {
+    if (s.musicVolumePressed) {
+      ui.musicVolumeActive = !ui.musicVolumeActive;
+      this._volumeAngle = null;
+      this.audio.play('ui');
+    }
+    if (!ui.musicVolumeActive) {
+      this._volumeAngle = null;
+      return;
+    }
+    const x = s.rightStickX || 0;
+    const y = s.rightStickY || 0;
+    if (Math.hypot(x, y) < 0.35) {
+      this._volumeAngle = null;
+      return;
+    }
+    const angle = Math.atan2(y, x);
+    if (this._volumeAngle === null) {
+      this._volumeAngle = angle;
+      return;
+    }
+    let delta = angle - this._volumeAngle;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    while (delta < -Math.PI) delta += Math.PI * 2;
+    this._volumeAngle = angle;
+    if (Math.abs(delta) < 0.002) return;
+    this.music.setRadioVolume(this.music.radioVolume + (delta / (Math.PI * 2)) * 2);
+  }
+
   setMode(name) {
     if (this.currentMode) {
       this.currentMode.exit();
@@ -364,10 +400,14 @@ export class Game {
 
   setPaused(v) {
     ui.paused = v;
-    if (this.currentMode && v) {
-      this.audio.horn(false);
-      this.audio.setEngine(0, 0, false);
-      this.audio.setSkid(0);
+    if (v) {
+      ui.musicVolumeActive = false;
+      this._volumeAngle = null;
+      if (this.currentMode) {
+        this.audio.horn(false);
+        this.audio.setEngine(0, 0, false);
+        this.audio.setSkid(0);
+      }
     }
     if (v) {
       this.music.pauseGame();
@@ -389,6 +429,8 @@ export class Game {
       veh.refuel(veh.fuelMax);
     }
     this.music.resetRadioPlaylist();
+    this.music.resetVolumes();
+    ui.musicVolumeActive = false;
     ui.trafficEnabled = false;
     ui.mobileOverride = null;
     applyUiScale();
@@ -454,6 +496,7 @@ export class Game {
       this.foley.setMuted(ui.muted);
     }
     this._updateRadio(dt, s);
+    this._updateMusicVolume(s);
     this.foley.update(dt);
 
     this.dayCycle.update(dt);

@@ -33,7 +33,7 @@ npm run preview  # serve the production build
 | R | Radio: tap = next track, hold = power |
 | Esc | Pause |
 | Enter / N | Accept / decline offer |
-| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn, LB radio) |
+| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn, LB radio, R3 radio volume) |
 
 ## Gameplay loop
 
@@ -133,8 +133,13 @@ Behavior:
   where it was; get back in and it picks up mid-song.
 - Pausing the game freezes the radio where it is and keeps everything silent until
   you resume (radio resumes only if you were driving).
-- Pause → Settings → Song Choice lets you mute individual songs so they never play;
-  choices are saved per browser and survive reloads.
+- Pause → Settings → Song Choice lets you mute individual songs and give each song
+  its own volume (0-200%); choices are saved per browser and survive reloads.
+- Pause → Settings → Sound sets master sound and the overall radio volume (0-200%,
+  so it can go past 100%). Settings are saved per browser.
+- Click R3 (right-stick press) during play to open the radio volume slider. Rotate
+  the right stick clockwise to raise it and counterclockwise to lower it; click R3
+  again to close.
 
 Radio controls: tap LB (or R) to skip to the next song, hold LB / R for about half a
 second to switch the radio on or off. A HUD widget top-right shows the current track

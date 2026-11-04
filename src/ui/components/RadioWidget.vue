@@ -7,7 +7,7 @@
     <div class="radio-track">
       {{ !ui.radio.hasTracks ? 'NO TRACKS LOADED' : (ui.radio.track || 'STATIC') }}
     </div>
-    <div class="radio-hint">LB / R tap: next · hold: power</div>
+    <div class="radio-hint">R3: volume · LB/R: next · hold: power</div>
   </div>
 </template>
 

@@ -25,6 +25,7 @@ export const ui = reactive({
 
   mobileOverride: null,
   playerMode: 'drive',
+  musicVolumeActive: false,
 
   uiScale: 1,
   uiScaleOverride: null,
@@ -66,7 +67,7 @@ export const ui = reactive({
   healthMax: 100,
   nearGasStation: false,
 
-  radio: { on: true, track: null, hasTracks: false },
+  radio: { on: true, track: null, hasTracks: false, volume: 1, tracks: [] },
 
   levelId: '1-1',
   levels: [],

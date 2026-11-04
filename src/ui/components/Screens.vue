@@ -42,7 +42,7 @@
     <div v-else-if="ui.pauseMenu === 'settings'" class="pause-card">
       <h2>SETTINGS</h2>
       <button class="btn ghost" @click="ui.pauseMenu = 'songs'">SONG CHOICE</button>
-      <button class="btn ghost" @click="toggleMute">{{ ui.muted ? 'SOUND: OFF' : 'SOUND: ON' }}</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'sound'">SOUND</button>
       <button class="btn ghost" @click="handleToggleTraffic">TRAFFIC (BETA): {{ ui.trafficEnabled ? 'ON' : 'OFF' }}</button>
       <button class="btn ghost" @click="handleToggleMobile">TOUCH CONTROLS: {{ ui.mobileOverride === null ? (detectedMobile ? 'AUTO (ON)' : 'AUTO (OFF)') : (ui.mobileOverride ? 'ON' : 'OFF') }}</button>
       <button class="btn ghost" @click="handleUiScale">{{ uiScaleLabel() }}</button>
@@ -50,14 +50,58 @@
       <button class="btn ghost" @click="ui.pauseMenu = 'main'">BACK</button>
     </div>
 
+    <div v-else-if="ui.pauseMenu === 'sound'" class="pause-card sound-card">
+      <h2>SOUND</h2>
+      <button class="btn ghost" @click="toggleMute">{{ ui.muted ? 'MASTER SOUND: OFF' : 'MASTER SOUND: ON' }}</button>
+      <div class="volume-setting">
+        <div class="volume-setting-head">
+          <span>RADIO VOLUME</span>
+          <span class="volume-setting-value">{{ radioVolumePct }}%</span>
+        </div>
+        <input
+          class="volume-range"
+          type="range"
+          min="0"
+          max="200"
+          step="5"
+          aria-label="Radio volume"
+          :value="radioVolumePct"
+          @input="onRadioVolume"
+        />
+        <div class="volume-scale"><span>0%</span><span>100%</span><span>200%</span></div>
+      </div>
+      <p class="volume-note">R3 in game opens the radio volume slider. Rotate the right stick clockwise to raise it, counterclockwise to lower it.</p>
+      <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
+    </div>
+
     <div v-else-if="ui.pauseMenu === 'songs'" class="pause-card songs-card">
       <h2>SONG CHOICE</h2>
       <p v-if="!ui.radio.hasTracks" class="songs-empty">No radio songs loaded.<br>Drop music files into src/audio/tracks/radio/</p>
       <div v-else class="song-list">
-        <button v-for="t in ui.radio.tracks" :key="t.name" class="btn ghost song-row" @click="toggleSong(t)">
-          <span class="song-name">{{ t.name }}</span>
-          <span class="song-state" :class="t.enabled ? 'on' : 'off'">{{ t.enabled ? 'ON' : 'OFF' }}</span>
-        </button>
+        <div
+          v-for="t in ui.radio.tracks"
+          :key="t.name"
+          class="song-row"
+          :class="{ 'song-off': !t.enabled }"
+        >
+          <button class="song-toggle" @click="toggleSong(t)">
+            <span class="song-name">{{ t.name }}</span>
+            <span class="song-state" :class="t.enabled ? 'on' : 'off'">{{ t.enabled ? 'ON' : 'OFF' }}</span>
+          </button>
+          <div class="song-volume">
+            <input
+              class="volume-range song-range"
+              type="range"
+              min="0"
+              max="200"
+              step="5"
+              :aria-label="'Volume for ' + t.name"
+              :value="songVolumePct(t)"
+              @input="onSongVolume(t, $event)"
+            />
+            <span class="song-volume-value">{{ songVolumePct(t) }}%</span>
+          </div>
+        </div>
       </div>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
@@ -89,6 +133,7 @@ import { CONFIG } from '../../config.js';
 const controls = CONFIG.controlsHelp;
 const padConnected = computed(() => ui.padConnected);
 const padName = computed(() => ui.padName);
+const radioVolumePct = computed(() => Math.round((ui.radio.volume ?? 1) * 100));
 const detectedMobile = detectMobile();
 
 watch(() => ui.paused, (v) => {
@@ -122,6 +167,15 @@ function handleUiScale() {
 function toggleSong(t) {
   ui.pauseMenu = 'songs';
   bus.emit('ui:song', { name: t.name, enabled: !t.enabled });
+}
+function songVolumePct(t) {
+  return Math.round((t.volume ?? 1) * 100);
+}
+function onRadioVolume(e) {
+  bus.emit('ui:radio-volume', Number(e.target.value) / 100);
+}
+function onSongVolume(t, e) {
+  bus.emit('ui:song-volume', { name: t.name, volume: Number(e.target.value) / 100 });
 }
 const resetArmed = ref(false);
 let resetTimer = null;
