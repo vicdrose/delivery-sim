@@ -14,6 +14,13 @@
       </div>
       <span class="fuel-pct">{{ Math.round(fuelF * 100) }}%</span>
     </div>
+    <div class="fuel-row" :class="{ crit: ui.sleepy }">
+      <span class="fuel-emoji">🌙</span>
+      <div class="fuel-bar">
+        <div class="fuel-fill sleep" :style="{ width: sleepPct }"></div>
+      </div>
+      <span class="fuel-pct">{{ sleepPct }}</span>
+    </div>
   </div>
 </template>
 
@@ -27,6 +34,7 @@ const healthF = computed(() => Math.max(0, Math.min(1, ui.healthLevel / healthMa
 const fuelPct = computed(() => `${Math.max(0, Math.min(1, fuelF.value)) * 100}%`);
 const healthPct = computed(() => `${Math.max(0, Math.min(1, healthF.value)) * 100}%`);
 const driving = computed(() => ui.playerMode === 'drive');
+const sleepPct = computed(() => `${Math.round(Math.max(0, Math.min(100, ui.sleepiness)))}%`);
 const healthRowClass = computed(() => ({
   crit: healthF.value < 0.25 && healthF.value > 0,
   dead: healthF.value <= 0

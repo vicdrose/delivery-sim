@@ -61,6 +61,8 @@ Full architecture in `README.md` (`src/` tree). Key files:
   toggles) lives here, imported as module-level `ui` (never `this.ui`).
 - `src/delivery/DeliveryStateMachine.js` — explicit FSM for the delivery flow.
 - `src/progression/Progression.js` — localStorage profile (bank, day, stats).
+- `src/sleep/SleepSystem.js` — sleepiness meter, sleep spot resolution (home / van),
+  the fade-sleep-wake sequence, and the dream roll (`sleep:dream` bus seam).
 - `src/audio/AudioSystem.js` + `src/audio/MusicManager.js` — Tone.js engine.
 - `src/audio/FoleySystem.js` — ambient sound (currently waves only).
 - `src/audio/tracks/{title,pause,radio}` — folder-driven music, picked up
@@ -70,7 +72,7 @@ Full architecture in `README.md` (`src/` tree). Key files:
   collision, grid-bound turns).
 - `src/ui/components/TouchControls.vue` — mobile analog stick + contextual
   action / pause buttons, bottom-left.
-- `src/ui/components/FuelGauge.vue` — gas + vehicle-health meters in the HUD.
+- `src/ui/components/FuelGauge.vue` — gas + vehicle-health + sleepiness meters in the HUD.
 - `src/rhythm/index.js` — stub seam where the rhythm mode will plug in.
 - `src/levels/index.js` — the level registry (`LEVELS`, `getLevel`, `levelList`).
   Every level owns its own `grid` (`zoneOf` + `gridN`), `seed`, `gasSpots`,
@@ -130,6 +132,17 @@ Current behavior worth remembering (all landed and stable):
   *or* `E` in the car parked at the pump, priced at `repairCostPerUnit` ($42 per
   point of missing health). Persisted in `snackrun_health`; wear rate was cut
   30x after day-12 breakdowns proved too fast.
+- **Sleepiness & sleep** is the third gas-style meter (moon row under fuel and
+  health). It rises with time, extra while walking / sprinting / driving, warns at
+  80%, caps at 100, and persists in `snackrun_sleepiness`. Each level has one sleep
+  spot: 1-1 uses the `home` POI nearest `city.spawn` (a pulsing `Zzz` doorstep
+  marker), 1-2 uses the rear of the van and follows it as it moves. Standing at the
+  spot on foot and pressing E runs the fade / sleep / wake overlay. Sleeping
+  advances to the next morning, resets sleepiness to 5, counts as ending the day
+  (`progression.endDay()` + today stats reset), and freezes world time and delivery
+  timers. Each sleep is 40% dream: a placeholder dream overlay plus a
+  `sleep:dream` bus event carrying `{ location, kind }` — that is the seam for
+  future dream mini-games; no rewards or mechanics exist yet.
 - **NPC traffic**: pause-menu toggle "TRAFFIC (BETA)", default OFF, persisted in
   localStorage `snackrun_traffic`. Added because collision used lane-offset
   positions, wheels use body-rotation angle, and cars are forced to turn at grid
@@ -155,6 +168,7 @@ Current behavior worth remembering (all landed and stable):
   take deliveries** (`deliveries: false`). The car is the only delivery vehicle.
   No offers spawn while the van is the active vehicle, the objective reads
   "THE VAN IS NOT FOR DELIVERIES", and the beacon/minimap still point at the car.
+  In 1-2 its rear is the level's sleep spot (the `Zzz` marker moves with it).
   **The van's creative workflow is deliberately TBD** — do not invent a rhythm
   mode; that is roadmap item #10.
 - **Vehicle switching** happens on foot: walk up to the *other* vehicle and press
@@ -184,6 +198,8 @@ water-bottle emoji + meter, burger emoji + meter, run down like fuel.
   wear, limp mode, paid repairs at the pump) — scam/refusal flavor and the
   remaining money-sink pressure are still open.
 - **Fitness / Sleep / Hunger / Thirst** — the same meter family, next systems.
+  **Sleep has landed** (meter, home/van sleep spots, next-morning wake, dream roll
+  seam). Fitness and hunger/thirst are still open; gym is roadmap #9.
 
 Other pillars:
 

@@ -67,6 +67,18 @@ export const ui = reactive({
   healthMax: 100,
   nearGasStation: false,
 
+  sleepiness: 15,
+  sleepy: false,
+  sleep: {
+    active: false,
+    phase: 'idle',
+    opacity: 0,
+    progress: 0,
+    dream: false,
+    location: '',
+    day: 1
+  },
+
   radio: { on: true, track: null, hasTracks: false, volume: 1, tracks: [] },
 
   levelId: '1-1',

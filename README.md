@@ -25,7 +25,7 @@ npm run preview  # serve the production build
 | W / S or Up / Down | Accelerate / brake-reverse |
 | A / D or Left / Right | Steer / strafe on foot |
 | Space | Handbrake |
-| E | Interact (enter building / pick up / deliver) |
+| E | Interact (enter building / pick up / deliver / sleep) |
 | F | Enter or exit the car |
 | Shift | Sprint on foot |
 | H | Horn |
@@ -48,6 +48,30 @@ npm run preview  # serve the production build
 The day clock advances continuously; light, sky and fog shift through morning, noon,
 sunset, dusk and night. Each day your earnings bank into a persistent profile
 (localStorage).
+
+## Sleep & dreams
+
+A sleepiness meter (the moon row in the HUD, under fuel and vehicle health) climbs
+while you play: slowly while idle, faster while walking, sprinting or driving. At 80%
+the row turns red and a warning toast points you toward bed. Sleepiness is capped at
+100% and persists in `snackrun_sleepiness`.
+
+Each level has one sleep spot:
+
+- **1-1** — the home nearest the spawn point (currently "Blue Condos Court"). A pulsing
+  `Zzz` marker sits on the doorstep; stand on it and press E.
+- **1-2** — the rear of the van. The spot and marker follow the van wherever it is
+  parked, so the van works as a bed on the move.
+
+Sleeping fades out, plays a sleep animation, advances the clock to the next morning
+and resets sleepiness to 5%. Every sleep has a 40% chance of being a dream; dreams
+currently show a placeholder sequence and emit `sleep:dream` on the shared bus. That
+event is the seam where dream mini-games will plug in. A plain sleep simply wakes you
+up.
+
+Sleeping counts as ending the day: the profile day counter advances and the "today"
+earnings/runs reset. The world (clock, traffic, delivery timers) is frozen for the
+duration.
 
 ## Architecture
 
@@ -85,6 +109,7 @@ src/
     DeliveryGenerator.js  Order generation, pricing, time limits, payout finalize
     DeliveryStateMachine.js Explicit FSM for the whole delivery flow
   progression/Progression.js  localStorage profile (bank, day, stats)
+  sleep/SleepSystem.js    Sleepiness meter, sleep spots, sleep sequence, dream roll
   rhythm/index.js         Stub seam where the rhythm mode will plug in
   audio/AudioSystem.js    Tone.js engine: engine drone, skid, horn, UI stingers
   game/

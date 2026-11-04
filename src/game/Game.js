@@ -13,6 +13,7 @@ import { getLevel, DEFAULT_LEVEL_ID, levelList } from '../levels/index.js';
 import { Vehicle } from '../vehicle/Vehicle.js';
 import { Player } from '../player/Player.js';
 import { InteractionSystem } from '../interaction/InteractionSystem.js';
+import { SleepSystem } from '../sleep/SleepSystem.js';
 import { InteriorManager } from '../interiors/InteriorManager.js';
 import { DayNightCycle } from '../world/DayNightCycle.js';
 import { Sky } from '../world/Sky.js';
@@ -132,6 +133,8 @@ export class Game {
     this._buildWorld();
     this._buildFleet();
 
+    this.sleep = new SleepSystem(this);
+
     this.generator = new DeliveryGenerator(this.city.locations);
     this.fsm = new DeliveryStateMachine(bus);
 
@@ -217,6 +220,7 @@ export class Game {
     this.fsm.reset();
     this._buildWorld();
     this._buildFleet();
+    this.sleep.onLevelChange();
     this.generator = new DeliveryGenerator(this.city.locations);
 
     this.audio.horn(false);
@@ -304,6 +308,10 @@ export class Game {
     this._onFirstGesture = () => this._ensureAudio();
     window.addEventListener('pointerdown', this._onFirstGesture);
     window.addEventListener('keydown', this._onFirstGesture);
+
+    this._onHide = () => this.sleep.save();
+    window.addEventListener('beforeunload', this._onHide);
+    window.addEventListener('pagehide', this._onHide);
   }
 
   _buildMinimap() {
@@ -430,6 +438,7 @@ export class Game {
     }
     this.music.resetRadioPlaylist();
     this.music.resetVolumes();
+    this.sleep.reset();
     ui.musicVolumeActive = false;
     ui.trafficEnabled = false;
     ui.mobileOverride = null;
@@ -486,7 +495,7 @@ export class Game {
       return;
     }
 
-    if (s.pausePressed) this.setPaused(!ui.paused);
+    if (s.pausePressed && !this.sleep.blocking) this.setPaused(!ui.paused);
     if (ui.paused) {
       return;
     }
@@ -498,6 +507,14 @@ export class Game {
     this._updateRadio(dt, s);
     this._updateMusicVolume(s);
     this.foley.update(dt);
+
+    this.sleep.update(dt, s);
+    if (this.sleep.blocking) {
+      this._applyEnvironment();
+      this.sky.update(dt);
+      this.scenery.update(dt);
+      return;
+    }
 
     this.dayCycle.update(dt);
     this._applyEnvironment();
@@ -532,6 +549,10 @@ export class Game {
     window.removeEventListener('pointerup', this._onUp);
     window.removeEventListener('pointerdown', this._onFirstGesture);
     window.removeEventListener('keydown', this._onFirstGesture);
+    window.removeEventListener('beforeunload', this._onHide);
+    window.removeEventListener('pagehide', this._onHide);
+    this.sleep.save();
+    this.sleep.dispose();
     this.music.dispose();
     this.foley.dispose();
     this.input.dispose();

@@ -70,6 +70,7 @@ export class DeliveryMode {
     this._showCarBeacon = true;
     this._registerDoorItems();
     this._registerVehicleItems();
+    this._registerSleepItem();
 
     this._registerDoorItems();
 
@@ -151,6 +152,27 @@ export class DeliveryMode {
       if (veh.canDeliver) return veh;
     }
     return g.vehicle;
+  }
+
+  _registerSleepItem() {
+    const g = this.g;
+    const spot = g.sleep.getSpot();
+    if (!spot) return;
+    g.interaction.add({
+      position: spot.position,
+      radius: spot.kind === 'van' ? 2.7 : 3.4,
+      priority: 1,
+      label: () => {
+        if (this.playerMode !== 'foot') return null;
+        if (spot.kind === 'van' && spot.vehicle && Math.abs(spot.vehicle.speed) >= 1.6) return null;
+        const d = g.fsm.delivery;
+        if (spot.poi && d && d.dropoff && d.dropoff.id === spot.poi.id && g.fsm.hasFood) return null;
+        return spot.label;
+      },
+      action: () => {
+        if (g.sleep.begin()) g.audio.play('ui');
+      }
+    });
   }
 
   _registerVehicleItems() {

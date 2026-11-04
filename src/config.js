@@ -126,6 +126,22 @@ export const CONFIG = {
     repairCostPerUnit: 42
   },
 
+  sleep: {
+    max: 100,
+    startValue: 15,
+    wakeValue: 5,
+    ratePerSecond: 0.14,
+    walkExtra: 0.03,
+    sprintExtra: 0.08,
+    driveExtra: 0.02,
+    warnAt: 80,
+    dreamChance: 0.4,
+    fadeSeconds: 0.9,
+    holdSeconds: 1.6,
+    wakeSeconds: 1.2,
+    dreamSeconds: 5.0
+  },
+
   audio: {
     masterVolume: 0.8,
     engineBaseFreq: 36,
@@ -147,7 +163,7 @@ export const CONFIG = {
     ['S / ↓', 'Brake / Reverse'],
     ['A D / ← →', 'Steer'],
     ['Space', 'Handbrake'],
-    ['E', 'Interact'],
+    ['E', 'Interact / sleep'],
     ['F', 'Enter / Exit vehicle'],
     ['Shift', 'Sprint (on foot)'],
     ['H', 'Horn'],
