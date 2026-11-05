@@ -133,6 +133,8 @@ export class DeliveryMode {
       bus.on('day:ended', ({ day }) => {
         g.progression.endDay();
         g.audio.play('dayEnd');
+        ui.todayEarned = 0;
+        ui.deliveriesToday = 0;
         toast(`Day ${day - 1} wrapped. The grind never sleeps!`, 'info', 5000);
       })
     );
@@ -164,13 +166,14 @@ export class DeliveryMode {
       priority: 1,
       label: () => {
         if (this.playerMode !== 'foot') return null;
+        if (g.sleep.value <= 0) return null;
         if (spot.kind === 'van' && spot.vehicle && Math.abs(spot.vehicle.speed) >= 1.6) return null;
         const d = g.fsm.delivery;
         if (spot.poi && d && d.dropoff && d.dropoff.id === spot.poi.id && g.fsm.hasFood) return null;
-        return spot.label;
+        return g.sleep.canSleep ? spot.label : spot.meditateLabel;
       },
       action: () => {
-        if (g.sleep.begin()) g.audio.play('ui');
+        if (g.sleep.useSpot()) g.audio.play('ui');
       }
     });
   }

@@ -129,17 +129,21 @@ export const CONFIG = {
   sleep: {
     max: 100,
     startValue: 15,
-    wakeValue: 5,
     ratePerSecond: 0.14,
     walkExtra: 0.03,
     sprintExtra: 0.08,
     driveExtra: 0.02,
     warnAt: 80,
     dreamChance: 0.4,
+    hoursAtFull: 8,
+    minSleep: 20,
+    lapseSecondsPerHour: 1.1,
+    minLapseSeconds: 2.5,
     fadeSeconds: 0.9,
-    holdSeconds: 1.6,
     wakeSeconds: 1.2,
-    dreamSeconds: 5.0
+    dreamSeconds: 5.0,
+    meditateTickSeconds: 10,
+    meditateAmount: 1
   },
 
   audio: {

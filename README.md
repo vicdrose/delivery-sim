@@ -25,7 +25,7 @@ npm run preview  # serve the production build
 | W / S or Up / Down | Accelerate / brake-reverse |
 | A / D or Left / Right | Steer / strafe on foot |
 | Space | Handbrake |
-| E | Interact (enter building / pick up / deliver / sleep) |
+| E | Interact (enter building / pick up / deliver / sleep / meditate) |
 | F | Enter or exit the car |
 | Shift | Sprint on foot |
 | H | Horn |
@@ -63,15 +63,21 @@ Each level has one sleep spot:
 - **1-2** — the rear of the van. The spot and marker follow the van wherever it is
   parked, so the van works as a bed on the move.
 
-Sleeping fades out, plays a sleep animation, advances the clock to the next morning
-and resets sleepiness to 5%. Every sleep has a 40% chance of being a dream; dreams
-currently show a placeholder sequence and emit `sleep:dream` on the shared bus. That
-event is the seam where dream mini-games will plug in. A plain sleep simply wakes you
-up.
+Sleep is time-based, not a day skip. **100% tiredness is 8 in-game hours of sleep**,
+and the length scales with the meter (60% = 4 hr 48 min). During sleep the clock and
+sky run forward in a time-lapse, the camera tilts up to the sky, and tiredness drains
+linearly to 0. You wake at whatever time that is, so a short nap can end on the same
+day. Crossing midnight still advances the day and the profile day counter.
 
-Sleeping counts as ending the day: the profile day counter advances and the "today"
-earnings/runs reset. The world (clock, traffic, delivery timers) is frozen for the
-duration.
+At **20% or more** the spot offers sleep. Below that you are not tired enough to fall
+asleep, so it offers **meditation** instead. Meditation keeps the world running at
+normal speed and removes 1% tiredness every 10 seconds; press E or **STAND UP** to
+stop. `CONFIG.sleep` holds the tuning (`hoursAtFull`, `minSleep`,
+`lapseSecondsPerHour`, `meditateTickSeconds`).
+
+Every sleep has a 40% chance of being a dream; dreams currently show a placeholder
+sequence and emit `sleep:dream` on the shared bus. That event is the seam where dream
+mini-games will plug in. A plain sleep simply wakes you up.
 
 ## Architecture
 

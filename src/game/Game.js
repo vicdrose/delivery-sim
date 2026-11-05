@@ -510,6 +510,7 @@ export class Game {
 
     this.sleep.update(dt, s);
     if (this.sleep.blocking) {
+      this.sleep.updateCamera();
       this._applyEnvironment();
       this.sky.update(dt);
       this.scenery.update(dt);

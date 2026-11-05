@@ -71,12 +71,19 @@ export const ui = reactive({
   sleepy: false,
   sleep: {
     active: false,
+    mode: null,
     phase: 'idle',
-    opacity: 0,
     progress: 0,
+    blackout: 0,
+    content: 0,
     dream: false,
+    dreamVisible: false,
     location: '',
-    day: 1
+    clock: '',
+    duration: '',
+    day: 1,
+    sleepiness: 15,
+    meditateNext: 0
   },
 
   radio: { on: true, track: null, hasTracks: false, volume: 1, tracks: [] },

@@ -14,14 +14,17 @@ export class DayNightCycle {
 
   update(dt) {
     if (this.paused) return;
-    const prev = this.t;
-    this.t += dt / CONFIG.day.lengthSeconds;
-    if (this.t >= 1) {
+    this.advanceHours((dt / CONFIG.day.lengthSeconds) * 24);
+  }
+
+  advanceHours(hours) {
+    if (!(hours > 0)) return;
+    this.t += hours / 24;
+    while (this.t >= 1) {
       this.t -= 1;
       this.day++;
       this.bus.emit('day:ended', { day: this.day });
     }
-    void prev;
   }
 
   sample(out = {}) {

@@ -43,8 +43,21 @@ body {
   z-index: 10;
 }
 
+.hud {
+  transition: opacity 0.35s ease;
+}
+
 .hud.hidden {
   display: none;
+}
+
+.hud.sleeping {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hud.sleeping * {
+  pointer-events: none;
 }
 
 .clickable {
@@ -1246,26 +1259,43 @@ kbd {
   position: fixed;
   inset: 0;
   z-index: 300;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
-  background: #05060a;
   color: #f4efff;
   pointer-events: none;
 }
 
-.sleep-overlay.is-dream {
+.sleep-black,
+.sleep-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sleep-black {
+  background: #05060a;
+  transition: opacity 0.35s ease;
+}
+
+.sleep-vignette {
   background:
-    radial-gradient(circle at 28% 18%, rgba(177, 140, 255, 0.35), transparent 46%),
-    radial-gradient(circle at 74% 78%, rgba(76, 201, 240, 0.24), transparent 52%),
-    #0a0616;
+    radial-gradient(
+      circle at 50% 38%,
+      rgba(5, 6, 10, 0) 12%,
+      rgba(5, 6, 10, 0.55) 64%,
+      rgba(5, 6, 10, 0.88) 100%
+    ),
+    linear-gradient(180deg, rgba(5, 6, 10, 0) 40%, rgba(5, 6, 10, 0.5) 100%);
+  transition: opacity 0.35s ease;
 }
 
 .sleep-world {
-  position: relative;
-  padding: 24px;
+  position: absolute;
+  left: 50%;
+  bottom: 7vh;
+  width: min(88vw, 420px);
+  transform: translateX(-50%);
   text-align: center;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.7);
 }
 
 .sleep-zzz {
@@ -1273,7 +1303,7 @@ kbd {
   align-items: flex-end;
   justify-content: center;
   gap: 6px;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
   color: #b18cff;
   font-weight: 900;
   line-height: 1;
@@ -1298,27 +1328,27 @@ kbd {
 }
 
 .sleep-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 900;
   letter-spacing: 0.32em;
 }
 
 .sleep-sub {
-  margin-top: 10px;
-  color: #b9acd9;
-  font-size: 13px;
+  margin-top: 8px;
+  color: #cfc4e8;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 .sleep-progress {
   width: 190px;
   height: 4px;
-  margin: 20px auto 0;
+  margin: 16px auto 0;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .sleep-progress span {
@@ -1329,13 +1359,35 @@ kbd {
   transition: width 0.1s linear;
 }
 
+.sleep-clock {
+  margin-top: 10px;
+  color: #e8ddff;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.18em;
+}
+
+.sleep-duration {
+  margin-top: 4px;
+  color: #b9acd9;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
 .dream-world {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(177, 140, 255, 0.3), transparent 46%),
+    radial-gradient(circle at 74% 78%, rgba(76, 201, 240, 0.2), transparent 52%),
+    rgba(10, 6, 22, 0.55);
+  backdrop-filter: blur(2px);
 }
 
 .dream-stars {
@@ -1408,6 +1460,97 @@ kbd {
   text-transform: uppercase;
 }
 
+.meditate-world {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(76, 201, 240, 0.14), transparent 42%),
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(5, 6, 10, 0) 30%,
+      rgba(5, 6, 10, 0.55) 100%
+    );
+}
+
+.meditate-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 128px;
+  height: 128px;
+  margin-bottom: 10px;
+  border: 2px solid rgba(177, 140, 255, 0.55);
+  border-radius: 50%;
+  box-shadow: 0 0 32px rgba(177, 140, 255, 0.35), inset 0 0 24px rgba(76, 201, 240, 0.2);
+  animation: meditate-breathe 8s ease-in-out infinite;
+}
+
+.meditate-ring span {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #e8ddff, #8c6bff 70%);
+  box-shadow: 0 0 22px rgba(177, 140, 255, 0.7);
+}
+
+.meditate-title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.3em;
+}
+
+.meditate-sub {
+  color: #cfc4e8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.meditate-stats {
+  display: flex;
+  gap: 18px;
+  margin-top: 12px;
+  color: #e8ddff;
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+.meditate-hint {
+  margin-top: 10px;
+  color: #a99bc9;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.meditate-stop {
+  margin-top: 18px;
+  padding: 10px 26px;
+  border: 1px solid rgba(177, 140, 255, 0.5);
+  border-radius: 999px;
+  background: rgba(20, 12, 40, 0.72);
+  color: #f4efff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.meditate-stop:hover {
+  background: rgba(177, 140, 255, 0.24);
+}
+
 @keyframes z-float {
   0%, 100% { transform: translateY(0); opacity: 0.65; }
   50% { transform: translateY(-10px); opacity: 1; }
@@ -1416,4 +1559,9 @@ kbd {
 @keyframes dream-twinkle {
   0%, 100% { opacity: 0.35; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes meditate-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.12); opacity: 1; }
 }

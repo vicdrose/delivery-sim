@@ -1,5 +1,5 @@
 <template>
-  <div class="hud" :class="{ hidden: !inGame }">
+  <div class="hud" :class="{ hidden: !inGame, sleeping: ui.sleep.active }">
     <MoneyDisplay />
     <ClockWidget />
     <ObjectiveBanner />

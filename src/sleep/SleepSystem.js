@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CONFIG } from '../config.js';
+import { CONFIG, formatClock } from '../config.js';
 import { bus } from '../core/bus.js';
 import { ui, toast } from '../ui/store.js';
 
@@ -21,21 +21,47 @@ function readSleepiness() {
   return SLEEP.startValue;
 }
 
+function formatDuration(hours) {
+  const minutes = Math.max(1, Math.round(hours * 60));
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h <= 0) return `${m} min`;
+  if (m === 0) return `${h} hr`;
+  return `${h} hr ${m} min`;
+}
+
 export class SleepSystem {
   constructor(game) {
     this.g = game;
     this.value = readSleepiness();
     this.blocking = false;
+    this.mode = null;
     this.phase = 'idle';
     this.timer = 0;
     this.outcome = null;
     this.spot = null;
+    this.totalHours = 0;
+    this.lapseDuration = 0;
+    this.lapseElapsed = 0;
+    this._advancedHours = 0;
+    this._startValue = this.value;
+    this._meditateTimer = 0;
+    this._meditateStart = this.value;
+    this._blackout = 0;
+    this._content = 0;
+    this._camFromPos = new THREE.Vector3();
+    this._camFromQuat = new THREE.Quaternion();
+    this._camDummy = new THREE.Object3D();
+    this._camYaw = 0;
     this._levelId = null;
     this._markerTime = 0;
     this._saveClock = 0;
+    this._unsubStand = bus.on('sleep:stand', () => {
+      if (this.blocking && this.mode === 'meditate') this._endMeditation(false);
+    });
     this._buildMarker();
     this._syncUi();
-    this._publish(0);
+    this._publish();
   }
 
   _buildMarker() {
@@ -102,6 +128,10 @@ export class SleepSystem {
     return this.spot ? this.spot.kind : null;
   }
 
+  get canSleep() {
+    return this.value >= SLEEP.minSleep;
+  }
+
   getSpot() {
     const level = this.g.level;
     if (!level) return null;
@@ -119,6 +149,7 @@ export class SleepSystem {
       return {
         kind: 'van',
         label: 'Sleep in the Van',
+        meditateLabel: 'Meditate in the Van',
         name: 'The Van',
         position: new THREE.Vector3(),
         vehicle: van
@@ -143,6 +174,7 @@ export class SleepSystem {
     return {
       kind: 'home',
       label: 'Sleep at Home',
+      meditateLabel: 'Meditate at Home',
       name: best.name,
       position: best.door,
       poi: best
@@ -199,7 +231,8 @@ export class SleepSystem {
     this._updateMarker(dt);
 
     if (this.blocking) {
-      this._tickSequence(dt);
+      if (this.mode === 'meditate') this._tickMeditation(dt, s);
+      else this._tickSleep(dt);
       return;
     }
     if (ui.screen !== 'playing' || ui.paused) return;
@@ -238,116 +271,270 @@ export class SleepSystem {
     ui.sleepy = this.value >= SLEEP.warnAt;
   }
 
-  _publish(opacity, progress = 0) {
+  _progress() {
+    if (this.mode === 'meditate') {
+      return clamp(1 - this.value / Math.max(1, this._meditateStart));
+    }
+    if (this.phase === 'lapse' && this.lapseDuration > 0) {
+      return this.lapseElapsed / this.lapseDuration;
+    }
+    if (this.phase === 'wake') return 1;
+    return 0;
+  }
+
+  _publish() {
+    const dreamVisible =
+      this.mode === 'sleep' &&
+      this.outcome === 'dream' &&
+      this.phase === 'lapse' &&
+      this.lapseElapsed < Math.min(SLEEP.dreamSeconds, this.lapseDuration);
     ui.sleep = {
       active: this.blocking,
+      mode: this.mode,
       phase: this.phase,
-      opacity,
-      progress,
+      progress: this._progress(),
+      blackout: this._blackout,
+      content: this._content,
       dream: this.outcome === 'dream',
+      dreamVisible,
       location: this.spot ? this.spot.name : '',
-      day: this.g.dayCycle.day
+      clock: formatClock(this.g.dayCycle.t),
+      duration: this.mode === 'sleep' ? formatDuration(this.totalHours) : '',
+      day: this.g.dayCycle.day,
+      sleepiness: this.value,
+      meditateNext: Math.max(0, Math.ceil(SLEEP.meditateTickSeconds - this._meditateTimer))
     };
   }
 
-  begin() {
-    if (this.blocking || ui.screen !== 'playing') return false;
-    this.getSpot();
-
-    this.blocking = true;
-    this.phase = 'fade';
-    this.timer = 0;
-    this.outcome = Math.random() < SLEEP.dreamChance ? 'dream' : 'plain';
-    this._publish(0, 0);
-
+  _lock(sound) {
     const g = this.g;
-    g.dayCycle.paused = true;
     g.audio.horn(false);
     g.audio.setEngine(0, 0, false);
     g.audio.setSkid(0);
-    g.audio.play('door');
+    if (sound) g.audio.play(sound);
     g.music.pauseGame();
     g.foley.stop();
     ui.prompt = null;
+  }
+
+  useSpot() {
+    return this.canSleep ? this.begin() : this.beginMeditation();
+  }
+
+  _captureCamera() {
+    const cam = this.g.camera;
+    this._camFromPos.copy(cam.position);
+    this._camFromQuat.copy(cam.quaternion);
+    this._camYaw = this.g.player ? this.g.player.yaw : 0;
+  }
+
+  _restoreCamera() {
+    if (!this.g.camera) return;
+    this.g.camera.position.copy(this._camFromPos);
+    this.g.camera.quaternion.copy(this._camFromQuat);
+  }
+
+  updateCamera() {
+    if (!this.blocking || this.mode !== 'sleep') return;
+    const cam = this.g.camera;
+    let k = 0;
+    if (this.phase === 'fade') k = this.timer / SLEEP.fadeSeconds;
+    else if (this.phase === 'lapse') k = 1;
+    else if (this.phase === 'wake') k = 1 - this.timer / SLEEP.wakeSeconds;
+    k = Math.min(1, Math.max(0, k));
+    k = k * k * (3 - 2 * k);
+
+    const yaw = this._camYaw + Math.sin(this.lapseElapsed * 0.16) * 0.25;
+    const dummy = this._camDummy;
+    dummy.position.copy(this._camFromPos);
+    dummy.lookAt(
+      this._camFromPos.x + Math.sin(yaw) * 18,
+      this._camFromPos.y + 24,
+      this._camFromPos.z + Math.cos(yaw) * 18
+    );
+
+    cam.position.copy(this._camFromPos);
+    cam.quaternion.copy(this._camFromQuat).slerp(dummy.quaternion, k);
+  }
+
+  begin() {
+    if (this.blocking || ui.screen !== 'playing' || !this.canSleep) return false;
+    this.getSpot();
+    this._captureCamera();
+
+    this.blocking = true;
+    this.mode = 'sleep';
+    this.phase = 'fade';
+    this.timer = 0;
+    this.outcome = Math.random() < SLEEP.dreamChance ? 'dream' : 'plain';
+    this._startValue = this.value;
+    this.totalHours = Math.max(0.05, (this.value / SLEEP.max) * SLEEP.hoursAtFull);
+    this.lapseDuration = Math.max(
+      SLEEP.minLapseSeconds,
+      this.totalHours * SLEEP.lapseSecondsPerHour
+    );
+    this.lapseElapsed = 0;
+    this._advancedHours = 0;
+    this._blackout = 0;
+    this._content = 0;
+    this.g.dayCycle.paused = true;
+    this._lock('door');
+    this._publish();
     return true;
   }
 
-  _tickSequence(dt) {
-    this.timer += dt;
+  beginMeditation() {
+    if (this.blocking || ui.screen !== 'playing' || this.value <= 0) return false;
+    this.getSpot();
 
+    this.blocking = true;
+    this.mode = 'meditate';
+    this.phase = 'meditate';
+    this.timer = 0;
+    this.outcome = null;
+    this._meditateTimer = 0;
+    this._meditateStart = this.value;
+    this._blackout = 0;
+    this._content = 1;
+    this.g.dayCycle.paused = false;
+    this._lock('notify');
+    this._publish();
+    return true;
+  }
+
+  _tickSleep(dt) {
     if (this.phase === 'fade') {
+      this.timer += dt;
       const p = Math.min(1, this.timer / SLEEP.fadeSeconds);
-      this._publish(p, p);
+      this._blackout = p;
+      this._content = p;
+      this._publish();
       if (this.timer >= SLEEP.fadeSeconds) {
-        this.phase = 'sleep';
+        this.phase = 'lapse';
         this.timer = 0;
-        this._publish(1, 0);
-      }
-      return;
-    }
-
-    if (this.phase === 'sleep') {
-      const p = Math.min(1, this.timer / SLEEP.holdSeconds);
-      this._publish(1, p);
-      if (this.timer >= SLEEP.holdSeconds) {
+        this.lapseElapsed = 0;
+        this._blackout = 0;
+        this._content = 1;
+        this._publish();
         if (this.outcome === 'dream') {
-          this.phase = 'dream';
-          this.timer = 0;
-          this._publish(1, 0);
           bus.emit('sleep:dream', {
             location: this.spot ? this.spot.name : 'somewhere',
-            kind: this.spotKind
+            kind: this.spotKind,
+            hours: this.totalHours,
+            day: this.g.dayCycle.day,
+            clock: formatClock(this.g.dayCycle.t)
           });
-        } else {
-          this._wake();
         }
       }
       return;
     }
 
-    if (this.phase === 'dream') {
-      const p = Math.min(1, this.timer / SLEEP.dreamSeconds);
-      this._publish(1, p);
-      if (this.timer >= SLEEP.dreamSeconds) this._wake();
+    if (this.phase === 'lapse') {
+      this.timer += dt;
+      this.lapseElapsed = Math.min(this.lapseDuration, this.lapseElapsed + dt);
+      const p = this.lapseDuration > 0 ? this.lapseElapsed / this.lapseDuration : 1;
+      const targetHours = this.totalHours * p;
+      const delta = targetHours - this._advancedHours;
+      if (delta > 0) {
+        this.g.dayCycle.advanceHours(delta);
+        this._advancedHours = targetHours;
+      }
+      this.value = Math.max(0, this._startValue * (1 - p));
+      this._syncUi();
+      this._saveClock += dt;
+      if (this._saveClock >= 1) {
+        this._saveClock = 0;
+        this.save();
+      }
+      this._publish();
+      if (this.lapseElapsed >= this.lapseDuration) this._wake();
       return;
     }
 
     if (this.phase === 'wake') {
+      this.timer += dt;
       const p = Math.min(1, this.timer / SLEEP.wakeSeconds);
-      this._publish(1 - p, p);
+      this._blackout = 0;
+      this._content = 1 - p;
+      this._publish();
       if (this.timer >= SLEEP.wakeSeconds) this._finish();
     }
   }
 
+  _tickMeditation(dt, s) {
+    this.timer += dt;
+    this.g.dayCycle.update(dt);
+    this._meditateTimer += dt;
+    this._blackout = 0;
+    this._content = 1;
+
+    while (this._meditateTimer >= SLEEP.meditateTickSeconds && this.value > 0) {
+      this._meditateTimer -= SLEEP.meditateTickSeconds;
+      this.value = Math.max(0, this.value - SLEEP.meditateAmount);
+      this._syncUi();
+      this.save();
+    }
+
+    if (this.value <= 0) {
+      this._endMeditation(true);
+      return;
+    }
+    if (s && (s.interactPressed || s.pausePressed)) {
+      this._endMeditation(false);
+      return;
+    }
+    this._publish();
+  }
+
   _wake() {
-    const g = this.g;
-    g.dayCycle.day += 1;
-    g.dayCycle.t = CONFIG.day.startTime;
-    g.progression.endDay();
-    ui.todayEarned = 0;
-    ui.deliveriesToday = 0;
-    this.value = SLEEP.wakeValue;
+    this.value = 0;
     this._saveClock = 0;
     this.save();
     this._syncUi();
     this.phase = 'wake';
     this.timer = 0;
-    this._publish(1, 0);
-    g.audio.play('dayEnd');
+    this._blackout = 0;
+    this._content = 1;
+    this._publish();
+    this.g.audio.play('dayEnd');
   }
 
   _finish() {
     const wasDream = this.outcome === 'dream';
+    const slept = this.totalHours;
+    const clock = formatClock(this.g.dayCycle.t);
+    this._restoreCamera();
     this.blocking = false;
+    this.mode = null;
     this.phase = 'idle';
     this.timer = 0;
     this.outcome = null;
+    this._blackout = 0;
+    this._content = 0;
     this.g.dayCycle.paused = false;
-    this._publish(0, 0);
+    this._publish();
     this.g.music.resumeGame(ui.playerMode === 'drive');
     this.g.foley.start();
-    toast(`Good morning — Day ${this.g.dayCycle.day}.`, 'success', 3600);
+    toast(`You slept ${formatDuration(slept)} and woke at ${clock}.`, 'success', 4200);
     if (wasDream) toast('You wake from a strange dream.', 'info', 3600);
+  }
+
+  _endMeditation(full) {
+    const reduced = Math.max(0, Math.round(this._meditateStart - this.value));
+    const clock = formatClock(this.g.dayCycle.t);
+    this.blocking = false;
+    this.mode = null;
+    this.phase = 'idle';
+    this.timer = 0;
+    this._meditateTimer = 0;
+    this._blackout = 0;
+    this._content = 0;
+    this._publish();
+    this.g.music.resumeGame(ui.playerMode === 'drive');
+    this.g.foley.start();
+    if (full) toast('You are fully rested.', 'success', 3600);
+    else if (reduced > 0) toast(`You meditate — tiredness down ${reduced}%. It is ${clock}.`, 'success', 3600);
+    else toast('You stand up.', 'info', 2400);
   }
 
   save() {
@@ -360,20 +547,29 @@ export class SleepSystem {
 
   reset() {
     if (this.blocking) {
+      if (this.mode === 'sleep') this._restoreCamera();
       this.blocking = false;
+      this.mode = null;
       this.phase = 'idle';
       this.timer = 0;
       this.outcome = null;
+      this._meditateTimer = 0;
       this.g.dayCycle.paused = false;
     }
     this.value = SLEEP.startValue;
     this._saveClock = 0;
+    this._blackout = 0;
+    this._content = 0;
     this.save();
     this._syncUi();
-    this._publish(0, 0);
+    this._publish();
   }
 
   dispose() {
+    if (this._unsubStand) {
+      this._unsubStand();
+      this._unsubStand = null;
+    }
     if (this.marker) {
       this.g.scene.remove(this.marker);
       this.marker.traverse((child) => {

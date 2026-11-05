@@ -136,13 +136,22 @@ Current behavior worth remembering (all landed and stable):
   health). It rises with time, extra while walking / sprinting / driving, warns at
   80%, caps at 100, and persists in `snackrun_sleepiness`. Each level has one sleep
   spot: 1-1 uses the `home` POI nearest `city.spawn` (a pulsing `Zzz` doorstep
-  marker), 1-2 uses the rear of the van and follows it as it moves. Standing at the
-  spot on foot and pressing E runs the fade / sleep / wake overlay. Sleeping
-  advances to the next morning, resets sleepiness to 5, counts as ending the day
-  (`progression.endDay()` + today stats reset), and freezes world time and delivery
-  timers. Each sleep is 40% dream: a placeholder dream overlay plus a
-  `sleep:dream` bus event carrying `{ location, kind }` — that is the seam for
-  future dream mini-games; no rewards or mechanics exist yet.
+  marker), 1-2 uses the rear of the van and follows it as it moves.
+  Sleep is **time-based, not a day skip**: 100% = 8 in-game hours (`hoursAtFull`),
+  scaled by the meter (60% = 4 hr 48 min). The lapse animation compresses that into
+  roughly `lapseSecondsPerHour` (1.1s) per in-game hour, min `minLapseSeconds`;
+  `DayNightCycle.advanceHours()` moves clock + sky while the day cycle stays paused.
+  Tiredness drains to 0 and you wake at the resulting clock time, possibly the same
+  day. Midnight during sleep still emits `day:ended`, so `progression.endDay()` and
+  the today-stats reset happen naturally. The view tilts up to the sky
+  (`SleepSystem.updateCamera`) and the HUD fades out for the sequence.
+  **Below `minSleep` (20%) you cannot sleep** — the spot offers meditation instead:
+  the world runs at normal speed and 1 point of tiredness drops every
+  `meditateTickSeconds` (10s); stand with E, Esc, or the STAND UP button. At 0 the
+  spot prompt disappears entirely. Each sleep is 40% dream: a placeholder overlay
+  for the first `dreamSeconds` of the lapse plus a `sleep:dream` bus event carrying
+  `{ location, kind, hours, day, clock }` — the seam for future dream mini-games;
+  no rewards or mechanics exist yet.
 - **NPC traffic**: pause-menu toggle "TRAFFIC (BETA)", default OFF, persisted in
   localStorage `snackrun_traffic`. Added because collision used lane-offset
   positions, wheels use body-rotation angle, and cars are forced to turn at grid
@@ -198,8 +207,8 @@ water-bottle emoji + meter, burger emoji + meter, run down like fuel.
   wear, limp mode, paid repairs at the pump) — scam/refusal flavor and the
   remaining money-sink pressure are still open.
 - **Fitness / Sleep / Hunger / Thirst** — the same meter family, next systems.
-  **Sleep has landed** (meter, home/van sleep spots, next-morning wake, dream roll
-  seam). Fitness and hunger/thirst are still open; gym is roadmap #9.
+  **Sleep has landed** (meter, home/van sleep spots, time-based sleep, meditation,
+  dream roll seam). Fitness and hunger/thirst are still open; gym is roadmap #9.
 
 Other pillars:
 
