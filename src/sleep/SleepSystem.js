@@ -132,6 +132,11 @@ export class SleepSystem {
     return this.value >= SLEEP.minSleep;
   }
 
+  get onDelivery() {
+    const fsm = this.g.fsm;
+    return !!(fsm && fsm.isActive);
+  }
+
   getSpot() {
     const level = this.g.level;
     if (!level) return null;
@@ -359,6 +364,10 @@ export class SleepSystem {
 
   begin() {
     if (this.blocking || ui.screen !== 'playing' || !this.canSleep) return false;
+    if (this.onDelivery) {
+      toast('Finish the delivery before you sleep.', 'warn', 3200);
+      return false;
+    }
     this.getSpot();
     this._captureCamera();
 

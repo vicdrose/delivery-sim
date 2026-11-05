@@ -148,10 +148,12 @@ Current behavior worth remembering (all landed and stable):
   **Below `minSleep` (20%) you cannot sleep** — the spot offers meditation instead:
   the world runs at normal speed and 1 point of tiredness drops every
   `meditateTickSeconds` (10s); stand with E, Esc, or the STAND UP button. At 0 the
-  spot prompt disappears entirely. Each sleep is 40% dream: a placeholder overlay
-  for the first `dreamSeconds` of the lapse plus a `sleep:dream` bus event carrying
-  `{ location, kind, hours, day, clock }` — the seam for future dream mini-games;
-  no rewards or mechanics exist yet.
+  spot prompt disappears entirely. **While a delivery is active the sleep prompt is
+  hidden** (sleeping would stall the countdown) although meditation is still allowed;
+  `SleepSystem.begin()` also refuses as a safety net. Each sleep is 40% dream: a
+  placeholder overlay for the first `dreamSeconds` of the lapse plus a `sleep:dream`
+  bus event carrying `{ location, kind, hours, day, clock }` — the seam for future
+  dream mini-games; no rewards or mechanics exist yet.
 - **NPC traffic**: pause-menu toggle "TRAFFIC (BETA)", default OFF, persisted in
   localStorage `snackrun_traffic`. Added because collision used lane-offset
   positions, wheels use body-rotation angle, and cars are forced to turn at grid

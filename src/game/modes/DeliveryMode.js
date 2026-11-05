@@ -170,7 +170,9 @@ export class DeliveryMode {
         if (spot.kind === 'van' && spot.vehicle && Math.abs(spot.vehicle.speed) >= 1.6) return null;
         const d = g.fsm.delivery;
         if (spot.poi && d && d.dropoff && d.dropoff.id === spot.poi.id && g.fsm.hasFood) return null;
-        return g.sleep.canSleep ? spot.label : spot.meditateLabel;
+        const tired = g.sleep.canSleep;
+        if (tired && g.sleep.onDelivery) return null;
+        return tired ? spot.label : spot.meditateLabel;
       },
       action: () => {
         if (g.sleep.useSpot()) g.audio.play('ui');

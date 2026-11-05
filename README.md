@@ -75,6 +75,10 @@ normal speed and removes 1% tiredness every 10 seconds; press E or **STAND UP** 
 stop. `CONFIG.sleep` holds the tuning (`hoursAtFull`, `minSleep`,
 `lapseSecondsPerHour`, `meditateTickSeconds`).
 
+You cannot sleep while a delivery is active — the timer would stall while in-game
+hours pass — so the sleep prompt is hidden until the run is delivered or failed.
+Meditation stays available because it does not pause the world.
+
 Every sleep has a 40% chance of being a dream; dreams currently show a placeholder
 sequence and emit `sleep:dream` on the shared bus. That event is the seam where dream
 mini-games will plug in. A plain sleep simply wakes you up.
