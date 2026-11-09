@@ -65,6 +65,7 @@ export class DeliveryMode {
     this.camYawFoot = Math.PI;
     g.cameraRig.setMode('foot');
     g.cameraRig.snapBehind(g.player.pos, this.camYawFoot);
+    g.radio.setInVehicle(false);
     this.offerTimer = 1.2;
     this.lastPickupId = null;
     this._showCarBeacon = true;
@@ -473,7 +474,7 @@ export class DeliveryMode {
     g.cameraRig.snapBehind(g.player.pos, this.camYawFoot);
     g.audio.play('exit');
     g.audio.setEngine(0, 0, false);
-    g.music.pauseForFoot();
+    g.radio.setInVehicle(false);
     this._checkWalkingArrival();
   }
 
@@ -485,7 +486,7 @@ export class DeliveryMode {
     g.cameraRig.setMode('car');
     g.cameraRig.snapBehind(g.vehicle.position, g.vehicle.heading);
     g.audio.play('enter');
-    g.music.resumeInCar();
+    g.radio.setInVehicle(true);
     if (g.vehicle.canDeliver) g.fsm.boardVehicle();
   }
 

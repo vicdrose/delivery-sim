@@ -43,6 +43,7 @@
       <h2>SETTINGS</h2>
       <button class="btn ghost" @click="ui.pauseMenu = 'songs'">SONG CHOICE</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'sound'">SOUND</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'spotify'">SPOTIFY</button>
       <button class="btn ghost" @click="handleToggleTraffic">TRAFFIC (BETA): {{ ui.trafficEnabled ? 'ON' : 'OFF' }}</button>
       <button class="btn ghost" @click="handleToggleMobile">TOUCH CONTROLS: {{ ui.mobileOverride === null ? (detectedMobile ? 'AUTO (ON)' : 'AUTO (OFF)') : (ui.mobileOverride ? 'ON' : 'OFF') }}</button>
       <button class="btn ghost" @click="handleUiScale">{{ uiScaleLabel() }}</button>
@@ -71,6 +72,50 @@
         <div class="volume-scale"><span>0%</span><span>100%</span><span>200%</span></div>
       </div>
       <p class="volume-note">R3 in game opens the radio volume slider. Rotate the right stick clockwise to raise it, counterclockwise to lower it.</p>
+      <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
+    </div>
+
+    <div v-else-if="ui.pauseMenu === 'spotify'" class="pause-card spotify-card">
+      <h2>SPOTIFY</h2>
+      <div class="spotify-status" :class="ui.radio.spotify.connected ? 'ok' : 'idle'">
+        <span class="spotify-dot"></span>
+        <span>{{ ui.radio.spotify.connected ? 'CONNECTED' : 'NOT CONNECTED' }}</span>
+        <span v-if="ui.radio.spotify.deviceName" class="spotify-device">{{ ui.radio.spotify.deviceName }}</span>
+      </div>
+      <p class="spotify-note">
+        SNACKRUN controls the Spotify app already running on your phone. Spotify keeps
+        playing its own audio. Playback control needs Spotify Premium and an active device.
+      </p>
+      <label class="spotify-field">
+        <span>CLIENT ID</span>
+        <input
+          class="spotify-input"
+          type="text"
+          spellcheck="false"
+          autocomplete="off"
+          placeholder="Paste your Spotify app client ID"
+          :value="ui.radio.spotify.clientId"
+          @input="onClientId"
+        />
+      </label>
+      <div class="spotify-redirect">
+        <span class="spotify-redirect-label">REDIRECT URI</span>
+        <code>{{ ui.radio.spotify.redirectUri }}</code>
+        <button class="btn ghost tiny" @click="copyRedirect">COPY</button>
+      </div>
+      <p v-if="ui.radio.spotify.error" class="spotify-error">{{ ui.radio.spotify.error }}</p>
+      <button class="btn primary" @click="connectSpotify">
+        {{ ui.radio.spotify.connected ? 'RECONNECT SPOTIFY' : 'CONNECT SPOTIFY' }}
+      </button>
+      <button v-if="ui.radio.spotify.connected" class="btn danger" @click="disconnectSpotify">
+        DISCONNECT SPOTIFY
+      </button>
+      <div class="spotify-steps">
+        <div>1. Create an app at developer.spotify.com/dashboard</div>
+        <div>2. Add the redirect URI above to that app</div>
+        <div>3. Paste the client ID here and connect</div>
+        <div>4. Open Spotify on the phone before selecting the station</div>
+      </div>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
 
@@ -126,7 +171,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { ui, toggleTraffic, setMobile, detectMobile, cycleUiScale, uiScaleLabel } from '../store.js';
+import { ui, toggleTraffic, setMobile, detectMobile, cycleUiScale, uiScaleLabel, toast } from '../store.js';
 import { bus } from '../../core/bus.js';
 import { CONFIG } from '../../config.js';
 
@@ -176,6 +221,23 @@ function onRadioVolume(e) {
 }
 function onSongVolume(t, e) {
   bus.emit('ui:song-volume', { name: t.name, volume: Number(e.target.value) / 100 });
+}
+function onClientId(e) {
+  bus.emit('ui:spotify-client-id', e.target.value);
+}
+function connectSpotify() {
+  bus.emit('ui:spotify-connect');
+}
+function disconnectSpotify() {
+  bus.emit('ui:spotify-disconnect');
+}
+async function copyRedirect() {
+  try {
+    await navigator.clipboard.writeText(ui.radio.spotify.redirectUri);
+    toast('Redirect URI copied.', 'success', 2200);
+  } catch {
+    toast('Could not copy. Select the URI manually.', 'warn', 2600);
+  }
 }
 const resetArmed = ref(false);
 let resetTimer = null;

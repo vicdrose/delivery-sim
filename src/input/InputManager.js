@@ -253,6 +253,10 @@ export class InputManager {
       sprintRT: throttle > 0.5,
       shiftHeld: btn(1),
       musicVolume: btn(11),
+      dpadUp: up,
+      dpadDown: down,
+      dpadLeft: left,
+      dpadRight: right,
       rightStickX: dz(axes[2] || 0),
       rightStickY: dz(axes[3] || 0)
     };
@@ -277,6 +281,10 @@ export class InputManager {
       mutePressed: false,
       radioHeld: false,
       radioPressed: false,
+      radioUpPressed: false,
+      radioDownPressed: false,
+      radioLeftPressed: false,
+      radioRightPressed: false,
       shiftHeld: false,
       musicVolumePressed: false,
       rightStickX: 0,
@@ -331,6 +339,10 @@ export class InputManager {
       state.pausePressed = state.pausePressed || (pad.pause && !this._padPrev[9]);
       if (pad.radio) state.radioHeld = true;
       if (pad.radio && !this._padPrev[4]) state.radioPressed = true;
+      state.radioUpPressed = state.radioUpPressed || (pad.dpadUp && !this._padPrev[12]);
+      state.radioDownPressed = state.radioDownPressed || (pad.dpadDown && !this._padPrev[13]);
+      state.radioLeftPressed = state.radioLeftPressed || (pad.dpadLeft && !this._padPrev[14]);
+      state.radioRightPressed = state.radioRightPressed || (pad.dpadRight && !this._padPrev[15]);
       state.musicVolumePressed = state.musicVolumePressed || (pad.musicVolume && !this._padPrev[11]);
       state.rightStickX = pad.rightStickX;
       state.rightStickY = pad.rightStickY;
@@ -341,9 +353,27 @@ export class InputManager {
       this._padPrev[4] = pad.radio;
       this._padPrev[9] = pad.pause;
       this._padPrev[11] = pad.musicVolume;
+      this._padPrev[12] = pad.dpadUp;
+      this._padPrev[13] = pad.dpadDown;
+      this._padPrev[14] = pad.dpadLeft;
+      this._padPrev[15] = pad.dpadRight;
     }
 
     this._mergeTouch(state, ui);
+
+    if (state.radioHeld) {
+      state.radioUpPressed = state.radioUpPressed || this._edge('ArrowUp');
+      state.radioDownPressed = state.radioDownPressed || this._edge('ArrowDown');
+      state.radioLeftPressed = state.radioLeftPressed || this._edge('ArrowLeft');
+      state.radioRightPressed = state.radioRightPressed || this._edge('ArrowRight');
+      state.steer = 0;
+      state.throttle = 0;
+      state.brake = 0;
+      state.moveForward = 0;
+      state.handbrake = false;
+      state.sprint = false;
+      state.sprintRT = false;
+    }
 
     state.anyInput =
       state.steer !== 0 ||

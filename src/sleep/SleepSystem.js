@@ -317,7 +317,7 @@ export class SleepSystem {
     g.audio.setEngine(0, 0, false);
     g.audio.setSkid(0);
     if (sound) g.audio.play(sound);
-    g.music.pauseGame();
+    g.radio.gamePause();
     g.foley.stop();
     ui.prompt = null;
   }
@@ -522,7 +522,7 @@ export class SleepSystem {
     this._content = 0;
     this.g.dayCycle.paused = false;
     this._publish();
-    this.g.music.resumeGame(ui.playerMode === 'drive');
+    this.g.radio.gameResume();
     this.g.foley.start();
     toast(`You slept ${formatDuration(slept)} and woke at ${clock}.`, 'success', 4200);
     if (wasDream) toast('You wake from a strange dream.', 'info', 3600);
@@ -539,7 +539,7 @@ export class SleepSystem {
     this._blackout = 0;
     this._content = 0;
     this._publish();
-    this.g.music.resumeGame(ui.playerMode === 'drive');
+    this.g.radio.gameResume();
     this.g.foley.start();
     if (full) toast('You are fully rested.', 'success', 3600);
     else if (reduced > 0) toast(`You meditate — tiredness down ${reduced}%. It is ${clock}.`, 'success', 3600);

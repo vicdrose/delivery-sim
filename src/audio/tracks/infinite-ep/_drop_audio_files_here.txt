@@ -1,0 +1,9 @@
+Drop your Infinite EP songs here (mp3, ogg, wav, m4a, flac).
+
+Tracks are sorted by filename and play in order on the INFINITE EP station.
+Use ASCII filenames with no special characters, for example:
+
+01 first song.mp3
+02 second song.mp3
+
+Station 2 is silent until at least one file is added.

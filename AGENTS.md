@@ -65,9 +65,16 @@ Full architecture in `README.md` (`src/` tree). Key files:
   the fade-sleep-wake sequence, and the dream roll (`sleep:dream` bus seam).
 - `src/audio/AudioSystem.js` + `src/audio/MusicManager.js` — Tone.js engine.
 - `src/audio/FoleySystem.js` — ambient sound (currently waves only).
-- `src/audio/tracks/{title,pause,radio}` — folder-driven music, picked up
-  automatically on reload/build. Radio = in-game looping playlist (~88 tracks; a
-  few have been dropped).
+- `src/audio/tracks/{title,pause,radio,infinite-ep}` — folder-driven music, picked
+  up automatically on reload/build. Radio = in-game looping playlist (~88 tracks;
+  a few have been dropped). `infinite-ep/` is the user's own EP station and is
+  empty until files are dropped in.
+- `src/radio/RadioSystem.js` — station selection (DEFAULT / INFINITE EP /
+  SPOTIFY), persistence (`snackrun_radio_station`), vehicle enter/exit and
+  pause/resume transitions, debounced playback requests. `src/radio/providers/`
+  holds the provider seam: `LocalStationProvider` wraps `MusicManager`, and
+  `SpotifyProvider` uses Spotify Web API + PKCE to control the user's active
+  Spotify Connect device.
 - `src/world/NPCTraffic.js` — NPC car traffic (re-enabled; uses lane-offset
   collision, grid-bound turns).
 - `src/ui/components/TouchControls.vue` — mobile analog stick + contextual
@@ -98,18 +105,38 @@ Current behavior worth remembering (all landed and stable):
   D-pad when there is no stick. The title screen prints the detected pad name
   (`ui.padName`) — if nothing shows there, the browser is not exposing the pad
   at all, which no game code can fix.
-- **Settings** = pause menu is a five-page stack (`ui.pauseMenu` =
-  `main` | `levels` | `settings` | `sound` | `songs`): level picker, sound, traffic,
-  touch controls, UI size, per-song radio on/off + volume, and **RESET GAME DATA**
-  (wipes every `snackrun*` localStorage key and rebuilds the profile;
-  `Game.resetAllData()`). The SOUND page holds master mute and the overall radio
-  volume (0-200%); Song Choice gives every track its own 0-200% volume. Both
-  persist in `snackrun_radio_volume` / `snackrun_song_volumes`.
+- **Settings** = pause menu is a six-page stack (`ui.pauseMenu` =
+  `main` | `levels` | `settings` | `sound` | `songs` | `spotify`): level picker,
+  sound, traffic, touch controls, UI size, per-song radio on/off + volume,
+  Spotify connection, and **RESET GAME DATA** (wipes every `snackrun*`
+  localStorage key and rebuilds the profile; `Game.resetAllData()`). The SOUND
+  page holds master mute and the overall radio volume (0-200%); Song Choice gives
+  every track its own 0-200% volume. Both persist in `snackrun_radio_volume` /
+  `snackrun_song_volumes`.
 - **Radio volume on the controller** = R3 toggles a radio-volume slider overlay;
   rotating the right stick clockwise raises it, counterclockwise lowers it (a full
   turn spans 0-200%). The slider stays open until R3 is pressed again. The Web Audio
   gain stage is what allows values above 100% (`MusicManager`), and each song's
   volume multiplies on top of the global radio volume.
+- **Radio stations** = hold LB / R (~0.22s) to open the selector; D-pad Up/Down
+  or arrow keys change station, Left/Right toggle power, release closes. A short
+  tap still skips to the next track. `RadioSystem` persists the station in
+  `snackrun_radio_station`; entering a vehicle resumes it, exiting pauses it, and
+  re-entering resumes mid-song. Station changes are debounced to avoid duplicate
+  playback requests. DEFAULT uses `tracks/radio/`; INFINITE EP plays
+  `tracks/infinite-ep/` in filename order (empty until the user drops files in,
+  showing `NO TRACKS`); SPOTIFY controls the user's active Spotify Connect device
+  through `SpotifyProvider`. The HUD widget shows station, track/artist when
+  available, and a status such as PLAYING, STANDBY, NO TRACKS, NO ACTIVE DEVICE,
+  PREMIUM REQUIRED, or SET CLIENT ID.
+- **Spotify** = Web API + PKCE from the browser, no backend and no native wrapper.
+  Pause → Settings → Spotify stores the client ID (`snackrun_spotify_client_id`),
+  token (`snackrun_spotify_token`), PKCE verifier/state, and shows the exact
+  redirect URI. Scopes are `user-read-playback-state
+  user-modify-playback-state user-read-currently-playing`. Playback control needs
+  Premium and an already-active Spotify app/device; the game cannot launch Spotify.
+  This is the only implementation testable without the Android SDK. A future native
+  App Remote provider can plug into the same seam.
 - **HUD size is resolution-relative**, not fixed pixels. Every HUD length in
   `src/style.css` is `calc(N * var(--u))`, where `--u` is `--ui` × 1px. `--ui`
   is set by `applyUiScale()` in `src/ui/store.js` on load and on

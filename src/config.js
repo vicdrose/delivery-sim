@@ -172,9 +172,9 @@ export const CONFIG = {
     ['Shift', 'Sprint (on foot)'],
     ['H', 'Horn'],
     ['M', 'Mute sound'],
-    ['R', 'Radio: tap next · hold power'],
+    ['R', 'Radio: tap next · hold stations'],
     ['Esc', 'Pause'],
-    ['Gamepad', 'RT gas · LT brake · Stick steer · A interact / accept · Y vehicle · RB handbrake · X horn · LB radio · R3 volume']
+    ['Gamepad', 'RT gas · LT brake · Stick steer · A interact / accept · Y vehicle · RB handbrake · X horn · LB radio / hold stations · R3 volume']
   ]
 };
 

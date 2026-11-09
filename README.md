@@ -30,10 +30,10 @@ npm run preview  # serve the production build
 | Shift | Sprint on foot |
 | H | Horn |
 | M | Mute audio |
-| R | Radio: tap = next track, hold = power |
+| R | Radio: tap = next track, hold = station selector |
 | Esc | Pause |
 | Enter / N | Accept / decline offer |
-| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn, LB radio, R3 radio volume) |
+| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn, LB radio / hold stations, R3 radio volume) |
 
 ## Gameplay loop
 
@@ -121,7 +121,10 @@ src/
   progression/Progression.js  localStorage profile (bank, day, stats)
   sleep/SleepSystem.js    Sleepiness meter, sleep spots, sleep sequence, dream roll
   rhythm/index.js         Stub seam where the rhythm mode will plug in
+  radio/RadioSystem.js    Station selection, vehicle/pause transitions, persistence
+  radio/providers/        LocalStationProvider (DEFAULT/EP) + SpotifyProvider (PKCE)
   audio/AudioSystem.js    Tone.js engine: engine drone, skid, horn, UI stingers
+  audio/MusicManager.js   Folder-driven title/radio/EP/ambient playback
   game/
     Game.js               Composition root: renderer, levels, fleet, environment sync
     modes/DeliveryMode.js The playable mode wiring everything together
@@ -153,8 +156,9 @@ matching folder and they are picked up automatically on the next dev reload or b
 
 ```
 src/audio/tracks/
-  title/    Loops on the main menu
-  radio/    In-game station; plays as a looping playlist during deliveries
+  title/         Loops on the main menu
+  radio/         DEFAULT station: the in-game looping playlist
+  infinite-ep/   INFINITE EP station: your own EP, played in filename order
 ```
 
 Behavior:
@@ -162,12 +166,13 @@ Behavior:
 - The title track starts immediately at page load, muted; browsers forbid audible
   autoplay, so it un-mutes itself on your first click or keypress without
   restarting.
-- Radio picks a random starting song each shift, then advances sequentially,
+- The radio picks a random starting song each shift, then advances sequentially,
   looping the playlist.
-- The radio only plays while you are driving. Leave the car and it pauses exactly
-  where it was; get back in and it picks up mid-song.
-- Pausing the game freezes the radio where it is and keeps everything silent until
-  you resume (radio resumes only if you were driving).
+- The DEFAULT and INFINITE EP stations only play while you are driving. Leave the
+  car and the selected station pauses exactly where it was; get back in and it picks
+  up mid-song. Changing stations while parked does not start playback.
+- Pausing the game freezes the station where it is and keeps everything silent until
+  you resume (the station resumes only if you were driving).
 - Pause → Settings → Song Choice lets you mute individual songs and give each song
   its own volume (0-200%); choices are saved per browser and survive reloads.
 - Pause → Settings → Sound sets master sound and the overall radio volume (0-200%,
@@ -176,12 +181,54 @@ Behavior:
   the right stick clockwise to raise it and counterclockwise to lower it; click R3
   again to close.
 
-Radio controls: tap LB (or R) to skip to the next song, hold LB / R for about half a
-second to switch the radio on or off. A HUD widget top-right shows the current track
-and radio state.
+### Stations
 
-No files in a folder simply means that part stays silent — everything degrades
-gracefully.
+Hold LB (or R) for about a quarter second to open the station selector. D-pad
+Up/Down or the arrow keys move between stations, Left/Right toggle power, and
+releasing LB/R closes the selector. A tap of LB/R still skips to the next track.
+The chosen station is saved in `snackrun_radio_station` and survives vehicle
+transitions and reloads.
+
+- **DEFAULT** — the existing in-game radio playlist in `tracks/radio/`.
+- **INFINITE EP** — plays `tracks/infinite-ep/` in filename order. The folder is
+  empty until you drop your EP files in.
+- **SPOTIFY** — controls the Spotify app already running on your phone. SNACKRUN
+  never downloads, hosts or redistributes Spotify audio; Spotify remains
+  responsible for its own playback.
+
+The HUD widget top-right shows the station, current track (and artist when
+available), and playback status. If a station has no tracks or Spotify is not
+configured, the widget shows a setup message instead of failing.
+
+### Spotify setup
+
+Spotify control uses the Web API with PKCE from the browser. There is no backend
+and no native wrapper. Pause → Settings → Spotify holds the setup:
+
+1. Create an app at https://developer.spotify.com/dashboard.
+2. Add the redirect URI shown on that page to the app exactly as written.
+   For GitHub Pages it is the page URL; for local dev it is
+   `http://127.0.0.1:5173/`.
+3. Paste the app's client ID into the field and press CONNECT SPOTIFY. The browser
+   redirects to Spotify, then back to the game with a token saved locally in
+   `snackrun_spotify_token`.
+4. Open Spotify on the phone and start something once so the phone is an active
+   Spotify Connect device. SNACKRUN can control that device but cannot launch the
+   Spotify app for you.
+
+Requirements and limits:
+
+- Spotify playback control requires **Spotify Premium**.
+- The Spotify Android app must already be open/active on a device; otherwise the
+  station reports **NO ACTIVE DEVICE**.
+- The app needs the `user-read-playback-state`, `user-modify-playback-state`, and
+  `user-read-currently-playing` scopes.
+- Missing client ID, cancelled login, expired sessions, rate limiting, offline
+  state, and Premium/device errors are shown in the widget instead of throwing.
+- The Web API path is the only Spotify integration in this milestone. A future
+  native App Remote provider can slot into the same `RadioSystem` provider seam
+  without changing the UI or station model.
+
 
 ## Key decisions
 
@@ -202,3 +249,10 @@ gracefully.
 - **Rhythm-ready seams.** `rhythm/index.js` exposes an interface stub; audio lives
   behind `AudioSystem` so a future beat-driven mode can schedule against Tone's
   transport without touching gameplay code.
+- **Radio is provider-based.** `RadioSystem` owns station choice, persistence and
+  vehicle/pause state; each station plugs in behind a small provider interface.
+  Local stations use `MusicManager`; Spotify uses PKCE and the Web API. Adding a
+  future provider (for example SoundCloud) does not change input or HUD code.
+- **Spotify stays Spotify.** The browser only sends playback commands to the
+  user's active Spotify Connect device. No audio is downloaded, proxied or
+  rebroadcast, and no server or client secret is needed.

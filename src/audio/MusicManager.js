@@ -10,13 +10,18 @@ const radioFiles = import.meta.glob('./tracks/radio/*.{mp3,ogg,wav,m4a,flac}', {
   query: '?url',
   import: 'default'
 });
+const epFiles = import.meta.glob('./tracks/infinite-ep/*.{mp3,ogg,wav,m4a,flac}', {
+  eager: true,
+  query: '?url',
+  import: 'default'
+});
 const ambientFiles = import.meta.glob('./tracks/ambient/*.{mp3,ogg,wav,m4a,flac}', {
   eager: true,
   query: '?url',
   import: 'default'
 });
 
-const VOLUMES = { title: 0.65, radio: 0.55, ambient: 0.30 };
+const VOLUMES = { title: 0.65, radio: 0.55, ep: 0.55, ambient: 0.30 };
 const VOLUME_MAX = 2;
 const RADIO_VOLUME_KEY = 'snackrun_radio_volume';
 const SONG_VOLUME_KEY = 'snackrun_song_volumes';
@@ -65,11 +70,15 @@ export class MusicManager {
     this.groups = {
       title: this._list(titleFiles, 'title'),
       radio: this._list(radioFiles, 'radio'),
+      ep: this._list(epFiles, 'ep'),
       ambient: this._list(ambientFiles, 'ambient')
     };
     this.radioIndex = 0;
+    this.epIndex = 0;
     this.radioOn = true;
     this.radioPlaying = false;
+    this.epPlaying = false;
+    this.localStation = 'radio';
     this.muted = false;
     this.ambient = null;
     this.radioVolume = readRadioVolume();
@@ -82,6 +91,11 @@ export class MusicManager {
     for (const entry of this.groups.radio) {
       entry.el.addEventListener('ended', () => {
         if (this.radioPlaying && this.groups.radio.length > 1) this.radioNext(true);
+      });
+    }
+    for (const entry of this.groups.ep) {
+      entry.el.addEventListener('ended', () => {
+        if (this.epPlaying && this.groups.ep.length > 1) this.epNext(true);
       });
     }
     this._syncUi();
@@ -99,7 +113,7 @@ export class MusicManager {
           el,
           name,
           group,
-          disabled: this.radioDisabled.has(name),
+          disabled: group === 'radio' && this.radioDisabled.has(name),
           source: null,
           gain: null,
           graphTried: false
@@ -143,7 +157,8 @@ export class MusicManager {
 
   _applyEntryVolume(entry) {
     const base = VOLUMES[entry.group] || 0;
-    const boost = entry.group === 'radio' ? this.radioVolume * this._songVolume(entry.name) : 1;
+    const station = entry.group === 'radio' || entry.group === 'ep';
+    const boost = station ? this.radioVolume * this._songVolume(entry.name) : 1;
     const target = this.muted ? 0 : base * boost;
     if (entry.gain && this._ctx) {
       const t = this._ctx.currentTime;
@@ -179,6 +194,24 @@ export class MusicManager {
     return g[this.radioIndex % g.length].name;
   }
 
+  currentEpName() {
+    const g = this.groups.ep;
+    if (!g.length) return null;
+    return g[this.epIndex % g.length].name;
+  }
+
+  currentLocalName(group) {
+    return group === 'ep' ? this.currentEpName() : this.currentRadioName();
+  }
+
+  localHasTracks(group) {
+    return (this.groups[group] || []).length > 0;
+  }
+
+  isLocalPlaying(group) {
+    return group === 'ep' ? this.epPlaying : this.radioPlaying;
+  }
+
   _playEl(entry, group, fromStart = true) {
     if (!entry) return;
     this._ensureGraph(entry);
@@ -208,7 +241,7 @@ export class MusicManager {
     if (!g.length) return;
     if (this.ambient === 'title' && !g[0].el.paused) return;
     this.ambient = 'title';
-    this._radioElsPause();
+    this.pauseLocalStations();
     this._playEl(g[0], 'title');
   }
 
@@ -231,7 +264,7 @@ export class MusicManager {
     if (this._ctx && this._ctx.state === 'suspended') {
       this._ctx.resume().catch(() => void 0);
     }
-    for (const group of ['title', 'radio', 'ambient']) {
+    for (const group of ['title', 'radio', 'ep', 'ambient']) {
       for (const entry of this.groups[group]) {
         entry.el.muted = false;
         this._applyEntryVolume(entry);
@@ -244,13 +277,17 @@ export class MusicManager {
     this._stopGroup('title');
     const next = this._nextRadioIndex();
     if (next !== null) this.radioIndex = next;
+    this.epIndex = 0;
     this.startAmbient();
     this._syncUi();
   }
 
   _startRadioCurrent(resume) {
     const g = this.groups.radio;
-    if (!g.length || !this.radioOn) return;
+    if (!g.length || !this.radioOn) {
+      this.radioPlaying = false;
+      return;
+    }
     if (g[this.radioIndex % g.length].disabled) {
       const next = this._nextRadioIndex(this.radioIndex);
       if (next === null) {
@@ -261,6 +298,19 @@ export class MusicManager {
     }
     this._playEl(g[this.radioIndex % g.length], 'radio', !resume);
     this.radioPlaying = true;
+    this.localStation = 'radio';
+  }
+
+  _startEpCurrent(resume) {
+    const g = this.groups.ep;
+    if (!g.length || !this.radioOn) {
+      this.epPlaying = false;
+      return;
+    }
+    this.epIndex = ((this.epIndex % g.length) + g.length) % g.length;
+    this._playEl(g[this.epIndex], 'ep', !resume);
+    this.epPlaying = true;
+    this.localStation = 'ep';
   }
 
   _radioElsPause() {
@@ -270,16 +320,52 @@ export class MusicManager {
     this.radioPlaying = false;
   }
 
+  _epElsPause() {
+    for (const entry of this.groups.ep) {
+      if (!entry.el.paused) entry.el.pause();
+    }
+    this.epPlaying = false;
+  }
+
+  pauseLocalStations() {
+    this._radioElsPause();
+    this._epElsPause();
+  }
+
+  playLocalStation(group, resume = true) {
+    if (!this.radioOn) return;
+    if (group === 'ep') {
+      this._radioElsPause();
+      this._startEpCurrent(resume);
+    } else {
+      this._epElsPause();
+      this._startRadioCurrent(resume);
+    }
+    this._syncUi();
+  }
+
+  setLocalPower(on, play = true) {
+    this.radioOn = !!on;
+    if (!this.radioOn) {
+      this.pauseLocalStations();
+    } else if (play) {
+      this.playLocalStation(this.localStation === 'ep' ? 'ep' : 'radio', true);
+    }
+    this._syncUi();
+  }
+
   pauseGame() {
     this.ambient = 'pause';
-    this._radioElsPause();
+    this.pauseLocalStations();
     this.stopAmbient();
   }
 
-  resumeGame(inCar = true) {
+  resumeGame(inCar = false) {
     this.ambient = null;
     this.startAmbient();
-    if (inCar && this.radioOn && this.groups.radio.length) this._startRadioCurrent(true);
+    if (inCar && this.radioOn) {
+      this.playLocalStation(this.localStation === 'ep' ? 'ep' : 'radio', true);
+    }
     this._syncUi();
   }
 
@@ -302,12 +388,12 @@ export class MusicManager {
   }
 
   pauseForFoot() {
-    if (this.radioPlaying) this._radioElsPause();
+    this.pauseLocalStations();
   }
 
   resumeInCar() {
-    if (!this.ambient && this.radioOn && this.groups.radio.length) {
-      this._startRadioCurrent(true);
+    if (!this.ambient && this.radioOn) {
+      this.playLocalStation(this.localStation === 'ep' ? 'ep' : 'radio', true);
     }
   }
 
@@ -327,8 +413,63 @@ export class MusicManager {
       }
       this._playEl(g[this.radioIndex], 'radio');
       this.radioPlaying = true;
+      this.localStation = 'radio';
     }
     this._syncUi();
+  }
+
+  radioPrevious() {
+    const g = this.groups.radio;
+    if (!g.length) return;
+    const i = ((this.radioIndex % g.length) + g.length) % g.length;
+    this.radioIndex = (i - 1 + g.length) % g.length;
+    if (this.radioOn && !this.ambient) {
+      this._epElsPause();
+      this._playEl(g[this.radioIndex], 'radio');
+      this.radioPlaying = true;
+      this.localStation = 'radio';
+    }
+    this._syncUi();
+  }
+
+  epNext(auto = false) {
+    const g = this.groups.ep;
+    if (g.length < 2) return;
+    this.epIndex = (this.epIndex + 1) % g.length;
+    if (auto ? this.epPlaying : this.radioOn && !this.ambient) {
+      for (const [i, entry] of g.entries()) {
+        if (i !== this.epIndex && !entry.el.paused) entry.el.pause();
+      }
+      this._playEl(g[this.epIndex], 'ep');
+      this.epPlaying = true;
+      this.radioPlaying = false;
+      this.localStation = 'ep';
+    }
+    this._syncUi();
+  }
+
+  epPrevious() {
+    const g = this.groups.ep;
+    if (!g.length) return;
+    this.epIndex = (this.epIndex - 1 + g.length) % g.length;
+    if (this.radioOn && !this.ambient) {
+      this._radioElsPause();
+      this._epElsPause();
+      this._playEl(g[this.epIndex], 'ep');
+      this.epPlaying = true;
+      this.localStation = 'ep';
+    }
+    this._syncUi();
+  }
+
+  nextLocal(group, auto = false) {
+    if (group === 'ep') this.epNext(auto);
+    else this.radioNext(auto);
+  }
+
+  previousLocal(group) {
+    if (group === 'ep') this.epPrevious();
+    else this.radioPrevious();
   }
 
   setRadioEnabled(name, enabled) {
@@ -355,6 +496,7 @@ export class MusicManager {
   setRadioVolume(value) {
     this.radioVolume = clampVolume(value);
     this._applyGroup('radio');
+    this._applyGroup('ep');
     this._saveVolumeSoon();
     if (ui.radio) ui.radio.volume = this.radioVolume;
   }
@@ -409,43 +551,39 @@ export class MusicManager {
     }
     this._applyGroup('title');
     this._applyGroup('radio');
+    this._applyGroup('ep');
     this._applyGroup('ambient');
     this._syncUi();
   }
 
   toggleRadio() {
-    this.radioOn = !this.radioOn;
-    if (this.radioOn && this.groups.radio.length && !this.ambient) {
-      this._startRadioCurrent(false);
-    } else if (!this.radioOn) {
-      this._radioElsPause();
-    }
-    this._syncUi();
+    this.setLocalPower(!this.radioOn);
   }
 
   setMuted(m) {
     this.muted = m;
-    for (const group of ['title', 'radio', 'ambient']) {
+    for (const group of ['title', 'radio', 'ep', 'ambient']) {
       for (const entry of this.groups[group]) this._applyEntryVolume(entry);
     }
   }
 
   dispose() {
     if (this._saveTimer) clearTimeout(this._saveTimer);
-    for (const group of ['title', 'radio', 'ambient']) this._stopGroup(group);
+    for (const group of ['title', 'radio', 'ep', 'ambient']) this._stopGroup(group);
   }
 
   _syncUi() {
-    ui.radio = {
+    if (!ui.radio) ui.radio = {};
+    Object.assign(ui.radio, {
       on: this.radioOn,
-      track: this.radioOn ? this.currentRadioName() : null,
       hasTracks: this.groups.radio.length > 0,
+      epHasTracks: this.groups.ep.length > 0,
       volume: this.radioVolume,
       tracks: this.groups.radio.map((e) => ({
         name: e.name,
         enabled: !e.disabled,
         volume: this._songVolume(e.name)
       }))
-    };
+    });
   }
 }

@@ -24,6 +24,7 @@ import { DeliveryStateMachine, DeliveryState } from '../delivery/DeliveryStateMa
 import { Progression } from '../progression/Progression.js';
 import { DeliveryMode } from './modes/DeliveryMode.js';
 import { registerRhythmModes } from '../rhythm/index.js';
+import { RadioSystem } from '../radio/RadioSystem.js';
 import { ui, toast, applyUiScale } from '../ui/store.js';
 
 const MINIMAP_ZONE_COLORS = {
@@ -115,6 +116,7 @@ export class Game {
     this.input = new InputManager();
     this.audio = new AudioSystem();
     this.music = new MusicManager();
+    this.radio = new RadioSystem(this, this.music);
     this.foley = new FoleySystem();
     this.progression = new Progression();
 
@@ -268,6 +270,18 @@ export class Game {
       bus.on('ui:song-volume', ({ name, volume }) => {
         this.music.setSongVolume(name, volume);
       }),
+      bus.on('ui:radio-select', (id) => {
+        this.radio.selectStation(id);
+      }),
+      bus.on('ui:spotify-client-id', (id) => {
+        this.radio.setSpotifyClientId(id);
+      }),
+      bus.on('ui:spotify-connect', () => {
+        this.radio.connectSpotify();
+      }),
+      bus.on('ui:spotify-disconnect', () => {
+        this.radio.disconnectSpotify();
+      }),
       bus.on('ui:reset-data', () => {
         this.resetAllData();
       }),
@@ -327,6 +341,7 @@ export class Game {
     ui.screen = 'playing';
     ui.paused = false;
     this.music.enterGame();
+    this.radio.onRunStart();
     this._ensureAudio();
     if (this.foley.ready) this.foley.start();
   }
@@ -351,17 +366,33 @@ export class Game {
     const held = !!s.radioHeld;
     if (held && !this._lbPrev) {
       this._lbHold = 0;
-      this._lbFired = false;
+      this._lbSelector = false;
     } else if (held) {
       this._lbHold += dt;
-      if (!this._lbFired && this._lbHold >= 0.65) {
-        this._lbFired = true;
-        this.music.toggleRadio();
+      if (!this._lbSelector && this._lbHold >= 0.22) {
+        this._lbSelector = true;
+        this.radio.openSelector();
         this.audio.play('ui');
       }
-    } else if (this._lbPrev && !this._lbFired) {
-      this.music.radioNext();
-      this.audio.play('ui');
+    }
+    if (held && this._lbSelector) {
+      if (s.radioUpPressed) {
+        this.radio.selectNext();
+        this.audio.play('ui');
+      } else if (s.radioDownPressed) {
+        this.radio.selectPrevious();
+        this.audio.play('ui');
+      } else if (s.radioLeftPressed || s.radioRightPressed) {
+        this.radio.togglePower();
+        this.audio.play('ui');
+      }
+    } else if (!held && this._lbPrev) {
+      if (this._lbSelector) {
+        this.radio.closeSelector();
+      } else {
+        this.radio.nextTrack();
+        this.audio.play('ui');
+      }
     }
     this._lbPrev = held;
   }
@@ -411,6 +442,9 @@ export class Game {
     if (v) {
       ui.musicVolumeActive = false;
       this._volumeAngle = null;
+      this._lbPrev = false;
+      this._lbHold = 0;
+      this._lbSelector = false;
       if (this.currentMode) {
         this.audio.horn(false);
         this.audio.setEngine(0, 0, false);
@@ -418,11 +452,10 @@ export class Game {
       }
     }
     if (v) {
-      this.music.pauseGame();
+      this.radio.gamePause();
       this.foley.stop();
     } else {
-      const inCar = !this.currentMode || this.currentMode.playerMode === 'drive';
-      this.music.resumeGame(inCar);
+      this.radio.gameResume();
       this.foley.start();
     }
   }
@@ -438,6 +471,7 @@ export class Game {
     }
     this.music.resetRadioPlaylist();
     this.music.resetVolumes();
+    this.radio.reset();
     this.sleep.reset();
     ui.musicVolumeActive = false;
     ui.trafficEnabled = false;
@@ -478,6 +512,7 @@ export class Game {
 
   update(dt) {
     const s = this.input.getState();
+    this.radio.update(dt);
 
     if (ui.screen === 'title') {
       this._titleT += dt * 0.05;
@@ -554,6 +589,7 @@ export class Game {
     window.removeEventListener('pagehide', this._onHide);
     this.sleep.save();
     this.sleep.dispose();
+    this.radio.dispose();
     this.music.dispose();
     this.foley.dispose();
     this.input.dispose();

@@ -86,7 +86,35 @@ export const ui = reactive({
     meditateNext: 0
   },
 
-  radio: { on: true, track: null, hasTracks: false, volume: 1, tracks: [] },
+  radio: {
+    on: true,
+    track: null,
+    artist: null,
+    hasTracks: false,
+    epHasTracks: false,
+    volume: 1,
+    tracks: [],
+    station: 'default',
+    stationName: 'DEFAULT',
+    stationDetail: 'In-game radio',
+    stations: [],
+    selectorOpen: false,
+    inVehicle: false,
+    paused: false,
+    power: true,
+    playing: false,
+    status: 'READY',
+    statusKind: 'idle',
+    spotify: {
+      configured: false,
+      connected: false,
+      clientId: '',
+      deviceName: '',
+      error: '',
+      status: 'disconnected',
+      redirectUri: ''
+    }
+  },
 
   levelId: '1-1',
   levels: [],
