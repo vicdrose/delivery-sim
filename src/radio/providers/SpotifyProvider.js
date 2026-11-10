@@ -83,6 +83,9 @@ export class SpotifyProvider {
     this._pollTimer = 0;
     this._polling = false;
     this._refreshPromise = null;
+    this._volumeTimer = 0;
+    this._volumeInFlight = false;
+    this._volumeQueued = null;
     this._ready = this._handleRedirect();
   }
 
@@ -144,6 +147,7 @@ export class SpotifyProvider {
 
   async disconnect() {
     if (this.connected) await this.pause();
+    this._cancelVolume();
     this.token = null;
     this.status = 'disconnected';
     this.error = '';
@@ -277,7 +281,7 @@ export class SpotifyProvider {
     this.error = message;
   }
 
-  async _request(path, options = {}, retried = false) {
+  async _request(path, options = {}, retried = false, tolerateForbidden = false) {
     if (!(await this._ensureToken())) return { ok: false, status: 401, data: null };
     let res;
     try {
@@ -293,12 +297,13 @@ export class SpotifyProvider {
       return { ok: false, status: 0, data: null };
     }
     if (res.status === 401 && !retried) {
-      if (await this._refresh()) return this._request(path, options, true);
+      if (await this._refresh()) return this._request(path, options, true, tolerateForbidden);
       this._setError('auth', 'Spotify session expired. Reconnect.');
       return { ok: false, status: 401, data: null };
     }
     if (res.status === 204) return { ok: true, status: 204, data: null };
     if (res.status === 403) {
+      if (tolerateForbidden) return { ok: false, status: 403, data: null };
       this._setError('premium', 'Spotify Premium is required for playback control.');
       return { ok: false, status: 403, data: null };
     }
@@ -374,6 +379,55 @@ export class SpotifyProvider {
     return res.ok;
   }
 
+  _cancelVolume() {
+    if (this._volumeTimer) {
+      clearTimeout(this._volumeTimer);
+      this._volumeTimer = 0;
+    }
+    this._volumeQueued = null;
+  }
+
+  setVolume(percent, immediate = false) {
+    const value = Math.round(Math.min(100, Math.max(0, Number(percent) || 0)));
+    if (!this.connected) return;
+    if (this._volumeTimer) {
+      clearTimeout(this._volumeTimer);
+      this._volumeTimer = 0;
+    }
+    if (immediate) {
+      this._sendVolume(value);
+      return;
+    }
+    this._volumeTimer = setTimeout(() => {
+      this._volumeTimer = 0;
+      this._sendVolume(value);
+    }, 180);
+  }
+
+  async _sendVolume(percent) {
+    if (!this.connected) return;
+    if (this._volumeInFlight) {
+      this._volumeQueued = percent;
+      return;
+    }
+    this._volumeInFlight = true;
+    try {
+      await this._request(
+        `/me/player/volume?volume_percent=${percent}`,
+        { method: 'PUT' },
+        false,
+        true
+      );
+    } catch {
+      void 0;
+    } finally {
+      this._volumeInFlight = false;
+      const queued = this._volumeQueued;
+      this._volumeQueued = null;
+      if (queued !== null && queued !== percent) this._sendVolume(queued);
+    }
+  }
+
   async poll() {
     if (this._polling || !this.connected) return;
     this._polling = true;
@@ -419,6 +473,7 @@ export class SpotifyProvider {
   }
 
   reset() {
+    this._cancelVolume();
     this.clientId = '';
     this.token = null;
     this.status = 'disconnected';

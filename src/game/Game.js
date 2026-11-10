@@ -266,6 +266,7 @@ export class Game {
       }),
       bus.on('ui:radio-volume', (volume) => {
         this.music.setRadioVolume(volume);
+        this.radio.setVolume(this.music.radioVolume);
       }),
       bus.on('ui:song-volume', ({ name, volume }) => {
         this.music.setSongVolume(name, volume);
@@ -424,6 +425,7 @@ export class Game {
     this._volumeAngle = angle;
     if (Math.abs(delta) < 0.002) return;
     this.music.setRadioVolume(this.music.radioVolume + (delta / (Math.PI * 2)) * 2);
+    this.radio.setVolume(this.music.radioVolume);
   }
 
   setMode(name) {

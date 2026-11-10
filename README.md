@@ -176,7 +176,9 @@ Behavior:
 - Pause → Settings → Song Choice lets you mute individual songs and give each song
   its own volume (0-200%); choices are saved per browser and survive reloads.
 - Pause → Settings → Sound sets master sound and the overall radio volume (0-200%,
-  so it can go past 100%). Settings are saved per browser.
+  so it can go past 100%). Settings are saved per browser. When SPOTIFY is the
+  selected station, the same volume setting controls Spotify's device volume
+  (mapped to Spotify's 0-100%).
 - Click R3 (right-stick press) during play to open the radio volume slider. Rotate
   the right stick clockwise to raise it and counterclockwise to lower it; click R3
   again to close.
@@ -223,6 +225,9 @@ Requirements and limits:
   station reports **NO ACTIVE DEVICE**.
 - The app needs the `user-read-playback-state`, `user-modify-playback-state`, and
   `user-read-currently-playing` scopes.
+- The radio volume slider also sets Spotify's volume (0-100%). Some Spotify
+  Connect devices do not accept remote volume changes; in that case the game
+  keeps playing and leaves the device volume alone.
 - Missing client ID, cancelled login, expired sessions, rate limiting, offline
   state, and Premium/device errors are shown in the widget instead of throwing.
 - The Web API path is the only Spotify integration in this milestone. A future

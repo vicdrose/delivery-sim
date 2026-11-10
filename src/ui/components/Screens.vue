@@ -71,7 +71,7 @@
         />
         <div class="volume-scale"><span>0%</span><span>100%</span><span>200%</span></div>
       </div>
-      <p class="volume-note">R3 in game opens the radio volume slider. Rotate the right stick clockwise to raise it, counterclockwise to lower it.</p>
+      <p class="volume-note">R3 in game opens the radio volume slider. Rotate the right stick clockwise to raise it, counterclockwise to lower it. When SPOTIFY is the selected station, this also sets Spotify's volume (0-100%).</p>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
 

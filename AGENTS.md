@@ -117,7 +117,11 @@ Current behavior worth remembering (all landed and stable):
   rotating the right stick clockwise raises it, counterclockwise lowers it (a full
   turn spans 0-200%). The slider stays open until R3 is pressed again. The Web Audio
   gain stage is what allows values above 100% (`MusicManager`), and each song's
-  volume multiplies on top of the global radio volume.
+  volume multiplies on top of the global radio volume. While SPOTIFY is the active
+  station, the same setting is mapped to Spotify's device volume (0-100%) and sent
+  through `PUT /me/player/volume`, debounced and coalesced so dragging the slider
+  does not spam the Web API. Devices that reject remote volume changes are ignored
+  without disturbing playback status.
 - **Radio stations** = hold LB / R (~0.22s) to open the selector; D-pad Up/Down
   or arrow keys change station, Left/Right toggle power, release closes. A short
   tap still skips to the next track. `RadioSystem` persists the station in

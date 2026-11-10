@@ -149,7 +149,10 @@ export class RadioSystem {
     if (this.station === 'spotify') {
       if (!this.inVehicle || this.paused) return;
       if (this.spotify.playing) this.spotify.pause();
-      else this.spotify.play();
+      else {
+        this.spotify.play();
+        this._applySpotifyVolume();
+      }
       this._syncUi();
       return;
     }
@@ -170,6 +173,17 @@ export class RadioSystem {
     if (this.station === 'spotify') this.spotify.previous();
     else this.music.previousLocal(this.localGroup);
     this._syncUi();
+  }
+
+  setVolume(value) {
+    const percent = Math.min(100, Math.max(0, Math.round((Number(value) || 0) * 100)));
+    if (this.station === 'spotify' && this.inVehicle && !this.paused && this.spotify.playing) {
+      this.spotify.setVolume(percent);
+    }
+  }
+
+  _applySpotifyVolume() {
+    this.spotify.setVolume(Math.min(100, Math.max(0, Math.round(this.music.radioVolume * 100))), true);
   }
 
   setSpotifyClientId(value) {
@@ -236,6 +250,7 @@ export class RadioSystem {
       this.music.pauseLocalStations();
       this._spotifyActive = true;
       this.spotify.play();
+      this._applySpotifyVolume();
     }
     this._syncUi();
   }
