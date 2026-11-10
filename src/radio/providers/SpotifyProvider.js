@@ -88,7 +88,11 @@ export class SpotifyProvider {
 
   get redirectUri() {
     if (typeof window === 'undefined') return '';
-    return window.location.origin + window.location.pathname;
+    const url = new URL(window.location.href);
+    let path = url.pathname;
+    if (path.endsWith('/index.html')) path = path.slice(0, -'index.html'.length);
+    if (!path.endsWith('/')) path += '/';
+    return url.origin + path;
   }
 
   get configured() {
