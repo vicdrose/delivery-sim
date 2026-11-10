@@ -164,18 +164,21 @@ export class InputManager {
 
   _padTriggers(pad, profile) {
     const axes = pad.axes || [];
-    const found = { brake: null, throttle: null, combined: null };
+    const found = { brake: null, throttle: null, combined: null, separate: [] };
     const combinedFrom = axes.length <= 3 ? 2 : 4;
+    const zeroRest = [];
     for (let i = 2; i < axes.length; i++) {
       const rest = profile.rest[i] || 0;
       if (Math.abs(rest) >= 0.6) {
         const entry = { index: i, rest };
         if (!found.brake) found.brake = entry;
         else if (!found.throttle) found.throttle = entry;
-      } else if (i >= combinedFrom && Math.abs(rest) < 0.2 && !found.combined) {
-        found.combined = { index: i };
+      } else if (i >= combinedFrom && Math.abs(rest) < 0.2) {
+        zeroRest.push({ index: i, rest });
       }
     }
+    if (zeroRest.length > 1) found.separate = zeroRest.slice(0, 2);
+    else if (zeroRest.length === 1) found.combined = zeroRest[0];
     return found;
   }
 
@@ -205,19 +208,22 @@ export class InputManager {
     let throttle = val(7);
     let brake = val(6);
 
-    if (!profile.standard) {
-      const triggers = this._padTriggers(pad, profile);
-      if (triggers.combined) {
-        const v = axes[triggers.combined.index] || 0;
-        throttle = Math.max(throttle, Math.min(1, Math.max(0, v)));
-        brake = Math.max(brake, Math.min(1, Math.max(0, -v)));
-      }
-      if (triggers.throttle) {
-        throttle = Math.max(throttle, this._axisTravel(axes[triggers.throttle.index] || 0, triggers.throttle.rest));
-      }
-      if (triggers.brake) {
-        brake = Math.max(brake, this._axisTravel(axes[triggers.brake.index] || 0, triggers.brake.rest));
-      }
+    const triggers = this._padTriggers(pad, profile);
+    if (triggers.combined) {
+      const v = axes[triggers.combined.index] || 0;
+      throttle = Math.max(throttle, Math.min(1, Math.max(0, v)));
+      brake = Math.max(brake, Math.min(1, Math.max(0, -v)));
+    }
+    if (triggers.separate.length) {
+      const [brakeAxis, throttleAxis] = triggers.separate;
+      brake = Math.max(brake, this._axisTravel(axes[brakeAxis.index] || 0, brakeAxis.rest));
+      throttle = Math.max(throttle, this._axisTravel(axes[throttleAxis.index] || 0, throttleAxis.rest));
+    }
+    if (triggers.throttle) {
+      throttle = Math.max(throttle, this._axisTravel(axes[triggers.throttle.index] || 0, triggers.throttle.rest));
+    }
+    if (triggers.brake) {
+      brake = Math.max(brake, this._axisTravel(axes[triggers.brake.index] || 0, triggers.brake.rest));
     }
 
     const up = btn(12);
