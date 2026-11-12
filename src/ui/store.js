@@ -1,4 +1,5 @@
 import { reactive } from 'vue';
+import { loadName, loadServerUrl, loadVoiceEnabled, loadMicMuted } from '../net/settings.js';
 
 let toastId = 1;
 
@@ -38,6 +39,7 @@ export const ui = reactive({
   repairPressed: false,
   handbrakePressed: false,
   sprintPressed: false,
+  voiceHeld: false,
 
   money: 0,
   todayEarned: 0,
@@ -119,6 +121,30 @@ export const ui = reactive({
   levelId: '1-1',
   levels: [],
   vehicleId: 'car',
+
+  multiplayer: {
+    panelOpen: false,
+    status: 'idle',
+    message: '',
+    error: '',
+    busy: false,
+    name: loadName(),
+    serverUrl: loadServerUrl(),
+    joinCode: '',
+    inRoom: false,
+    roomCode: '',
+    localId: '',
+    level: '1-1',
+    isHost: false,
+    players: [],
+    max: 32,
+    voiceEnabled: loadVoiceEnabled(),
+    voiceStatus: 'off',
+    micMuted: loadMicMuted(),
+    talking: false,
+    nearby: 0,
+    voicePeers: 0
+  },
 
   minimapStatic: null,
   minimapHalf: 180,

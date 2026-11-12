@@ -1,0 +1,16 @@
+{
+  "name": "snackrun-multiplayer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Realtime presence and voice signaling relay for SNACKRUN",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ws": "^8.22.2"
+  }
+}

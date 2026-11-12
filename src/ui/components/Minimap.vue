@@ -30,8 +30,8 @@ function draw() {
     }
 
     if (ui.blipsOther) {
-      ctx.fillStyle = '#4cc9f0';
       for (const b of ui.blipsOther) {
+        ctx.fillStyle = b.remote ? '#9ef01a' : '#4cc9f0';
         ctx.fillRect(toPx(b.x) - 2.5, toPx(b.z) - 2.5, 5, 5);
       }
     }

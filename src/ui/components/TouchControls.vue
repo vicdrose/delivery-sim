@@ -23,6 +23,16 @@
       @pointerdown="action"
     >{{ actionLabel }}</button>
 
+    <button
+      v-if="showMic"
+      class="touch-btn mic-btn"
+      :class="{ live: ui.voiceHeld }"
+      @pointerdown="micDown"
+      @pointerup="micUp"
+      @pointercancel="micUp"
+      @lostpointercapture="micUp"
+    >MIC</button>
+
     <button v-if="showRepair" class="touch-btn wrench-btn" @pointerdown="repair">⚙</button>
   </div>
 </template>
@@ -99,6 +109,17 @@ function repair() {
   pulse('repairPressed');
 }
 
+function micDown(e) {
+  e.currentTarget.setPointerCapture?.(e.pointerId);
+  ui.voiceHeld = true;
+}
+
+function micUp() {
+  ui.voiceHeld = false;
+}
+
+const showMic = computed(() => ui.multiplayer.inRoom && ui.multiplayer.voiceEnabled);
+
 const showRepair = computed(() => ui.nearGasStation && ui.playerMode === 'foot' && ui.healthLevel < ui.healthMax);
 
 const actionLabel = computed(() => {
@@ -171,6 +192,23 @@ function shortPrompt(p) {
   font-size: 22px;
   background: rgba(242, 165, 65, 0.85);
   border-color: rgba(255, 255, 255, 0.85);
+}
+
+.mic-btn {
+  right: 128px;
+  bottom: 62px;
+  width: 64px;
+  height: 64px;
+  font-size: 13px;
+  background: rgba(76, 201, 240, 0.8);
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 5px 0 rgba(22, 92, 116, 0.6);
+}
+
+.mic-btn.live {
+  background: rgba(158, 240, 26, 0.92);
+  color: #1d2430;
+  box-shadow: 0 0 18px rgba(158, 240, 26, 0.7);
 }
 
 .stick-base {

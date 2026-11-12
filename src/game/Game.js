@@ -25,6 +25,7 @@ import { Progression } from '../progression/Progression.js';
 import { DeliveryMode } from './modes/DeliveryMode.js';
 import { registerRhythmModes } from '../rhythm/index.js';
 import { RadioSystem } from '../radio/RadioSystem.js';
+import { Multiplayer } from '../net/Multiplayer.js';
 import { ui, toast, applyUiScale } from '../ui/store.js';
 
 const MINIMAP_ZONE_COLORS = {
@@ -136,6 +137,7 @@ export class Game {
     this._buildFleet();
 
     this.sleep = new SleepSystem(this);
+    this.multiplayer = new Multiplayer(this);
 
     this.generator = new DeliveryGenerator(this.city.locations);
     this.fsm = new DeliveryStateMachine(bus);
@@ -189,6 +191,10 @@ export class Game {
 
   loadLevel(id) {
     if (id === this.level.id) return;
+    if (this.multiplayer && this.multiplayer.inRoom && !this.multiplayer.switchingLevel) {
+      toast('Leave multiplayer before changing levels.', 'warn');
+      return;
+    }
     const next = getLevel(id);
     if (!next) return;
 
@@ -441,6 +447,7 @@ export class Game {
 
   setPaused(v) {
     ui.paused = v;
+    this.multiplayer?.setPaused(v);
     if (v) {
       ui.musicVolumeActive = false;
       this._volumeAngle = null;
@@ -463,6 +470,7 @@ export class Game {
   }
 
   resetAllData() {
+    this.multiplayer?.leave();
     for (const key of Object.keys(localStorage)) {
       if (key.startsWith('snackrun')) localStorage.removeItem(key);
     }
@@ -475,6 +483,7 @@ export class Game {
     this.music.resetVolumes();
     this.radio.reset();
     this.sleep.reset();
+    this.multiplayer?.resetSettings();
     ui.musicVolumeActive = false;
     ui.trafficEnabled = false;
     ui.mobileOverride = null;
@@ -551,6 +560,7 @@ export class Game {
       this._applyEnvironment();
       this.sky.update(dt);
       this.scenery.update(dt);
+      this.multiplayer?.update(dt, s);
       return;
     }
 
@@ -566,6 +576,7 @@ export class Game {
     if (this.currentMode) {
       this.currentMode.update(dt, s);
     }
+    this.multiplayer?.update(dt, s);
   }
 
   render() {
@@ -591,6 +602,7 @@ export class Game {
     window.removeEventListener('pagehide', this._onHide);
     this.sleep.save();
     this.sleep.dispose();
+    this.multiplayer.dispose();
     this.radio.dispose();
     this.music.dispose();
     this.foley.dispose();

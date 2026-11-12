@@ -78,9 +78,20 @@ Full architecture in `README.md` (`src/` tree). Key files:
 - `src/world/NPCTraffic.js` — NPC car traffic (re-enabled; uses lane-offset
   collision, grid-bound turns).
 - `src/ui/components/TouchControls.vue` — mobile analog stick + contextual
-  action / pause buttons, bottom-left.
+  action / pause buttons and push-to-talk MIC button, bottom-left.
 - `src/ui/components/FuelGauge.vue` — gas + vehicle-health + sleepiness meters in the HUD.
 - `src/rhythm/index.js` — stub seam where the rhythm mode will plug in.
+- `src/net/settings.js` — persisted driver name, relay URL, voice and mic prefs.
+- `src/net/client.js` — WebSocket relay client: room create/join, presence,
+  reconnect with backoff, and voice-signal forwarding.
+- `src/net/Multiplayer.js` — room lifecycle, local state publishing at 15 Hz,
+  voice proximity (8 closest within 75 m), HUD state, level guard.
+- `src/net/RemotePlayers.js` — remote avatar/vehicle visuals, interpolation,
+  name tags, mic dots, minimap blips.
+- `src/net/VoiceChat.js` — WebRTC mesh with perfect negotiation, PTT gating and
+  distance-based gain.
+- `server/index.js` — standalone `ws` relay (rooms, presence ticks, voice
+  signaling, `/health`); `render.yaml` deploys it to Render.
 - `src/levels/index.js` — the level registry (`LEVELS`, `getLevel`, `levelList`).
   Every level owns its own `grid` (`zoneOf` + `gridN`), `seed`, `gasSpots`,
   optional `storageBlock`, `spawn`, and the `vehicles` it spawns.
@@ -223,6 +234,21 @@ Current behavior worth remembering (all landed and stable):
   is backed into the west-front unit with its nose facing the aisle (so it can
   pull straight out) and the car is parked at the curb outside the gate; the
   player starts on foot at the gate (`spawn.kind: 'storage'`).
+- **Multiplayer is presence-only co-presence.** Title → MULTIPLAYER creates or
+  joins a five-character room (32 cap) on a separate Node `ws` relay
+  (`server/index.js`, `render.yaml`). Everyone loads the host's level, but each
+  player keeps their own deliveries, money, fuel, health, sleep, radio and
+  progression; remotes are visual only (no collision, no shared car). Clients
+  publish position/heading/speed/mode/vehicle/mic at 15 Hz; remote avatars and
+  cars interpolate, carry name tags and green minimap blips, and hide when
+  inside/sleeping. Push-to-talk is V, gamepad Select/Back (button 8), or the
+  mobile MIC button; WebRTC voice meshes only the 8 closest drivers within 75 m
+  (full volume inside 20 m). `VITE_MULTIPLAYER_URL` overrides the default relay
+  (`ws://<host>:2567` locally, `wss://snackrun-multiplayer.onrender.com` in
+  production); the panel SERVER field persists to `snackrun_mp_server`. Joining
+  a room switches levels (bypassing the normal in-room level guard), leaving
+  while host destroys an empty room, and dropped connections reconnect while the
+  room survives. No accounts, friends, chat or shared activities yet.
 
 ## Design language — the systems family
 
@@ -301,9 +327,14 @@ their first pass land as the level-select + 1-2 / van / storage facility — see
 9. **Gym**
 10. **Study** (coffee shop / college campus)
 
-Loose / later: hunger + thirst meters (with fitness + sleep), multiplayer for
-friends, roommates, volleyball mini-game, malls, multi-floor deliveries, more
-cities, national-park travel cutscenes, then the rhythm mode.
+Loose / later: hunger + thirst meters (with fitness + sleep), multiplayer
+friends/accounts, roommates, volleyball mini-game, malls, multi-floor
+deliveries, more cities, national-park travel cutscenes, then the rhythm mode.
+
+Multiplayer co-presence has a first pass landed already (rooms, 32-player
+presence, remote avatars/cars, minimap blips, 8-peer proximity PTT voice,
+reconnect, Render relay). Friends, accounts, text chat and shared mini-games
+remain later work.
 
 Track feature work against this file: when a feature ships or its context changes,
 update the roadmap here so the next session inherits accurate context.

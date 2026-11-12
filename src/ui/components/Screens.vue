@@ -1,6 +1,6 @@
 <template>
   <div v-if="ui.screen === 'title'" class="overlay title-screen">
-    <div class="title-inner">
+    <div v-if="!ui.multiplayer.panelOpen" class="title-inner">
       <h1 class="game-title">SNACK<span>RUN</span></h1>
       <p class="tagline">drive · dash · deliver · repeat</p>
       <div class="level-picker">
@@ -17,12 +17,70 @@
         </button>
       </div>
       <button class="btn primary big" @click="start">START SHIFT</button>
+      <button class="btn ghost" @click="openMultiplayer">MULTIPLAYER</button>
       <div class="controls-panel">
         <div v-for="row in controls" :key="row[0]" class="ctrl-row">
           <kbd>{{ row[0] }}</kbd><span>{{ row[1] }}</span>
         </div>
         <div v-if="padConnected" class="pad-note">Gamepad: {{ padName || 'detected' }}</div>
       </div>
+    </div>
+
+    <div v-else class="title-inner mp-panel">
+      <h2 class="mp-title">MULTIPLAYER</h2>
+      <p class="mp-sub">Same city. Your own shift. Proximity voice.</p>
+
+      <div v-if="!ui.multiplayer.inRoom" class="mp-body">
+        <label class="mp-field">
+          <span>DRIVER NAME</span>
+          <input v-model="ui.multiplayer.name" class="mp-input" type="text" maxlength="16" spellcheck="false" autocomplete="off" />
+        </label>
+
+        <button class="btn primary" :disabled="ui.multiplayer.busy" @click="createRoom">
+          {{ ui.multiplayer.busy ? 'CONNECTING…' : 'CREATE ROOM' }}
+        </button>
+
+        <div class="mp-join-row">
+          <input
+            v-model="ui.multiplayer.joinCode"
+            class="mp-input mp-code"
+            type="text"
+            maxlength="5"
+            placeholder="ROOM CODE"
+            spellcheck="false"
+            autocomplete="off"
+            @keyup.enter="joinRoom"
+          />
+          <button class="btn ghost" :disabled="ui.multiplayer.busy" @click="joinRoom">JOIN</button>
+        </div>
+
+        <label class="mp-field">
+          <span>SERVER</span>
+          <input v-model="ui.multiplayer.serverUrl" class="mp-input mp-server" type="text" spellcheck="false" autocomplete="off" />
+        </label>
+
+        <div class="mp-voice-row">
+          <button class="btn ghost" @click="toggleVoice">VOICE: {{ ui.multiplayer.voiceEnabled ? 'ON' : 'OFF' }}</button>
+          <button v-if="ui.multiplayer.voiceEnabled" class="btn ghost" @click="toggleMic">
+            MIC: {{ ui.multiplayer.micMuted ? 'MUTED' : 'PUSH TO TALK' }}
+          </button>
+        </div>
+
+        <p v-if="ui.multiplayer.message" class="mp-note">{{ ui.multiplayer.message }}</p>
+        <p v-if="ui.multiplayer.error" class="mp-error">{{ ui.multiplayer.error }}</p>
+
+        <p class="mp-help">
+          Up to 32 drivers share a city. Hold V or gamepad Select / Back to talk.
+          Voice connects to the 8 closest drivers near you.
+        </p>
+      </div>
+
+      <div v-else class="mp-body">
+        <div class="mp-room-code">ROOM {{ ui.multiplayer.roomCode }}</div>
+        <p class="mp-note">Return to the pause menu to manage the room.</p>
+      </div>
+
+      <button class="btn ghost" @click="closeMultiplayer">BACK</button>
     </div>
   </div>
 
@@ -32,6 +90,9 @@
       <button class="btn primary" @click="resume">RESUME</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'levels'">LEVELS</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">SETTINGS</button>
+      <button v-if="ui.multiplayer.inRoom" class="btn ghost" @click="ui.pauseMenu = 'multiplayer'">
+        ROOM {{ ui.multiplayer.roomCode }}
+      </button>
       <div class="controls-panel small">
         <div v-for="row in controls" :key="row[0]" class="ctrl-row">
           <kbd>{{ row[0] }}</kbd><span>{{ row[1] }}</span>
@@ -166,6 +227,25 @@
       </button>
       <button class="btn ghost" @click="ui.pauseMenu = 'main'">BACK</button>
     </div>
+
+    <div v-else-if="ui.pauseMenu === 'multiplayer'" class="pause-card">
+      <h2>MULTIPLAYER</h2>
+      <div class="mp-room-code">ROOM {{ ui.multiplayer.roomCode }}</div>
+      <div class="mp-roster">
+        <div v-for="p in ui.multiplayer.players" :key="p.id" class="mp-roster-row">
+          <span class="mp-roster-name">{{ p.name }}</span>
+          <span class="mp-roster-tag">{{ p.host ? 'HOST' : p.id === ui.multiplayer.localId ? 'YOU' : '' }}</span>
+        </div>
+      </div>
+      <p class="mp-help">{{ ui.multiplayer.players.length }} / {{ ui.multiplayer.max }} drivers · {{ ui.multiplayer.nearby }} nearby</p>
+      <button class="btn ghost" @click="toggleVoice">VOICE: {{ ui.multiplayer.voiceEnabled ? 'ON' : 'OFF' }}</button>
+      <button v-if="ui.multiplayer.voiceEnabled" class="btn ghost" @click="toggleMic">
+        MIC: {{ ui.multiplayer.micMuted ? 'MUTED' : 'PUSH TO TALK' }}
+      </button>
+      <p class="mp-help">Hold V or gamepad Select / Back to talk. Voice reaches the 8 closest drivers.</p>
+      <button class="btn danger" @click="leaveRoom">LEAVE ROOM</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'main'">BACK</button>
+    </div>
   </div>
 </template>
 
@@ -187,6 +267,28 @@ watch(() => ui.paused, (v) => {
 
 function start() {
   bus.emit('ui:start');
+}
+function openMultiplayer() {
+  bus.emit('ui:mp-open');
+}
+function closeMultiplayer() {
+  bus.emit('ui:mp-close');
+}
+function createRoom() {
+  bus.emit('ui:mp-create');
+}
+function joinRoom() {
+  bus.emit('ui:mp-join');
+}
+function leaveRoom() {
+  ui.pauseMenu = 'main';
+  bus.emit('ui:mp-leave');
+}
+function toggleVoice() {
+  bus.emit('ui:mp-voice');
+}
+function toggleMic() {
+  bus.emit('ui:mp-mic');
 }
 function pickLevel(id) {
   if (id === ui.levelId) return;

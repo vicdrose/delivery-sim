@@ -31,9 +31,10 @@ npm run preview  # serve the production build
 | H | Horn |
 | M | Mute audio |
 | R | Radio: tap = next track, hold = station selector |
+| V | Push-to-talk (multiplayer voice) |
 | Esc | Pause |
 | Enter / N | Accept / decline offer |
-| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn, LB radio / hold stations, R3 radio volume) |
+| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn, LB radio / hold stations, R3 radio volume, Select / Back push-to-talk) |
 
 ## Gameplay loop
 
@@ -115,6 +116,12 @@ src/
   interiors/
     InteriorManager.js    One shared interior room placed far outside the city
   interaction/InteractionSystem.js   Nearest-interactable prompts + key routing
+  net/
+    settings.js           Persisted driver name, server URL, voice + mic prefs
+    client.js             WebSocket relay client: rooms, presence, reconnect, signaling
+    Multiplayer.js        Room lifecycle, local state publishing, voice proximity, HUD state
+    RemotePlayers.js      Remote avatars/vehicles, interpolation, name tags, map blips
+    VoiceChat.js          WebRTC mesh, perfect negotiation, PTT gating, distance gain
   delivery/
     DeliveryGenerator.js  Order generation, pricing, time limits, payout finalize
     DeliveryStateMachine.js Explicit FSM for the whole delivery flow
@@ -131,6 +138,9 @@ src/
   ui/
     store.js              Reactive HUD state singleton
     App.vue + components/ Hud, minimap canvas, offers, payment flash, screens
+server/
+  index.js                Standalone WebSocket relay: rooms, presence ticks, voice signaling
+render.yaml               Render web service definition for the relay
 ```
 
 ## The World
@@ -235,6 +245,63 @@ Requirements and limits:
   without changing the UI or station model.
 
 
+## Multiplayer co-presence
+
+The title screen has a **MULTIPLAYER** entry next to START SHIFT. It is not a
+different map or mode: everyone in a room loads the room's level and plays their
+own shift in the same city.
+
+- **Rooms** — enter a driver name, press CREATE ROOM, or join with a
+  five-character code (for example `QERTY`). Names are anonymous and local; no
+  account is required. The room cap is 32 drivers.
+- **Your game stays yours.** Deliveries, offers, timers, money, fuel, vehicle
+  health, sleepiness, progression, radio and Spotify are all local. Nothing is
+  shared or authoritative on the server. Players cannot collide with each other,
+  share a car, or take the same delivery.
+- **What is shared** — position, heading, speed, on-foot/driving/idle/hidden
+  state, car vs. van, and mic activity, sent 15 times per second. Remote players
+  appear as low-poly people or cars with floating name tags and a microphone dot;
+  they interpolate smoothly, disappear when inside/sleeping, and show as green
+  blips on the minimap.
+- **Voice** — push-to-talk with **V**, gamepad **Select / Back** (button 8), or
+  the on-screen **MIC** button on mobile. Voice is a WebRTC mesh limited to the
+  **8 closest drivers within 75 m**; volume is full within 20 m and fades to
+  silence at 75 m. The HUD shows talking, muted, mic-blocked and no-device
+  states. A mic needs HTTPS or localhost in the browser.
+- **Leaving** — the pause menu exposes a ROOM page with the roster, voice/mic
+  toggles, and LEAVE ROOM. Closing the tab leaves the room. A dropped connection
+  reconnects automatically while the room still exists. Changing levels is
+  blocked while in a room.
+
+### Relay server
+
+The relay is a standalone Node `ws` service in `server/` (port `2567` locally).
+It only forwards room membership, presence ticks and voice signaling; it never
+runs game logic. `render.yaml` deploys it to Render:
+
+1. Push the repo and create a Render Blueprint (or Web Service) from `render.yaml`.
+2. The service builds with `npm install --omit=dev` in `server/` and starts with
+   `npm start`; health check is `/health`.
+3. Set `TURN_URL`, `TURN_USERNAME`, `TURN_CREDENTIAL` if you have a TURN service
+   (optional; STUN defaults to `stun:stun.l.google.com:19302`).
+4. Point the frontend at it with `VITE_MULTIPLAYER_URL=wss://<service>.onrender.com`
+   at build time, or paste the address into the SERVER field in the multiplayer
+   panel (persisted in `snackrun_mp_server`).
+
+Local development defaults to `ws://<host>:2567` for localhost, so run
+`node server/index.js` next to `npm run dev`. Production defaults to
+`wss://snackrun-multiplayer.onrender.com`. A page served over HTTPS must use
+`wss://`, and Render's free plan may take a few seconds to wake a sleeping
+service.
+
+Wire format: clients send `create` / `join` / `s` (state) / `v` (voice signal to
+one peer); the server sends `joined`, `roster`, `p` (presence tick), `v`, and
+`error`. State tuples are `[id, x, z, yaw, mode, vehicle, speed, mic]`, where
+mode is `0` driving, `1` walking, `2` idle and `3` hidden.
+
+This milestone does not include friends, accounts, text chat, shared activities,
+or persistent rooms. Those build on the same relay later.
+
 ## Key decisions
 
 - **One merged mesh for the static city.** Every building, curb and sidewalk is
@@ -261,3 +328,7 @@ Requirements and limits:
 - **Spotify stays Spotify.** The browser only sends playback commands to the
   user's active Spotify Connect device. No audio is downloaded, proxied or
   rebroadcast, and no server or client secret is needed.
+- **Multiplayer is presence, not simulation.** A small WebSocket relay forwards
+  15 Hz state tuples and WebRTC signaling; every client simulates only its own
+  player and game. This keeps single-player play untouched, avoids server
+  authority and rollback, and leaves room for shared activities later.

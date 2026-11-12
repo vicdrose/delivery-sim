@@ -838,7 +838,8 @@ export class DeliveryMode {
         this.playerMode === 'drive' ? null : { x: this.deliveryVehicle.position.x, z: this.deliveryVehicle.position.z };
       ui.blipsOther = Object.values(g.vehicles)
         .filter((v) => v !== this.deliveryVehicle)
-        .map((v) => ({ x: v.position.x, z: v.position.z }));
+        .map((v) => ({ x: v.position.x, z: v.position.z }))
+        .concat(g.multiplayer ? g.multiplayer.blips() : []);
       ui.blipsTarget = this.targetPos ? { x: this.targetPos.x, z: this.targetPos.z, food: fsm.hasFood } : null;
     }
   }

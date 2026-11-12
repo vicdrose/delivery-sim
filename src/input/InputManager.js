@@ -66,6 +66,7 @@ export class InputManager {
     }
     state.handbrake = state.handbrake || ui.handbrakePressed;
     state.sprint = state.sprint || ui.sprintPressed;
+    state.voiceHeld = state.voiceHeld || ui.voiceHeld;
 
     const actionEdge = ui.actionPressed && !this._actionPrev;
     state.actionPressed = state.actionPressed || actionEdge;
@@ -256,6 +257,7 @@ export class InputManager {
       radio: btn(4),
       pause: btn(9),
       sprint: btn(10),
+      voice: btn(8),
       sprintRT: throttle > 0.5,
       shiftHeld: btn(1),
       musicVolume: btn(11),
@@ -293,6 +295,7 @@ export class InputManager {
       radioRightPressed: false,
       shiftHeld: false,
       musicVolumePressed: false,
+      voiceHeld: false,
       rightStickX: 0,
       rightStickY: 0,
       moveForward: 0,
@@ -315,6 +318,7 @@ export class InputManager {
     state.sprint = this._down('ShiftLeft', 'ShiftRight');
     state.horn = this._down('KeyH');
     state.shiftHeld = this._down('KeyN');
+    state.voiceHeld = this._down('KeyV');
 
     state.interactPressed = this._edge('KeyE');
     state.enterExitPressed = this._edge('KeyF');
@@ -338,6 +342,7 @@ export class InputManager {
       state.sprintRT = pad.sprintRT;
       state.horn = state.horn || pad.horn;
       state.shiftHeld = state.shiftHeld || pad.shiftHeld;
+      state.voiceHeld = state.voiceHeld || pad.voice;
       state.interactPressed = state.interactPressed || (pad.horn && !this._padPrev[2]) || (pad.interact && !this._padPrev[0]);
       state.acceptPressed = state.acceptPressed || (pad.interact && !this._padPrev[0]) || (pad.horn && !this._padPrev[2]);
       state.declinePressed = state.declinePressed || (pad.decline && !this._padPrev[1]);

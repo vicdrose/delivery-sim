@@ -1959,3 +1959,153 @@ kbd {
   0%, 100% { transform: scale(1); opacity: 0.8; }
   50% { transform: scale(1.12); opacity: 1; }
 }
+
+.mp-panel {
+  width: min(92vw, 470px);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 30px 34px;
+  border-radius: 22px;
+  background: var(--paper);
+  box-shadow: var(--card-shadow);
+  text-align: center;
+}
+
+.mp-title {
+  font-size: 26px;
+  letter-spacing: 0.3em;
+}
+
+.mp-sub {
+  margin-top: -4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #5b6574;
+}
+
+.mp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mp-panel .btn {
+  width: 100%;
+}
+
+.mp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #5b6574;
+}
+
+.mp-input {
+  padding: 9px 12px;
+  border: 2px solid #ddd7c9;
+  border-radius: 10px;
+  background: #f3efe4;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  outline: none;
+}
+
+.mp-input:focus {
+  border-color: var(--accent2);
+}
+
+.mp-server {
+  font-size: 12px;
+}
+
+.mp-join-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mp-code {
+  flex: 1;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 900;
+}
+
+.mp-join-row .btn {
+  flex: 0 0 110px;
+}
+
+.mp-voice-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mp-voice-row .btn {
+  flex: 1;
+}
+
+.mp-note {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5b6574;
+}
+
+.mp-error {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--bad);
+}
+
+.mp-help {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #6b7583;
+}
+
+.mp-room-code {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #f3efe4;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+}
+
+.mp-roster {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mp-roster-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f3efe4;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mp-roster-tag {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
