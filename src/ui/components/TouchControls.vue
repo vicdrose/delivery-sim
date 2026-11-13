@@ -19,8 +19,11 @@
 
     <button
       class="touch-btn action-btn"
-      :class="{ pulse: ui.actionPressed }"
-      @pointerdown="action"
+      :class="{ pulse: ui.actionPressed, running: ui.sprintPressed }"
+      @pointerdown="actionDown"
+      @pointerup="actionUp"
+      @pointercancel="actionUp"
+      @lostpointercapture="actionUp"
     >{{ actionLabel }}</button>
 
     <button
@@ -38,7 +41,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { ui, isMobileUI } from '../store.js';
 
 const mobile = computed(() => isMobileUI() && ui.screen === 'playing');
@@ -48,6 +51,14 @@ const dy = ref(0);
 const active = ref(false);
 
 const RADIUS = 58;
+
+watch([mobile, () => ui.paused], ([shown, paused]) => {
+  if (!shown || paused) ui.sprintPressed = false;
+});
+
+onBeforeUnmount(() => {
+  ui.sprintPressed = false;
+});
 
 const thumbStyle = computed(() => ({
   transform: `translate(${dx.value}px, ${dy.value}px)`
@@ -97,11 +108,21 @@ function pulse(key) {
   setTimeout(() => { ui[key] = false; }, 90);
 }
 
-function action() {
-  pulse('actionPressed');
+function actionDown(e) {
+  e.currentTarget.setPointerCapture?.(e.pointerId);
+  if (hasAction.value) {
+    pulse('actionPressed');
+  } else {
+    ui.sprintPressed = true;
+  }
+}
+
+function actionUp() {
+  ui.sprintPressed = false;
 }
 
 function pause() {
+  ui.sprintPressed = false;
   pulse('pausePressed');
 }
 
@@ -122,12 +143,13 @@ const showMic = computed(() => ui.multiplayer.inRoom && ui.multiplayer.voiceEnab
 
 const showRepair = computed(() => ui.nearGasStation && ui.playerMode === 'foot' && ui.healthLevel < ui.healthMax);
 
+const hasAction = computed(() => !!ui.offer || !!ui.prompt || ui.playerMode === 'drive');
+
 const actionLabel = computed(() => {
   if (ui.offer) return 'ACCEPT';
-  if (ui.playerMode === 'inside') return ui.prompt ? shortPrompt(ui.prompt) : 'LEAVE';
   if (ui.prompt) return shortPrompt(ui.prompt);
   if (ui.playerMode === 'drive') return 'EXIT';
-  return 'GET IN';
+  return 'RUN';
 });
 
 function shortPrompt(p) {
@@ -182,6 +204,12 @@ function shortPrompt(p) {
 
 .action-btn.pulse {
   transform: scale(0.92);
+}
+
+.action-btn.running {
+  transform: scale(0.94);
+  background: rgba(232, 97, 90, 1);
+  box-shadow: 0 3px 0 rgba(140, 40, 35, 0.6), 0 0 18px rgba(232, 97, 90, 0.55);
 }
 
 .wrench-btn {

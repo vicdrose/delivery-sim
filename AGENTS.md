@@ -78,7 +78,9 @@ Full architecture in `README.md` (`src/` tree). Key files:
 - `src/world/NPCTraffic.js` — NPC car traffic (re-enabled; uses lane-offset
   collision, grid-bound turns).
 - `src/ui/components/TouchControls.vue` — mobile analog stick + contextual
-  action / pause buttons and push-to-talk MIC button, bottom-left.
+  action / pause buttons and push-to-talk MIC button, bottom-left. The action
+  button becomes **RUN** (hold to sprint) whenever no interaction, offer or exit
+  action is available.
 - `src/ui/components/FuelGauge.vue` — gas + vehicle-health + sleepiness meters in the HUD.
 - `src/rhythm/index.js` — stub seam where the rhythm mode will plug in.
 - `src/net/settings.js` — persisted driver name, relay URL, voice and mic prefs.
@@ -166,7 +168,10 @@ Current behavior worth remembering (all landed and stable):
   overlays stay at fixed px on purpose, as do the touch controls.
 - **Touch controls** auto-enable on coarse-pointer/UA detection but are
   forceable from settings; override persisted in `snackrun_mobile`. Key hints
-  render as empty strings on mobile (`_keyHint` in `DeliveryMode.js`).
+  render as empty strings on mobile (`_keyHint` in `DeliveryMode.js`). On foot
+  or inside with nothing to interact with, the round action button reads **RUN**
+  and holding it sprints; it switches back to the contextual action (ACCEPT,
+  EXIT, GET IN, etc.) as soon as one is available.
 - **Vehicle health** (`CONFIG.vehicle.healthMax` 100) is the second gas-style
   meter, gear icon above the gas. Wears while driving (`driveWearPerSec`), takes
   collision damage scaled by impact speed, and **caps top speed at 12% once
