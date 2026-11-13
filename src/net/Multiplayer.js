@@ -64,6 +64,12 @@ export class Multiplayer {
       if (document.hidden) this.voice.setTalking(false);
     };
     document.addEventListener('visibilitychange', this._onVisibility);
+
+    this._resumeVoice = () => {
+      if (this.client.inRoom) this.voice.resume();
+    };
+    window.addEventListener('pointerdown', this._resumeVoice);
+    window.addEventListener('keydown', this._resumeVoice);
   }
 
   get inRoom() {
@@ -173,6 +179,9 @@ export class Multiplayer {
     mp.isHost = false;
     mp.talking = false;
     mp.nearby = 0;
+    mp.voicePeers = 0;
+    mp.voiceConnected = 0;
+    mp.voiceFailed = 0;
     ui.voiceHeld = false;
     if (wasInRoom) toast('Left multiplayer.', 'info');
   }
@@ -236,9 +245,12 @@ export class Multiplayer {
     this.voice.setDistances(new Map(near.map((p) => [p.id, p.distance])));
     const canTalk = !!(input && input.voiceHeld) && !ui.paused && !this.g.sleep.blocking && !mp.micMuted;
     this.voice.setTalking(canTalk);
+    const stats = this.voice.stats();
     mp.talking = this.voice.talking;
     mp.nearby = near.length;
-    mp.voicePeers = near.length;
+    mp.voicePeers = stats.total;
+    mp.voiceConnected = stats.connected;
+    mp.voiceFailed = stats.failed;
   }
 
   blips() {
@@ -412,6 +424,8 @@ export class Multiplayer {
     for (const off of this._unsubs) off();
     this._unsubs = [];
     document.removeEventListener('visibilitychange', this._onVisibility);
+    window.removeEventListener('pointerdown', this._resumeVoice);
+    window.removeEventListener('keydown', this._resumeVoice);
     this.voice.disable();
     this.remotes.clear();
     this.client.leave();

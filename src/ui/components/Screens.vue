@@ -237,7 +237,7 @@
           <span class="mp-roster-tag">{{ p.host ? 'HOST' : p.id === ui.multiplayer.localId ? 'YOU' : '' }}</span>
         </div>
       </div>
-      <p class="mp-help">{{ ui.multiplayer.players.length }} / {{ ui.multiplayer.max }} drivers · {{ ui.multiplayer.nearby }} nearby</p>
+      <p class="mp-help">{{ ui.multiplayer.players.length }} / {{ ui.multiplayer.max }} drivers · {{ ui.multiplayer.nearby }} nearby · voice {{ ui.multiplayer.voiceConnected }}/{{ ui.multiplayer.voicePeers }}</p>
       <button class="btn ghost" @click="toggleVoice">VOICE: {{ ui.multiplayer.voiceEnabled ? 'ON' : 'OFF' }}</button>
       <button v-if="ui.multiplayer.voiceEnabled" class="btn ghost" @click="toggleMic">
         MIC: {{ ui.multiplayer.micMuted ? 'MUTED' : 'PUSH TO TALK' }}

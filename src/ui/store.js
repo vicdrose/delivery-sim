@@ -143,7 +143,9 @@ export const ui = reactive({
     micMuted: loadMicMuted(),
     talking: false,
     nearby: 0,
-    voicePeers: 0
+    voicePeers: 0,
+    voiceConnected: 0,
+    voiceFailed: 0
   },
 
   minimapStatic: null,

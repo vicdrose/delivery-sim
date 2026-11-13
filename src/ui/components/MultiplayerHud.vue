@@ -20,7 +20,8 @@ const active = computed(() => ui.screen === 'playing' && ui.multiplayer.inRoom);
 
 const micProblem = computed(() => {
   if (!ui.multiplayer.voiceEnabled) return false;
-  return ['denied', 'unsupported', 'no-device'].includes(ui.multiplayer.voiceStatus);
+  if (['denied', 'unsupported', 'no-device'].includes(ui.multiplayer.voiceStatus)) return true;
+  return ui.multiplayer.voiceFailed > 0 && ui.multiplayer.voiceConnected === 0;
 });
 
 const voiceLine = computed(() => {
@@ -32,7 +33,10 @@ const voiceLine = computed(() => {
   if (mp.voiceStatus === 'unsupported') return 'NO MIC SUPPORT';
   if (mp.voiceStatus === 'no-device') return 'NO MIC FOUND';
   if (mp.voiceStatus === 'off') return 'VOICE OFF';
+  if (mp.voiceFailed > 0 && mp.voiceConnected === 0) return 'VOICE UNREACHABLE';
   if (mp.talking) return 'TALKING';
+  if (mp.nearby > 0 && mp.voiceConnected === 0) return 'VOICE CONNECTING…';
+  if (mp.voiceConnected > 0) return `VOICE ${mp.voiceConnected}/${mp.nearby}`;
   return 'HOLD V / SELECT TO TALK';
 });
 </script>

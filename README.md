@@ -268,6 +268,13 @@ own shift in the same city.
   **8 closest drivers within 75 m**; volume is full within 20 m and fades to
   silence at 75 m. The HUD shows talking, muted, mic-blocked and no-device
   states. A mic needs HTTPS or localhost in the browser.
+  The HUD also reports connection state: `VOICE CONNECTING…` means signaling
+  finished and ICE is still probing; `VOICE UNREACHABLE` means ICE failed, which
+  usually needs a TURN server (set `TURN_URL`, `TURN_USERNAME` and
+  `TURN_CREDENTIAL` on the relay). Mic permission is requested when a room is
+  created or joined; if it is blocked, allow the mic in site settings and rejoin.
+  Audio output also needs one click or keypress on the page so the browser
+  unlocks playback.
 - **Leaving** — the pause menu exposes a ROOM page with the roster, voice/mic
   toggles, and LEAVE ROOM. Closing the tab leaves the room. A dropped connection
   reconnects automatically while the room still exists. Changing levels is

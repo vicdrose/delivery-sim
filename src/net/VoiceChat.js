@@ -19,6 +19,7 @@ export class VoiceChat {
     this.talking = false;
     this.ctx = null;
     this._pending = null;
+    this._retry = new Map();
   }
 
   setId(id) {
@@ -42,10 +43,15 @@ export class VoiceChat {
     this._applyGating();
   }
 
+  resume() {
+    this._ensureCtx();
+  }
+
   async enable() {
     if (this.stream) {
       this._ensureCtx();
       this._applyGating();
+      this._attachLocalTracks();
       return true;
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -68,6 +74,7 @@ export class VoiceChat {
         this.ready = !!this.track;
         this._ensureCtx();
         this._applyGating();
+        this._attachLocalTracks();
         ui.multiplayer.voiceStatus = this.ready ? 'ready' : 'no-device';
         return this.ready;
       } catch (err) {
@@ -102,6 +109,7 @@ export class VoiceChat {
 
   setTalking(value) {
     const next = !!value && this.enabled && this.ready && !this.muted;
+    if (next) this._ensureCtx();
     if (next === this.talking) return;
     this.talking = next;
     this._applyGating();
@@ -122,8 +130,13 @@ export class VoiceChat {
       return;
     }
     const wanted = new Set(ids);
+    const now = performance.now();
     for (const id of wanted) {
-      if (id && id !== this.id && !this.peers.has(id)) this._createPeer(id);
+      if (!id || id === this.id || this.peers.has(id)) continue;
+      const retryAt = this._retry.get(id);
+      if (retryAt && retryAt > now) continue;
+      this._retry.delete(id);
+      this._createPeer(id);
     }
     for (const id of [...this.peers.keys()]) {
       if (!wanted.has(id)) this._closePeer(id);
@@ -177,7 +190,8 @@ export class VoiceChat {
     };
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'failed') this._closePeer(peerId);
+      if (pc.connectionState === 'connected') this._retry.delete(peerId);
+      if (pc.connectionState === 'failed') this._closePeer(peerId, true);
     };
 
     if (this.stream) {
@@ -185,6 +199,27 @@ export class VoiceChat {
     }
 
     return entry;
+  }
+
+  _attachLocalTracks() {
+    if (!this.stream) return;
+    for (const entry of this.peers.values()) {
+      if (entry.closed) continue;
+      for (const track of this.stream.getTracks()) {
+        const sender = entry.pc.getSenders().find((s) => s.track === track);
+        if (!sender) entry.pc.addTrack(track, this.stream);
+      }
+    }
+  }
+
+  stats() {
+    let connected = 0;
+    let failed = 0;
+    for (const entry of this.peers.values()) {
+      if (entry.pc.connectionState === 'connected') connected++;
+      else if (entry.pc.connectionState === 'failed') failed++;
+    }
+    return { total: this.peers.size, connected, failed };
   }
 
   async _onDescription(peerId, description) {
@@ -272,7 +307,7 @@ export class VoiceChat {
     }
   }
 
-  _closePeer(peerId) {
+  _closePeer(peerId, retry = false) {
     const entry = this.peers.get(peerId);
     if (entry) {
       entry.closed = true;
@@ -297,9 +332,11 @@ export class VoiceChat {
       }
       this.audio.delete(peerId);
     }
+    if (retry) this._retry.set(peerId, performance.now() + 5000);
   }
 
   closeAll() {
     for (const id of [...this.peers.keys()]) this._closePeer(id);
+    this._retry.clear();
   }
 }
