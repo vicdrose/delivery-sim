@@ -37,6 +37,7 @@ export class Multiplayer {
     this._lastFoot = { x: 0, z: 0 };
     this._lastFootValid = false;
     this._joinTimer = null;
+    this._wakeTimer = null;
     this._switchingLevel = false;
 
     ui.multiplayer.name = loadName();
@@ -380,19 +381,29 @@ export class Multiplayer {
 
   _armJoinTimer() {
     this._clearJoinTimer();
+    this._wakeTimer = setTimeout(() => {
+      this._wakeTimer = null;
+      if (!ui.multiplayer.inRoom && ui.multiplayer.busy) {
+        ui.multiplayer.message = 'Waking the multiplayer server…';
+      }
+    }, 5000);
     this._joinTimer = setTimeout(() => {
       this._joinTimer = null;
       if (!ui.multiplayer.inRoom && ui.multiplayer.busy) {
         this.client.leave();
         this._fail('The multiplayer server did not answer. Check the server URL and try again.');
       }
-    }, 15000);
+    }, 60000);
   }
 
   _clearJoinTimer() {
     if (this._joinTimer) {
       clearTimeout(this._joinTimer);
       this._joinTimer = null;
+    }
+    if (this._wakeTimer) {
+      clearTimeout(this._wakeTimer);
+      this._wakeTimer = null;
     }
   }
 

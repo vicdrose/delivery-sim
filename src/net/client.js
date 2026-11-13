@@ -1,4 +1,5 @@
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 12000];
+const OPEN_TIMEOUT_MS = 45000;
 
 export class MultiplayerClient {
   constructor(handlers = {}) {
@@ -98,7 +99,7 @@ export class MultiplayerClient {
           void 0;
         }
         reject(new Error('Timed out connecting to the multiplayer server.'));
-      }, 12000);
+      }, OPEN_TIMEOUT_MS);
       this._openReject = reject;
 
       ws.onopen = () => {

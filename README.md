@@ -291,8 +291,9 @@ runs game logic. `render.yaml` deploys it to Render:
 Local development defaults to `ws://<host>:2567` for localhost, so run
 `node server/index.js` next to `npm run dev`. Production defaults to
 `wss://snackrun-multiplayer.onrender.com`. A page served over HTTPS must use
-`wss://`, and Render's free plan may take a few seconds to wake a sleeping
-service.
+`wss://`. Render's free plan suspends an idle service, so the first join after a
+quiet spell can take up to a minute; the panel shows "Waking the multiplayer
+server…" and waits instead of failing after a few seconds.
 
 Wire format: clients send `create` / `join` / `s` (state) / `v` (voice signal to
 one peer); the server sends `joined`, `roster`, `p` (presence tick), `v`, and
