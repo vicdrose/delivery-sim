@@ -485,7 +485,7 @@ export class Game {
     this.sleep.reset();
     this.multiplayer?.resetSettings();
     ui.musicVolumeActive = false;
-    ui.trafficEnabled = false;
+    ui.trafficEnabled = true;
     ui.mobileOverride = null;
     applyUiScale();
     ui.money = 0;

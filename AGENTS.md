@@ -196,8 +196,9 @@ Current behavior worth remembering (all landed and stable):
   placeholder overlay for the first `dreamSeconds` of the lapse plus a `sleep:dream`
   bus event carrying `{ location, kind, hours, day, clock }` — the seam for future
   dream mini-games; no rewards or mechanics exist yet.
-- **NPC traffic**: pause-menu toggle "TRAFFIC (BETA)", default OFF, persisted in
-  localStorage `snackrun_traffic`. Added because collision used lane-offset
+- **NPC traffic**: ON by default in every level and mode; the pause-menu toggle
+  "TRAFFIC (BETA)" remains as a debug override and persists in localStorage
+  `snackrun_traffic`. Kept for debugging collisions: traffic uses lane-offset
   positions, wheels use body-rotation angle, and cars are forced to turn at grid
   edges (no driving onto the beach).
 - **Out of gas** = no forward *and* no reverse; braking still decelerates while

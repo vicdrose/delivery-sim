@@ -20,7 +20,7 @@ export const ui = reactive({
   paused: false,
   pauseMenu: 'main',
   muted: false,
-  trafficEnabled: JSON.parse(localStorage.getItem('snackrun_traffic') ?? 'false'),
+  trafficEnabled: JSON.parse(localStorage.getItem('snackrun_traffic') ?? 'true'),
   padConnected: false,
   padName: '',
 
