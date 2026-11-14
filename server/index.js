@@ -14,7 +14,14 @@ const ALLOWED_MODES = new Set([0, 1, 2, 3]);
 const rooms = new Map();
 
 function iceServers() {
-  const list = [{ urls: process.env.STUN_URL || 'stun:stun.l.google.com:19302' }];
+  const stun = (
+    process.env.STUN_URL ||
+    'stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302,stun:stun.cloudflare.com:3478'
+  )
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean);
+  const list = [{ urls: stun }];
   const turn = (process.env.TURN_URL || '').split(',').map((v) => v.trim()).filter(Boolean);
   if (turn.length) {
     list.push({

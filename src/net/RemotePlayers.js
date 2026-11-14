@@ -319,6 +319,16 @@ export class RemotePlayers {
     return list.slice(0, limit);
   }
 
+  nearestDistance(x, z) {
+    let nearest = Infinity;
+    for (const remote of this.players.values()) {
+      if (remote.mode === 3) continue;
+      const distance = Math.hypot(remote.x - x, remote.z - z);
+      if (distance < nearest) nearest = distance;
+    }
+    return Number.isFinite(nearest) ? nearest : null;
+  }
+
   blips() {
     const list = [];
     for (const remote of this.players.values()) {

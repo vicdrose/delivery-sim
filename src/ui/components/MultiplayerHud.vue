@@ -26,6 +26,8 @@ const micProblem = computed(() => {
 
 const voiceLine = computed(() => {
   const mp = ui.multiplayer;
+  const listeners = mp.voiceConnected;
+  const nearest = Number.isFinite(mp.nearest) ? Math.round(mp.nearest) : null;
   if (!mp.voiceEnabled) return 'VOICE OFF';
   if (mp.micMuted) return 'MIC MUTED';
   if (mp.voiceStatus === 'requesting') return 'MIC REQUEST…';
@@ -33,10 +35,18 @@ const voiceLine = computed(() => {
   if (mp.voiceStatus === 'unsupported') return 'NO MIC SUPPORT';
   if (mp.voiceStatus === 'no-device') return 'NO MIC FOUND';
   if (mp.voiceStatus === 'off') return 'VOICE OFF';
-  if (mp.voiceFailed > 0 && mp.voiceConnected === 0) return 'VOICE UNREACHABLE';
-  if (mp.talking) return 'TALKING';
-  if (mp.nearby > 0 && mp.voiceConnected === 0) return 'VOICE CONNECTING…';
-  if (mp.voiceConnected > 0) return `VOICE ${mp.voiceConnected}/${mp.nearby}`;
+  if (mp.voiceFailed > 0 && listeners === 0) return 'VOICE UNREACHABLE';
+  if (mp.talking) {
+    if (listeners === 0) return 'TALKING · NO ONE CONNECTED';
+    return `TALKING · ${listeners} ${listeners === 1 ? 'LISTENER' : 'LISTENERS'}`;
+  }
+  if (mp.nearby > 0 && listeners === 0) return 'VOICE CONNECTING…';
+  if (listeners > 0) {
+    const where = nearest === null ? '' : ` · ${nearest}m`;
+    return `VOICE ${listeners}/${mp.nearby}${where}`;
+  }
+  if (mp.players.length <= 1) return 'WAITING FOR DRIVERS';
+  if (nearest !== null && nearest > 75) return `NO ONE IN RANGE · NEAREST ${nearest}m`;
   return 'HOLD V / SELECT TO TALK';
 });
 </script>

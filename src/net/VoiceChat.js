@@ -17,7 +17,6 @@ export class VoiceChat {
     this.enabled = false;
     this.muted = false;
     this.talking = false;
-    this.ctx = null;
     this._pending = null;
     this._retry = new Map();
   }
@@ -44,14 +43,15 @@ export class VoiceChat {
   }
 
   resume() {
-    this._ensureCtx();
+    for (const entry of this.audio.values()) entry.nextPlay = 0;
+    this._playAll();
   }
 
   async enable() {
     if (this.stream) {
-      this._ensureCtx();
       this._applyGating();
       this._attachLocalTracks();
+      this._playAll();
       return true;
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -72,7 +72,6 @@ export class VoiceChat {
         });
         this.track = this.stream.getAudioTracks()[0] || null;
         this.ready = !!this.track;
-        this._ensureCtx();
         this._applyGating();
         this._attachLocalTracks();
         ui.multiplayer.voiceStatus = this.ready ? 'ready' : 'no-device';
@@ -99,17 +98,10 @@ export class VoiceChat {
     this.track = null;
     this.ready = false;
     ui.multiplayer.voiceStatus = 'off';
-    if (this.ctx) {
-      this.ctx.close().catch(() => {
-        void 0;
-      });
-      this.ctx = null;
-    }
   }
 
   setTalking(value) {
     const next = !!value && this.enabled && this.ready && !this.muted;
-    if (next) this._ensureCtx();
     if (next === this.talking) return;
     this.talking = next;
     this._applyGating();
@@ -117,10 +109,9 @@ export class VoiceChat {
 
   setDistances(map) {
     this.distances = map;
-    if (!this.ctx) return;
     for (const [id, dist] of map) {
       const entry = this.audio.get(id);
-      if (entry) entry.gain.gain.setTargetAtTime(this._gainFor(dist), this.ctx.currentTime, 0.12);
+      if (entry) entry.el.volume = this._gainFor(dist);
     }
   }
 
@@ -141,6 +132,7 @@ export class VoiceChat {
     for (const id of [...this.peers.keys()]) {
       if (!wanted.has(id)) this._closePeer(id);
     }
+    this._playAll();
   }
 
   handleSignal(from, data) {
@@ -190,8 +182,21 @@ export class VoiceChat {
     };
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'connected') this._retry.delete(peerId);
-      if (pc.connectionState === 'failed') this._closePeer(peerId, true);
+      if (pc.connectionState === 'connected') {
+        this._retry.delete(peerId);
+        if (entry.disconnectTimer) {
+          clearTimeout(entry.disconnectTimer);
+          entry.disconnectTimer = null;
+        }
+      }
+      if (pc.connectionState === 'failed') {
+        this._closePeer(peerId, true);
+      } else if (pc.connectionState === 'disconnected' && !entry.disconnectTimer) {
+        entry.disconnectTimer = setTimeout(() => {
+          entry.disconnectTimer = null;
+          if (!entry.closed && pc.connectionState !== 'connected') this._closePeer(peerId, true);
+        }, 8000);
+      }
     };
 
     if (this.stream) {
@@ -215,11 +220,15 @@ export class VoiceChat {
   stats() {
     let connected = 0;
     let failed = 0;
+    let playing = 0;
     for (const entry of this.peers.values()) {
       if (entry.pc.connectionState === 'connected') connected++;
       else if (entry.pc.connectionState === 'failed') failed++;
     }
-    return { total: this.peers.size, connected, failed };
+    for (const entry of this.audio.values()) {
+      if (entry.el && !entry.el.paused) playing++;
+    }
+    return { total: this.peers.size, connected, failed, playing };
   }
 
   async _onDescription(peerId, description) {
@@ -234,7 +243,8 @@ export class VoiceChat {
     if (entry.ignoreOffer) return;
     try {
       if (collision) {
-        await Promise.all([pc.setLocalDescription({ type: 'rollback' }), pc.setRemoteDescription(description)]);
+        await pc.setLocalDescription({ type: 'rollback' });
+        await pc.setRemoteDescription(description);
       } else {
         await pc.setRemoteDescription(description);
       }
@@ -270,19 +280,51 @@ export class VoiceChat {
   }
 
   _attachAudio(peerId, stream) {
-    this._ensureCtx();
-    if (!this.ctx) return;
-    const existing = this.audio.get(peerId);
-    if (existing) {
-      existing.source.disconnect();
-      existing.gain.disconnect();
+    this._dropAudio(peerId);
+    const el = document.createElement('audio');
+    el.autoplay = true;
+    el.playsInline = true;
+    el.setAttribute('playsinline', '');
+    el.setAttribute('webkit-playsinline', '');
+    el.setAttribute('aria-hidden', 'true');
+    el.style.display = 'none';
+    el.srcObject = stream;
+    el.volume = this._gainFor(this.distances.get(peerId) ?? VOICE_FULL);
+    document.body.appendChild(el);
+    this.audio.set(peerId, { el, stream });
+    this._playPeer(peerId);
+  }
+
+  _playPeer(peerId) {
+    const entry = this.audio.get(peerId);
+    if (!entry || !entry.el) return;
+    if (!entry.el.paused) return;
+    const now = performance.now();
+    if (entry.nextPlay && entry.nextPlay > now) return;
+    entry.nextPlay = now + 1500;
+    const promise = entry.el.play();
+    if (promise && promise.catch) {
+      promise.catch(() => {
+        void 0;
+      });
     }
-    const source = this.ctx.createMediaStreamSource(stream);
-    const gain = this.ctx.createGain();
-    gain.gain.value = this._gainFor(this.distances.get(peerId) ?? VOICE_FULL);
-    source.connect(gain);
-    gain.connect(this.ctx.destination);
-    this.audio.set(peerId, { source, gain });
+  }
+
+  _playAll() {
+    for (const id of this.audio.keys()) this._playPeer(id);
+  }
+
+  _dropAudio(peerId) {
+    const entry = this.audio.get(peerId);
+    if (!entry) return;
+    try {
+      entry.el.pause();
+      entry.el.srcObject = null;
+      entry.el.remove();
+    } catch {
+      void 0;
+    }
+    this.audio.delete(peerId);
   }
 
   _gainFor(distance) {
@@ -295,22 +337,14 @@ export class VoiceChat {
     if (this.track) this.track.enabled = this.talking && !this.muted;
   }
 
-  _ensureCtx() {
-    if (!this.ctx) {
-      const Ctor = window.AudioContext || window.webkitAudioContext;
-      if (Ctor) this.ctx = new Ctor();
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume().catch(() => {
-        void 0;
-      });
-    }
-  }
-
   _closePeer(peerId, retry = false) {
     const entry = this.peers.get(peerId);
     if (entry) {
       entry.closed = true;
+      if (entry.disconnectTimer) {
+        clearTimeout(entry.disconnectTimer);
+        entry.disconnectTimer = null;
+      }
       try {
         entry.pc.onnegotiationneeded = null;
         entry.pc.onicecandidate = null;
@@ -322,16 +356,7 @@ export class VoiceChat {
       }
       this.peers.delete(peerId);
     }
-    const audio = this.audio.get(peerId);
-    if (audio) {
-      try {
-        audio.source.disconnect();
-        audio.gain.disconnect();
-      } catch {
-        void 0;
-      }
-      this.audio.delete(peerId);
-    }
+    this._dropAudio(peerId);
     if (retry) this._retry.set(peerId, performance.now() + 5000);
   }
 

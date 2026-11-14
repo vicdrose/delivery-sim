@@ -91,7 +91,9 @@ Full architecture in `README.md` (`src/` tree). Key files:
 - `src/net/RemotePlayers.js` — remote avatar/vehicle visuals, interpolation,
   name tags, mic dots, minimap blips.
 - `src/net/VoiceChat.js` — WebRTC mesh with perfect negotiation, PTT gating and
-  distance-based gain.
+  distance-based gain. Remote streams play through one hidden `<audio>` element
+  per peer (`playsInline`, volume by distance) rather than a Web Audio graph, and
+  playback is retried on gestures and presence ticks.
 - `server/index.js` — standalone `ws` relay (rooms, presence ticks, voice
   signaling, `/health`); `render.yaml` deploys it to Render.
 - `src/levels/index.js` — the level registry (`LEVELS`, `getLevel`, `levelList`).
@@ -249,7 +251,9 @@ Current behavior worth remembering (all landed and stable):
   cars interpolate, carry name tags and green minimap blips, and hide when
   inside/sleeping. Push-to-talk is V, gamepad Select/Back (button 8), or the
   mobile MIC button; WebRTC voice meshes only the 8 closest drivers within 75 m
-  (full volume inside 20 m). `VITE_MULTIPLAYER_URL` overrides the default relay
+  (full volume inside 20 m). The HUD names the nearest driver when nobody is in
+  range and distinguishes `VOICE CONNECTING…` from `VOICE UNREACHABLE`.
+  `VITE_MULTIPLAYER_URL` overrides the default relay
   (`ws://<host>:2567` locally, `wss://snackrun-multiplayer.onrender.com` in
   production); the panel SERVER field persists to `snackrun_mp_server`. Joining
   a room switches levels (bypassing the normal in-room level guard), leaving

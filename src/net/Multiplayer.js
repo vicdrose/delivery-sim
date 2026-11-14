@@ -179,6 +179,7 @@ export class Multiplayer {
     mp.isHost = false;
     mp.talking = false;
     mp.nearby = 0;
+    mp.nearest = null;
     mp.voicePeers = 0;
     mp.voiceConnected = 0;
     mp.voiceFailed = 0;
@@ -248,6 +249,7 @@ export class Multiplayer {
     const stats = this.voice.stats();
     mp.talking = this.voice.talking;
     mp.nearby = near.length;
+    mp.nearest = this.remotes.nearestDistance(local.x, local.z);
     mp.voicePeers = stats.total;
     mp.voiceConnected = stats.connected;
     mp.voiceFailed = stats.failed;
