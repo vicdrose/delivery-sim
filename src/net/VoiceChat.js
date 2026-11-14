@@ -294,7 +294,13 @@ export class VoiceChat {
     el.setAttribute('playsinline', '');
     el.setAttribute('webkit-playsinline', '');
     el.setAttribute('aria-hidden', 'true');
-    el.style.display = 'none';
+    el.preload = 'auto';
+    el.style.position = 'fixed';
+    el.style.left = '-9999px';
+    el.style.width = '1px';
+    el.style.height = '1px';
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
     el.srcObject = stream;
     el.volume = this._gainFor(this.distances.get(peerId) ?? VOICE_FULL);
     document.body.appendChild(el);
