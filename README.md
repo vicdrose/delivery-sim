@@ -272,8 +272,11 @@ own shift in the same city.
   The HUD also reports connection state: `VOICE CONNECTING…` means signaling
   finished and ICE is still probing; `VOICE UNREACHABLE` means ICE failed, which
   usually needs a TURN server (set `TURN_URL`, `TURN_USERNAME` and
-  `TURN_CREDENTIAL` on the relay). Mic permission is requested when a room is
-  created or joined; if it is blocked, allow the mic in site settings and rejoin.
+  `TURN_CREDENTIAL` on the relay). The pause-menu room summary shows
+  `TURN READY` or `STUN ONLY` plus the distance to the nearest driver, which
+  tells you at a glance whether the relay handed out a TURN server. Mic
+  permission is requested when a room is created or joined; if it is blocked,
+  allow the mic in site settings and rejoin.
   Remote audio plays through one hidden `<audio>` element per peer (instead of a
   Web Audio graph), which is more reliable across browsers and mobile Safari.
   Browsers still require one click or keypress before a page may play audio, so

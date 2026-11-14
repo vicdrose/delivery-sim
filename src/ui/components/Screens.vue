@@ -238,6 +238,7 @@
         </div>
       </div>
       <p class="mp-help">{{ ui.multiplayer.players.length }} / {{ ui.multiplayer.max }} drivers · {{ ui.multiplayer.nearby }} nearby · voice {{ ui.multiplayer.voiceConnected }}/{{ ui.multiplayer.voicePeers }}</p>
+      <p class="mp-help">{{ ui.multiplayer.voiceTurn ? 'TURN READY' : 'STUN ONLY' }} · {{ ui.multiplayer.nearest === null ? 'NO DRIVERS YET' : Math.round(ui.multiplayer.nearest) + 'm TO NEAREST' }}</p>
       <button class="btn ghost" @click="toggleVoice">VOICE: {{ ui.multiplayer.voiceEnabled ? 'ON' : 'OFF' }}</button>
       <button v-if="ui.multiplayer.voiceEnabled" class="btn ghost" @click="toggleMic">
         MIC: {{ ui.multiplayer.micMuted ? 'MUTED' : 'PUSH TO TALK' }}

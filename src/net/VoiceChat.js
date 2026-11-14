@@ -29,6 +29,13 @@ export class VoiceChat {
     if (Array.isArray(list) && list.length) this.iceServers = list;
   }
 
+  hasTurn() {
+    return this.iceServers.some((server) => {
+      const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
+      return urls.some((url) => typeof url === 'string' && url.toLowerCase().startsWith('turn:'));
+    });
+  }
+
   setEnabled(enabled) {
     this.enabled = !!enabled;
     if (!this.enabled) {

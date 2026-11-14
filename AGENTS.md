@@ -252,7 +252,8 @@ Current behavior worth remembering (all landed and stable):
   inside/sleeping. Push-to-talk is V, gamepad Select/Back (button 8), or the
   mobile MIC button; WebRTC voice meshes only the 8 closest drivers within 75 m
   (full volume inside 20 m). The HUD names the nearest driver when nobody is in
-  range and distinguishes `VOICE CONNECTING…` from `VOICE UNREACHABLE`.
+  range and distinguishes `VOICE CONNECTING…` from `VOICE UNREACHABLE`; the
+  pause-menu room summary shows `TURN READY` or `STUN ONLY`.
   `VITE_MULTIPLAYER_URL` overrides the default relay
   (`ws://<host>:2567` locally, `wss://snackrun-multiplayer.onrender.com` in
   production); the panel SERVER field persists to `snackrun_mp_server`. Joining

@@ -146,7 +146,8 @@ export const ui = reactive({
     nearest: null,
     voicePeers: 0,
     voiceConnected: 0,
-    voiceFailed: 0
+    voiceFailed: 0,
+    voiceTurn: false
   },
 
   minimapStatic: null,

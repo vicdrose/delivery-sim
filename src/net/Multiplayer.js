@@ -183,6 +183,7 @@ export class Multiplayer {
     mp.voicePeers = 0;
     mp.voiceConnected = 0;
     mp.voiceFailed = 0;
+    mp.voiceTurn = false;
     ui.voiceHeld = false;
     if (wasInRoom) toast('Left multiplayer.', 'info');
   }
@@ -327,6 +328,7 @@ export class Multiplayer {
     this.remotes.setRoster(msg.players || [], msg.hostId);
     this.voice.setId(msg.id);
     this.voice.setIceServers(msg.iceServers);
+    mp.voiceTurn = this.voice.hasTurn();
     this.voice.setEnabled(mp.voiceEnabled);
     this.voice.setMuted(mp.micMuted);
     if (mp.voiceEnabled) this.voice.enable();
