@@ -31,10 +31,11 @@ npm run preview  # serve the production build
 | H | Horn |
 | M | Mute audio |
 | R | Radio: tap = next track, hold = station selector |
+| P | Radio power on/off (while the station selector is open) |
 | V | Push-to-talk (multiplayer voice) |
 | Esc | Pause |
 | Enter / N | Accept / decline offer |
-| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn, LB radio / hold stations, R3 radio volume, Select / Back push-to-talk) |
+| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn, LB radio / hold stations, D-pad ←/→ aux source, Y radio power while the selector is open, R3 radio volume, Select / Back push-to-talk) |
 
 ## Gameplay loop
 
@@ -187,9 +188,9 @@ Behavior:
 - Pause → Settings → Song Choice lets you mute individual songs and give each song
   its own volume (0-200%); choices are saved per browser and survive reloads.
 - Pause → Settings → Sound sets master sound and the overall radio volume (0-200%,
-  so it can go past 100%). Settings are saved per browser. When SPOTIFY is the
-  selected station, the same volume setting controls Spotify's device volume
-  (mapped to Spotify's 0-100%). When SOUNDCLOUD is selected it sets the embedded
+  so it can go past 100%). Settings are saved per browser. When AUX is set to
+  SPOTIFY, the same volume setting controls Spotify's device volume (mapped to
+  Spotify's 0-100%). When AUX is set to SOUNDCLOUD it sets the embedded
   SoundCloud player's volume.
 - Click R3 (right-stick press) during play to open the radio volume slider. Rotate
   the right stick clockwise to raise it and counterclockwise to lower it; click R3
@@ -198,27 +199,34 @@ Behavior:
 ### Stations
 
 Hold LB (or R) for about a quarter second to open the station selector. D-pad
-Up/Down or the arrow keys move between stations, Left/Right toggle power, and
-releasing LB/R closes the selector. A tap of LB/R still skips to the next track.
-The chosen station is saved in `snackrun_radio_station` and survives vehicle
-transitions and reloads. The cycle wraps in the order below, so one step past
-SPOTIFY is SOUNDCLOUD.
+Up/Down or the arrow keys move between the three stations. On AUX, D-pad
+Left/Right or the arrow keys switch the aux source between Spotify and
+SoundCloud. Y on the gamepad, P on the keyboard, or the POWER button in the
+selector toggles playback. Releasing LB/R closes the selector. A tap of LB/R
+still skips to the next track.
+
+The chosen station is saved in `snackrun_radio_station`; the aux source is saved
+in `snackrun_aux_source`. Both survive vehicle transitions and reloads. The
+station cycle wraps in the order below.
 
 - **DEFAULT** — the existing in-game radio playlist in `tracks/radio/`.
 - **INFINITE EP** — plays `tracks/infinite-ep/` in filename order. The folder is
   empty until you drop your EP files in.
-- **SPOTIFY** — controls the Spotify app already running on your phone. SNACKRUN
-  never downloads, hosts or redistributes Spotify audio; Spotify remains
-  responsible for its own playback.
-- **SOUNDCLOUD** — plays a public SoundCloud profile, playlist or track inside the
-  game through SoundCloud's official embedded player. It cannot control a
-  soundcloud.com tab you already have open: browsers do not allow one site to
-  reach into another tab's audio. Paste a link once in Pause → Settings →
-  SoundCloud and the station reuses it.
+- **AUX** — the aux input. Left/Right or the two source buttons in the selector
+  choose which source is plugged in:
+  - **SPOTIFY** — controls the Spotify app already running on your phone.
+    SNACKRUN never downloads, hosts or redistributes Spotify audio; Spotify
+    remains responsible for its own playback.
+  - **SOUNDCLOUD** — plays a public SoundCloud profile, playlist or track inside
+    the game through SoundCloud's official embedded player. It cannot control a
+    soundcloud.com tab you already have open: browsers do not allow one site to
+    reach into another tab's audio. Paste a link once in Pause → Settings →
+    SoundCloud and the aux source reuses it.
 
-The HUD widget top-right shows the station, current track (and artist when
-available), and playback status. If a station has no tracks or Spotify is not
-configured, the widget shows a setup message instead of failing.
+The HUD widget top-right shows the station, the AUX source when AUX is selected,
+current track (and artist when available), and playback status. If a station has
+no tracks or the aux source is not configured, the widget shows a setup message
+instead of failing.
 
 ### Spotify setup
 
@@ -234,7 +242,7 @@ and no native wrapper. Pause → Settings → Spotify holds the setup:
    `snackrun_spotify_token`.
 4. Open Spotify on the phone and start something once so the phone is an active
    Spotify Connect device. SNACKRUN can control that device but cannot launch the
-   Spotify app for you.
+   Spotify app for you. In the car, pick AUX and switch the source to SPOTIFY.
 
 Requirements and limits:
 
@@ -263,7 +271,8 @@ Settings → SoundCloud holds the setup:
    For example `https://soundcloud.com/you/sets/your-playlist`.
 2. Paste it into the field and press LOAD SOUNDCLOUD. The link is saved in
    `snackrun_soundcloud_url`.
-3. Select SOUNDCLOUD in the station selector while driving.
+3. In the car, hold the station selector, pick AUX, then press ←/→ until
+   SOUNDCLOUD is the aux source.
 
 Behaviour and limits:
 
@@ -374,8 +383,9 @@ or persistent rooms. Those build on the same relay later.
   transport without touching gameplay code.
 - **Radio is provider-based.** `RadioSystem` owns station choice, persistence and
   vehicle/pause state; each station plugs in behind a small provider interface.
-  Local stations use `MusicManager`; Spotify uses PKCE and the Web API. Adding a
-  future provider (for example SoundCloud) does not change input or HUD code.
+  Local stations use `MusicManager`; AUX switches between Spotify (PKCE + Web
+  API) and SoundCloud (embedded Widget API). Adding another aux source does not
+  change input or HUD code.
 - **Spotify stays Spotify.** The browser only sends playback commands to the
   user's active Spotify Connect device. No audio is downloaded, proxied or
   rebroadcast, and no server or client secret is needed.

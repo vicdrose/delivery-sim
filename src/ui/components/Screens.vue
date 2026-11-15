@@ -133,7 +133,7 @@
         />
         <div class="volume-scale"><span>0%</span><span>100%</span><span>200%</span></div>
       </div>
-      <p class="volume-note">R3 in game opens the radio volume slider. Rotate the right stick clockwise to raise it, counterclockwise to lower it. When SPOTIFY is the selected station, this also sets Spotify's volume (0-100%).</p>
+      <p class="volume-note">R3 in game opens the radio volume slider. Rotate the right stick clockwise to raise it, counterclockwise to lower it. When AUX is set to SPOTIFY, this also sets Spotify's volume (0-100%).</p>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
 
@@ -176,7 +176,7 @@
         <div>1. Create an app at developer.spotify.com/dashboard</div>
         <div>2. Add the redirect URI above to that app</div>
         <div>3. Paste the client ID here and connect</div>
-        <div>4. Open Spotify on the phone before selecting the station</div>
+        <div>4. Open Spotify on the phone, then pick AUX and switch to SPOTIFY in game</div>
       </div>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
@@ -212,7 +212,7 @@
       <div class="spotify-steps">
         <div>1. On soundcloud.com, copy your profile or a playlist link</div>
         <div>2. Paste it above and press LOAD SOUNDCLOUD</div>
-        <div>3. In game, hold R / LB and pick SOUNDCLOUD</div>
+        <div>3. In game, hold R / LB, pick AUX, then press ← / → for SOUNDCLOUD</div>
         <div>4. Private tracks and on.soundcloud.com short links may not load</div>
       </div>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>

@@ -1,7 +1,7 @@
 const URL_KEY = 'snackrun_soundcloud_url';
 const SCRIPT_URL = 'https://w.soundcloud.com/player/api.js';
 const LOAD_TIMEOUT_MS = 12000;
-const SCRIPT_TIMEOUT_MS = 20000;
+const SCRIPT_TIMEOUT_MS = 30000;
 
 function readText(key) {
   try {
@@ -90,6 +90,7 @@ export class SoundCloudProvider {
     writeText(URL_KEY, next);
     this._teardown();
     this.status = 'idle';
+    this._loadScript().catch(() => void 0);
     return true;
   }
 

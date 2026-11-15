@@ -4,12 +4,14 @@ import { SpotifyProvider } from './providers/SpotifyProvider.js';
 import { SoundCloudProvider } from './providers/SoundCloudProvider.js';
 
 const STATION_KEY = 'snackrun_radio_station';
+const AUX_KEY = 'snackrun_aux_source';
+
+export const AUX_SOURCES = ['spotify', 'soundcloud'];
 
 export const RADIO_STATIONS = [
   { id: 'default', name: 'DEFAULT', detail: 'In-game radio' },
   { id: 'ep', name: 'INFINITE EP', detail: 'Local EP playlist' },
-  { id: 'spotify', name: 'SPOTIFY', detail: 'Phone playback' },
-  { id: 'soundcloud', name: 'SOUNDCLOUD', detail: 'Browser player' }
+  { id: 'aux', name: 'AUX', detail: 'Spotify / SoundCloud' }
 ];
 
 const STATION_IDS = new Set(RADIO_STATIONS.map((s) => s.id));
@@ -17,11 +19,24 @@ const STATION_IDS = new Set(RADIO_STATIONS.map((s) => s.id));
 function readStation() {
   try {
     const raw = localStorage.getItem(STATION_KEY);
+    if (raw === 'spotify' || raw === 'soundcloud') return 'aux';
     if (raw && STATION_IDS.has(raw)) return raw;
   } catch {
     void 0;
   }
   return 'default';
+}
+
+function readAuxSource() {
+  try {
+    const raw = localStorage.getItem(AUX_KEY);
+    if (AUX_SOURCES.includes(raw)) return raw;
+    const legacy = localStorage.getItem(STATION_KEY);
+    if (legacy === 'soundcloud') return 'soundcloud';
+  } catch {
+    void 0;
+  }
+  return 'spotify';
 }
 
 const SPOTIFY_LABELS = {
@@ -55,6 +70,7 @@ export class RadioSystem {
     this.g = game;
     this.music = music;
     this.station = readStation();
+    this.auxSource = readAuxSource();
     this.inVehicle = false;
     this.paused = false;
     this.selectorOpen = false;
@@ -80,15 +96,24 @@ export class RadioSystem {
     return this.station === 'default' || this.station === 'ep';
   }
 
+  get isAux() {
+    return this.station === 'aux';
+  }
+
   get isSpotify() {
-    return this.station === 'spotify';
+    return this.isAux && this.auxSource === 'spotify';
   }
 
   get isSoundCloud() {
-    return this.station === 'soundcloud';
+    return this.isAux && this.auxSource === 'soundcloud';
+  }
+
+  get auxProvider() {
+    return this.providers[this.auxSource];
   }
 
   providerFor(id = this.station) {
+    if (id === 'aux') return this.auxProvider;
     return this.providers[id] || this.providers.default;
   }
 
@@ -166,15 +191,34 @@ export class RadioSystem {
     this.selectStation(RADIO_STATIONS[(index - 1 + RADIO_STATIONS.length) % RADIO_STATIONS.length].id);
   }
 
+  selectAuxSource(id) {
+    if (!AUX_SOURCES.includes(id) || id === this.auxSource) return false;
+    this._pauseExternal();
+    this.auxSource = id;
+    try {
+      localStorage.setItem(AUX_KEY, id);
+    } catch {
+      void 0;
+    }
+    this._syncUi();
+    if (this.station === 'aux' && this.inVehicle && !this.paused) this._scheduleApply(140);
+    return true;
+  }
+
+  cycleAuxSource() {
+    if (this.station !== 'aux') return false;
+    return this.selectAuxSource(this.auxSource === 'spotify' ? 'soundcloud' : 'spotify');
+  }
+
   togglePower() {
     if (!this.isLocal) {
       if (!this.inVehicle || this.paused) return;
       const provider = this.providerFor();
       if (provider.playing) {
         provider.pause();
-        if (this._externalActive === this.station) this._externalActive = null;
+        if (this._externalActive === this.auxSource) this._externalActive = null;
       } else {
-        this._externalActive = this.station;
+        this._externalActive = this.auxSource;
         provider.play();
         this._applyStationVolume();
       }
@@ -287,7 +331,7 @@ export class RadioSystem {
       if (this.music.radioOn) this.music.playLocalStation(this.localGroup, true);
     } else {
       this.music.pauseLocalStations();
-      this._externalActive = this.station;
+      this._externalActive = this.auxSource;
       this.providerFor().play();
       this._applyStationVolume();
     }
@@ -309,6 +353,7 @@ export class RadioSystem {
   reset() {
     this._cancelApply();
     this.station = 'default';
+    this.auxSource = 'spotify';
     this.inVehicle = false;
     this.paused = false;
     this.selectorOpen = false;
@@ -379,13 +424,16 @@ export class RadioSystem {
     }
 
     const stationInfo = RADIO_STATIONS.find((s) => s.id === this.station) || RADIO_STATIONS[0];
+    const auxSourceName = this.auxSource === 'spotify' ? 'SPOTIFY' : 'SOUNDCLOUD';
     const power = local ? this.music.radioOn : this.isSpotify ? spotify.connected : soundcloud.configured;
     const on = local ? this.music.radioOn : playing;
 
     return {
       station: this.station,
       stationName: stationInfo.name,
-      stationDetail: stationInfo.detail,
+      stationDetail: this.station === 'aux' ? auxSourceName : stationInfo.detail,
+      auxSource: this.auxSource,
+      auxSourceName,
       stations: RADIO_STATIONS.map((s) => ({
         id: s.id,
         name: s.name,

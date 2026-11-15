@@ -6,7 +6,10 @@
   >
     <div class="radio-selector-head">
       <span class="radio-selector-title">RADIO</span>
-      <span class="radio-selector-hint">LB + D-PAD ↑↓</span>
+      <span class="radio-selector-hint">LB + D-PAD</span>
+      <button class="radio-selector-power" :class="{ on: ui.radio.on }" @click="togglePower">
+        POWER {{ ui.radio.on ? 'ON' : 'OFF' }}
+      </button>
     </div>
     <div class="radio-station-list">
       <button
@@ -24,11 +27,28 @@
         <span v-if="station.active" class="radio-station-status">{{ ui.radio.status }}</span>
       </button>
     </div>
+    <div v-if="ui.radio.station === 'aux'" class="radio-aux-row">
+      <span class="radio-aux-label">AUX SOURCE</span>
+      <button
+        class="radio-aux-btn"
+        :class="{ active: ui.radio.auxSource === 'spotify' }"
+        @click="pickAux('spotify')"
+      >
+        SPOTIFY
+      </button>
+      <button
+        class="radio-aux-btn"
+        :class="{ active: ui.radio.auxSource === 'soundcloud' }"
+        @click="pickAux('soundcloud')"
+      >
+        SOUNDCLOUD
+      </button>
+    </div>
     <div class="radio-selector-now">
       <span class="radio-selector-now-label">{{ ui.radio.playing ? 'NOW PLAYING' : 'STATION' }}</span>
       <span class="radio-selector-now-track">{{ nowLine }}</span>
     </div>
-    <div class="radio-selector-foot">↑ next · ↓ previous · ← → power · release LB to close</div>
+    <div class="radio-selector-foot">↑↓ station · ←→ aux source · Y/P power · release LB to close</div>
   </div>
 </template>
 
@@ -45,15 +65,29 @@ const nowLine = computed(() => {
   const radio = ui.radio;
   if (radio.track && radio.artist) return `${radio.track} — ${radio.artist}`;
   if (radio.track) return radio.track;
-  if (radio.station === 'spotify' && radio.spotify.error) return radio.spotify.error;
-  if (radio.station === 'soundcloud' && radio.soundcloud.error) return radio.soundcloud.error;
+  if (radio.station === 'aux') {
+    if (radio.auxSource === 'spotify') {
+      if (radio.spotify.error) return radio.spotify.error;
+      if (!radio.spotify.configured) return 'Add a Spotify client ID in Settings';
+      return 'Spotify on your phone';
+    }
+    if (radio.soundcloud.error) return radio.soundcloud.error;
+    if (!radio.soundcloud.configured) return 'Add a SoundCloud link in Settings';
+    return 'SoundCloud in the game';
+  }
   if (radio.station === 'ep' && !radio.epHasTracks) return 'Drop EP files into src/audio/tracks/infinite-ep/';
-  if (radio.station === 'spotify' && !radio.spotify.configured) return 'Add a Spotify client ID in Settings';
-  if (radio.station === 'soundcloud' && !radio.soundcloud.configured) return 'Add a SoundCloud link in Settings';
   return radio.stationDetail;
 });
 
 function pick(id) {
   bus.emit('ui:radio-select', id);
+}
+
+function pickAux(id) {
+  bus.emit('ui:radio-aux', id);
+}
+
+function togglePower() {
+  bus.emit('ui:radio-power');
 }
 </script>

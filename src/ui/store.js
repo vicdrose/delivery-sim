@@ -99,6 +99,8 @@ export const ui = reactive({
     station: 'default',
     stationName: 'DEFAULT',
     stationDetail: 'In-game radio',
+    auxSource: 'spotify',
+    auxSourceName: 'SPOTIFY',
     stations: [],
     selectorOpen: false,
     inVehicle: false,

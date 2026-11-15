@@ -69,12 +69,14 @@ Full architecture in `README.md` (`src/` tree). Key files:
   up automatically on reload/build. Radio = in-game looping playlist (~88 tracks;
   a few have been dropped). `infinite-ep/` is the user's own EP station and is
   empty until files are dropped in.
-- `src/radio/RadioSystem.js` — station selection (DEFAULT / INFINITE EP /
-  SPOTIFY), persistence (`snackrun_radio_station`), vehicle enter/exit and
+- `src/radio/RadioSystem.js` — station selection (DEFAULT / INFINITE EP / AUX,
+  with AUX switching between SPOTIFY and SOUNDCLOUD), persistence
+  (`snackrun_radio_station`, `snackrun_aux_source`), vehicle enter/exit and
   pause/resume transitions, debounced playback requests. `src/radio/providers/`
-  holds the provider seam: `LocalStationProvider` wraps `MusicManager`, and
+  holds the provider seam: `LocalStationProvider` wraps `MusicManager`,
   `SpotifyProvider` uses Spotify Web API + PKCE to control the user's active
-  Spotify Connect device.
+  Spotify Connect device; `SoundCloudProvider` drives the official embedded
+  player widget.
 - `src/world/NPCTraffic.js` — NPC car traffic (re-enabled; uses lane-offset
   collision, grid-bound turns).
 - `src/ui/components/TouchControls.vue` — mobile analog stick + contextual
@@ -136,29 +138,34 @@ Current behavior worth remembering (all landed and stable):
   station, the same setting is mapped to Spotify's device volume (0-100%) and sent
   through `PUT /me/player/volume`, debounced and coalesced so dragging the slider
   does not spam the Web API. Devices that reject remote volume changes are ignored
-  without disturbing playback status. While SOUNDCLOUD is active, the same slider
-  sets the embedded widget's volume (0-100%).
+  without disturbing playback status. When AUX is set to SPOTIFY the slider sets
+  the device volume; when AUX is set to SOUNDCLOUD it sets the embedded widget's
+  volume (0-100%).
 - **Radio stations** = hold LB / R (~0.22s) to open the selector; D-pad Up/Down
-  or arrow keys change station, Left/Right toggle power, release closes. A short
-  tap still skips to the next track. `RadioSystem` persists the station in
-  `snackrun_radio_station`; entering a vehicle resumes it, exiting pauses it, and
-  re-entering resumes mid-song. Station changes are debounced to avoid duplicate
-  playback requests. DEFAULT uses `tracks/radio/`; INFINITE EP plays
-  `tracks/infinite-ep/` in filename order (empty until the user drops files in,
-  showing `NO TRACKS`); SPOTIFY controls the user's active Spotify Connect device
-  through `SpotifyProvider`; SOUNDCLOUD plays a public SoundCloud profile,
-  playlist or track through `SoundCloudProvider`, which embeds the official
-  player iframe and drives it with the Widget API. The cycle order is DEFAULT →
-  INFINITE EP → SPOTIFY → SOUNDCLOUD. The HUD widget shows station, track/artist
-  when available, and a status such as PLAYING, STANDBY, NO TRACKS, NO ACTIVE
-  DEVICE, PREMIUM REQUIRED, SET CLIENT ID, or SET LINK.
+  or arrow keys change station, release closes. On AUX, D-pad Left/Right or the
+  arrow keys switch the aux source between Spotify and SoundCloud. Y on the
+  gamepad, P on the keyboard, or the selector's POWER button toggles playback
+  (Y is suppressed as vehicle enter/exit while the selector is held). A short tap
+  still skips to the next track. `RadioSystem` persists the station in
+  `snackrun_radio_station` and the aux source in `snackrun_aux_source`; entering
+  a vehicle resumes it, exiting pauses it, and re-entering resumes mid-song.
+  Station changes are debounced to avoid duplicate playback requests. DEFAULT uses
+  `tracks/radio/`; INFINITE EP plays `tracks/infinite-ep/` in filename order
+  (empty until the user drops files in, showing `NO TRACKS`); AUX is the aux
+  input: SPOTIFY controls the user's active Spotify Connect device through
+  `SpotifyProvider`, SOUNDCLOUD plays a public SoundCloud profile, playlist or
+  track through `SoundCloudProvider`, which embeds the official player iframe and
+  drives it with the Widget API. The station cycle order is DEFAULT → INFINITE EP
+  → AUX. The HUD widget shows station, the AUX source chip, track/artist when
+  available, and a status such as PLAYING, STANDBY, NO TRACKS, NO ACTIVE DEVICE,
+  PREMIUM REQUIRED, SET CLIENT ID, or SET LINK.
 - **SoundCloud** = official Widget API (`w.soundcloud.com/player/api.js`) in a
   hidden offscreen iframe, no OAuth and no backend. Pause → Settings → SoundCloud
-  stores the public link in `snackrun_soundcloud_url`. Play/pause, next/previous
-  and the radio volume slider drive the widget; leaving the vehicle pauses it.
-  It cannot control the SoundCloud Android app or an already-open soundcloud.com
-  tab, and private tracks or `on.soundcloud.com` short links may fail (`LINK
-  FAILED`).
+  stores the public link in `snackrun_soundcloud_url`. Pick AUX in the selector
+  and switch the source with Left/Right. Play/pause, next/previous and the radio
+  volume slider drive the widget; leaving the vehicle pauses it. It cannot
+  control the SoundCloud Android app or an already-open soundcloud.com tab, and
+  private tracks or `on.soundcloud.com` short links may fail (`LINK FAILED`).
 - **Spotify** = Web API + PKCE from the browser, no backend and no native wrapper.
   Pause → Settings → Spotify stores the client ID (`snackrun_spotify_client_id`),
   token (`snackrun_spotify_token`), PKCE verifier/state, and shows the exact

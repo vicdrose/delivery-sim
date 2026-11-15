@@ -280,6 +280,12 @@ export class Game {
       bus.on('ui:radio-select', (id) => {
         this.radio.selectStation(id);
       }),
+      bus.on('ui:radio-aux', (id) => {
+        this.radio.selectAuxSource(id);
+      }),
+      bus.on('ui:radio-power', () => {
+        this.radio.togglePower();
+      }),
       bus.on('ui:spotify-client-id', (id) => {
         this.radio.setSpotifyClientId(id);
       }),
@@ -396,6 +402,8 @@ export class Game {
         this.radio.selectPrevious();
         this.audio.play('ui');
       } else if (s.radioLeftPressed || s.radioRightPressed) {
+        if (this.radio.cycleAuxSource()) this.audio.play('ui');
+      } else if (s.radioPowerPressed) {
         this.radio.togglePower();
         this.audio.play('ui');
       }
