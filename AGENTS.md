@@ -120,14 +120,14 @@ Current behavior worth remembering (all landed and stable):
   D-pad when there is no stick. The title screen prints the detected pad name
   (`ui.padName`) — if nothing shows there, the browser is not exposing the pad
   at all, which no game code can fix.
-- **Settings** = pause menu is a six-page stack (`ui.pauseMenu` =
-  `main` | `levels` | `settings` | `sound` | `songs` | `spotify`): level picker,
-  sound, traffic, touch controls, UI size, per-song radio on/off + volume,
-  Spotify connection, and **RESET GAME DATA** (wipes every `snackrun*`
-  localStorage key and rebuilds the profile; `Game.resetAllData()`). The SOUND
-  page holds master mute and the overall radio volume (0-200%); Song Choice gives
-  every track its own 0-200% volume. Both persist in `snackrun_radio_volume` /
-  `snackrun_song_volumes`.
+- **Settings** = pause menu is a seven-page stack (`ui.pauseMenu` =
+  `main` | `levels` | `settings` | `sound` | `songs` | `spotify` | `soundcloud`):
+  level picker, sound, traffic, touch controls, UI size, per-song radio on/off +
+  volume, Spotify connection, SoundCloud link, and **RESET GAME DATA** (wipes
+  every `snackrun*` localStorage key and rebuilds the profile;
+  `Game.resetAllData()`). The SOUND page holds master mute and the overall radio
+  volume (0-200%); Song Choice gives every track its own 0-200% volume. Both
+  persist in `snackrun_radio_volume` / `snackrun_song_volumes`.
 - **Radio volume on the controller** = R3 toggles a radio-volume slider overlay;
   rotating the right stick clockwise raises it, counterclockwise lowers it (a full
   turn spans 0-200%). The slider stays open until R3 is pressed again. The Web Audio
@@ -136,7 +136,8 @@ Current behavior worth remembering (all landed and stable):
   station, the same setting is mapped to Spotify's device volume (0-100%) and sent
   through `PUT /me/player/volume`, debounced and coalesced so dragging the slider
   does not spam the Web API. Devices that reject remote volume changes are ignored
-  without disturbing playback status.
+  without disturbing playback status. While SOUNDCLOUD is active, the same slider
+  sets the embedded widget's volume (0-100%).
 - **Radio stations** = hold LB / R (~0.22s) to open the selector; D-pad Up/Down
   or arrow keys change station, Left/Right toggle power, release closes. A short
   tap still skips to the next track. `RadioSystem` persists the station in
@@ -145,9 +146,19 @@ Current behavior worth remembering (all landed and stable):
   playback requests. DEFAULT uses `tracks/radio/`; INFINITE EP plays
   `tracks/infinite-ep/` in filename order (empty until the user drops files in,
   showing `NO TRACKS`); SPOTIFY controls the user's active Spotify Connect device
-  through `SpotifyProvider`. The HUD widget shows station, track/artist when
-  available, and a status such as PLAYING, STANDBY, NO TRACKS, NO ACTIVE DEVICE,
-  PREMIUM REQUIRED, or SET CLIENT ID.
+  through `SpotifyProvider`; SOUNDCLOUD plays a public SoundCloud profile,
+  playlist or track through `SoundCloudProvider`, which embeds the official
+  player iframe and drives it with the Widget API. The cycle order is DEFAULT →
+  INFINITE EP → SPOTIFY → SOUNDCLOUD. The HUD widget shows station, track/artist
+  when available, and a status such as PLAYING, STANDBY, NO TRACKS, NO ACTIVE
+  DEVICE, PREMIUM REQUIRED, SET CLIENT ID, or SET LINK.
+- **SoundCloud** = official Widget API (`w.soundcloud.com/player/api.js`) in a
+  hidden offscreen iframe, no OAuth and no backend. Pause → Settings → SoundCloud
+  stores the public link in `snackrun_soundcloud_url`. Play/pause, next/previous
+  and the radio volume slider drive the widget; leaving the vehicle pauses it.
+  It cannot control the SoundCloud Android app or an already-open soundcloud.com
+  tab, and private tracks or `on.soundcloud.com` short links may fail (`LINK
+  FAILED`).
 - **Spotify** = Web API + PKCE from the browser, no backend and no native wrapper.
   Pause → Settings → Spotify stores the client ID (`snackrun_spotify_client_id`),
   token (`snackrun_spotify_token`), PKCE verifier/state, and shows the exact

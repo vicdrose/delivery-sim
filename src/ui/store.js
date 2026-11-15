@@ -115,6 +115,15 @@ export const ui = reactive({
       error: '',
       status: 'disconnected',
       redirectUri: ''
+    },
+    soundcloud: {
+      configured: false,
+      url: '',
+      status: 'unset',
+      label: 'NO LINK',
+      track: null,
+      artist: null,
+      error: ''
     }
   },
 

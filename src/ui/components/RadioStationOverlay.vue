@@ -46,8 +46,10 @@ const nowLine = computed(() => {
   if (radio.track && radio.artist) return `${radio.track} — ${radio.artist}`;
   if (radio.track) return radio.track;
   if (radio.station === 'spotify' && radio.spotify.error) return radio.spotify.error;
+  if (radio.station === 'soundcloud' && radio.soundcloud.error) return radio.soundcloud.error;
   if (radio.station === 'ep' && !radio.epHasTracks) return 'Drop EP files into src/audio/tracks/infinite-ep/';
   if (radio.station === 'spotify' && !radio.spotify.configured) return 'Add a Spotify client ID in Settings';
+  if (radio.station === 'soundcloud' && !radio.soundcloud.configured) return 'Add a SoundCloud link in Settings';
   return radio.stationDetail;
 });
 

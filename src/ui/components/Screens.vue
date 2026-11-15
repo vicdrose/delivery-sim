@@ -105,6 +105,7 @@
       <button class="btn ghost" @click="ui.pauseMenu = 'songs'">SONG CHOICE</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'sound'">SOUND</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'spotify'">SPOTIFY</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'soundcloud'">SOUNDCLOUD</button>
       <button class="btn ghost" @click="handleToggleTraffic">TRAFFIC (BETA): {{ ui.trafficEnabled ? 'ON' : 'OFF' }}</button>
       <button class="btn ghost" @click="handleToggleMobile">TOUCH CONTROLS: {{ ui.mobileOverride === null ? (detectedMobile ? 'AUTO (ON)' : 'AUTO (OFF)') : (ui.mobileOverride ? 'ON' : 'OFF') }}</button>
       <button class="btn ghost" @click="handleUiScale">{{ uiScaleLabel() }}</button>
@@ -176,6 +177,43 @@
         <div>2. Add the redirect URI above to that app</div>
         <div>3. Paste the client ID here and connect</div>
         <div>4. Open Spotify on the phone before selecting the station</div>
+      </div>
+      <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
+    </div>
+
+    <div v-else-if="ui.pauseMenu === 'soundcloud'" class="pause-card spotify-card">
+      <h2>SOUNDCLOUD</h2>
+      <div class="spotify-status" :class="ui.radio.soundcloud.configured ? 'ok' : 'idle'">
+        <span class="spotify-dot"></span>
+        <span>{{ ui.radio.soundcloud.label }}</span>
+        <span v-if="ui.radio.soundcloud.artist" class="spotify-device">{{ ui.radio.soundcloud.artist }}</span>
+      </div>
+      <p class="spotify-note">
+        SNACKRUN plays SoundCloud inside the game through the official player. It cannot
+        take over a soundcloud.com tab that is already open, so paste a public profile,
+        playlist or track link here and load it once.
+      </p>
+      <label class="spotify-field">
+        <span>PROFILE OR PLAYLIST LINK</span>
+        <input
+          v-model="soundCloudDraft"
+          class="spotify-input"
+          type="text"
+          spellcheck="false"
+          autocomplete="off"
+          placeholder="https://soundcloud.com/you/sets/your-playlist"
+        />
+      </label>
+      <p v-if="ui.radio.soundcloud.error" class="spotify-error">{{ ui.radio.soundcloud.error }}</p>
+      <button class="btn primary" @click="loadSoundCloud">LOAD SOUNDCLOUD</button>
+      <button v-if="ui.radio.soundcloud.configured" class="btn danger" @click="clearSoundCloud">
+        CLEAR LINK
+      </button>
+      <div class="spotify-steps">
+        <div>1. On soundcloud.com, copy your profile or a playlist link</div>
+        <div>2. Paste it above and press LOAD SOUNDCLOUD</div>
+        <div>3. In game, hold R / LB and pick SOUNDCLOUD</div>
+        <div>4. Private tracks and on.soundcloud.com short links may not load</div>
       </div>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
@@ -261,6 +299,11 @@ const padConnected = computed(() => ui.padConnected);
 const padName = computed(() => ui.padName);
 const radioVolumePct = computed(() => Math.round((ui.radio.volume ?? 1) * 100));
 const detectedMobile = detectMobile();
+const soundCloudDraft = ref(ui.radio.soundcloud.url || '');
+
+watch(() => ui.pauseMenu, (menu) => {
+  if (menu === 'soundcloud') soundCloudDraft.value = ui.radio.soundcloud.url || '';
+});
 
 watch(() => ui.paused, (v) => {
   if (!v) ui.pauseMenu = 'main';
@@ -333,6 +376,12 @@ function connectSpotify() {
 }
 function disconnectSpotify() {
   bus.emit('ui:spotify-disconnect');
+}
+function loadSoundCloud() {
+  bus.emit('ui:soundcloud-url', soundCloudDraft.value);
+}
+function clearSoundCloud() {
+  bus.emit('ui:soundcloud-clear');
 }
 async function copyRedirect() {
   try {

@@ -31,6 +31,9 @@ const trackLine = computed(() => {
   if (radio.station === 'ep') {
     return radio.epHasTracks ? 'NO TRACK SELECTED' : 'DROP EP FILES IN TRACKS';
   }
+  if (radio.station === 'soundcloud') {
+    return radio.soundcloud.configured ? 'LINK READY' : 'SET A LINK IN SETTINGS';
+  }
   return radio.hasTracks ? 'NO TRACK SELECTED' : 'NO TRACKS LOADED';
 });
 </script>

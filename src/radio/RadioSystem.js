@@ -1,13 +1,15 @@
 import { ui, toast } from '../ui/store.js';
 import { LocalStationProvider } from './providers/LocalStationProvider.js';
 import { SpotifyProvider } from './providers/SpotifyProvider.js';
+import { SoundCloudProvider } from './providers/SoundCloudProvider.js';
 
 const STATION_KEY = 'snackrun_radio_station';
 
 export const RADIO_STATIONS = [
   { id: 'default', name: 'DEFAULT', detail: 'In-game radio' },
   { id: 'ep', name: 'INFINITE EP', detail: 'Local EP playlist' },
-  { id: 'spotify', name: 'SPOTIFY', detail: 'Phone playback' }
+  { id: 'spotify', name: 'SPOTIFY', detail: 'Phone playback' },
+  { id: 'soundcloud', name: 'SOUNDCLOUD', detail: 'Browser player' }
 ];
 
 const STATION_IDS = new Set(RADIO_STATIONS.map((s) => s.id));
@@ -38,6 +40,16 @@ const SPOTIFY_LABELS = {
   connecting: ['CONNECTING', 'idle']
 };
 
+const SOUNDCLOUD_LABELS = {
+  unset: ['SET LINK', 'warn'],
+  idle: ['READY', 'idle'],
+  loading: ['LOADING', 'idle'],
+  ready: ['READY', 'idle'],
+  playing: ['PLAYING', 'ok'],
+  paused: ['PAUSED', 'idle'],
+  error: ['LINK FAILED', 'error']
+};
+
 export class RadioSystem {
   constructor(game, music) {
     this.g = game;
@@ -47,13 +59,15 @@ export class RadioSystem {
     this.paused = false;
     this.selectorOpen = false;
     this.spotify = new SpotifyProvider();
+    this.soundcloud = new SoundCloudProvider();
     this.providers = {
       default: new LocalStationProvider(music, 'radio'),
       ep: new LocalStationProvider(music, 'ep'),
-      spotify: this.spotify
+      spotify: this.spotify,
+      soundcloud: this.soundcloud
     };
     this._applyTimer = null;
-    this._spotifyActive = false;
+    this._externalActive = null;
     this._lastSignature = '';
     this._syncUi();
   }
@@ -63,7 +77,15 @@ export class RadioSystem {
   }
 
   get isLocal() {
-    return this.station !== 'spotify';
+    return this.station === 'default' || this.station === 'ep';
+  }
+
+  get isSpotify() {
+    return this.station === 'spotify';
+  }
+
+  get isSoundCloud() {
+    return this.station === 'soundcloud';
   }
 
   providerFor(id = this.station) {
@@ -76,7 +98,9 @@ export class RadioSystem {
     this.closeSelector();
     this._cancelApply();
     this.music.pauseLocalStations();
+    this._pauseExternal();
     this.spotify.update(0, false);
+    this.soundcloud.update(0, false);
     this._syncUi();
   }
 
@@ -95,10 +119,7 @@ export class RadioSystem {
     this.closeSelector();
     this._cancelApply();
     this.music.pauseGame();
-    if (this._spotifyActive) {
-      this.spotify.pause();
-      this._spotifyActive = false;
-    }
+    this._pauseExternal();
     this._syncUi();
   }
 
@@ -146,12 +167,16 @@ export class RadioSystem {
   }
 
   togglePower() {
-    if (this.station === 'spotify') {
+    if (!this.isLocal) {
       if (!this.inVehicle || this.paused) return;
-      if (this.spotify.playing) this.spotify.pause();
-      else {
-        this.spotify.play();
-        this._applySpotifyVolume();
+      const provider = this.providerFor();
+      if (provider.playing) {
+        provider.pause();
+        if (this._externalActive === this.station) this._externalActive = null;
+      } else {
+        this._externalActive = this.station;
+        provider.play();
+        this._applyStationVolume();
       }
       this._syncUi();
       return;
@@ -163,27 +188,27 @@ export class RadioSystem {
 
   nextTrack() {
     if (!this.inVehicle || this.paused) return;
-    if (this.station === 'spotify') this.spotify.next();
-    else this.music.nextLocal(this.localGroup, false);
+    if (this.isLocal) this.music.nextLocal(this.localGroup, false);
+    else this.providerFor().next();
     this._syncUi();
   }
 
   previousTrack() {
     if (!this.inVehicle || this.paused) return;
-    if (this.station === 'spotify') this.spotify.previous();
-    else this.music.previousLocal(this.localGroup);
+    if (this.isLocal) this.music.previousLocal(this.localGroup);
+    else this.providerFor().previous();
     this._syncUi();
   }
 
   setVolume(value) {
     const percent = Math.min(100, Math.max(0, Math.round((Number(value) || 0) * 100)));
-    if (this.station === 'spotify' && this.inVehicle && !this.paused && this.spotify.playing) {
-      this.spotify.setVolume(percent);
-    }
+    if (this.isLocal || !this.inVehicle || this.paused) return;
+    this.providerFor().setVolume(percent);
   }
 
-  _applySpotifyVolume() {
-    this.spotify.setVolume(Math.min(100, Math.max(0, Math.round(this.music.radioVolume * 100))), true);
+  _applyStationVolume() {
+    if (this.isLocal) return;
+    this.providerFor().setVolume(Math.min(100, Math.max(0, Math.round(this.music.radioVolume * 100))));
   }
 
   setSpotifyClientId(value) {
@@ -202,15 +227,35 @@ export class RadioSystem {
 
   async disconnectSpotify() {
     await this.spotify.disconnect();
-    this._spotifyActive = false;
+    this._externalActive = null;
     this._syncUi();
   }
 
-  _stopCurrent() {
-    if (this._spotifyActive) {
-      this.spotify.pause();
-      this._spotifyActive = false;
+  setSoundCloudUrl(value) {
+    const ok = this.soundcloud.setUrl(value);
+    if (!ok) {
+      toast('Paste a public soundcloud.com profile or playlist link.', 'warn', 4200);
+      this._syncUi();
+      return;
     }
+    if (this.inVehicle && !this.paused) this._scheduleApply(120);
+    else this._syncUi();
+  }
+
+  clearSoundCloud() {
+    this._pauseExternal();
+    this.soundcloud.clear();
+    this._syncUi();
+  }
+
+  _pauseExternal() {
+    if (!this._externalActive) return;
+    this.providerFor(this._externalActive).pause();
+    this._externalActive = null;
+  }
+
+  _stopCurrent() {
+    this._pauseExternal();
     if (this.isLocal) this.music.pauseLocalStations();
   }
 
@@ -233,30 +278,26 @@ export class RadioSystem {
     if (this.paused) return;
     if (!this.inVehicle) {
       this.music.pauseLocalStations();
-      if (this._spotifyActive) {
-        this._spotifyActive = false;
-        this.spotify.pause();
-      }
+      this._pauseExternal();
       this._syncUi();
       return;
     }
     if (this.isLocal) {
-      if (this._spotifyActive) {
-        this._spotifyActive = false;
-        this.spotify.pause();
-      }
+      this._pauseExternal();
       if (this.music.radioOn) this.music.playLocalStation(this.localGroup, true);
     } else {
       this.music.pauseLocalStations();
-      this._spotifyActive = true;
-      this.spotify.play();
-      this._applySpotifyVolume();
+      this._externalActive = this.station;
+      this.providerFor().play();
+      this._applyStationVolume();
     }
     this._syncUi();
   }
 
   update(dt) {
-    this.spotify.update(dt, this.inVehicle && !this.paused);
+    const active = this.inVehicle && !this.paused;
+    this.spotify.update(dt, active);
+    this.soundcloud.update(dt, active);
     const state = this._buildState();
     const signature = JSON.stringify(state);
     if (signature !== this._lastSignature) {
@@ -271,9 +312,10 @@ export class RadioSystem {
     this.inVehicle = false;
     this.paused = false;
     this.selectorOpen = false;
-    this._spotifyActive = false;
+    this._pauseExternal();
     this.music.pauseLocalStations();
     this.spotify.reset();
+    this.soundcloud.reset();
     this._lastSignature = '';
     this._syncUi();
   }
@@ -281,9 +323,9 @@ export class RadioSystem {
   _buildState() {
     const local = this.isLocal;
     const group = this.localGroup;
-    const available = local
-      ? this.music.localHasTracks(group)
-      : this.spotify.configured;
+    const spotify = this.spotify.snapshot();
+    const soundcloud = this.soundcloud.snapshot();
+    const available = local ? this.music.localHasTracks(group) : this.providerFor().configured;
     let track = null;
     let artist = null;
     let playing = false;
@@ -309,8 +351,7 @@ export class RadioSystem {
         status = 'STANDBY';
         statusKind = 'idle';
       }
-    } else {
-      const spotify = this.spotify.snapshot();
+    } else if (this.isSpotify) {
       track = spotify.track;
       artist = spotify.artist;
       playing = spotify.playing;
@@ -321,10 +362,25 @@ export class RadioSystem {
         status = 'SET CLIENT ID';
         statusKind = 'warn';
       }
+    } else {
+      track = soundcloud.track;
+      artist = soundcloud.artist;
+      playing = soundcloud.playing;
+      const mapped = SOUNDCLOUD_LABELS[soundcloud.status] || ['READY', 'idle'];
+      status = mapped[0];
+      statusKind = mapped[1];
+      if (!soundcloud.configured) {
+        status = 'SET LINK';
+        statusKind = 'warn';
+      } else if (soundcloud.error) {
+        status = 'LINK FAILED';
+        statusKind = 'error';
+      }
     }
 
     const stationInfo = RADIO_STATIONS.find((s) => s.id === this.station) || RADIO_STATIONS[0];
-    const spotify = this.spotify.snapshot();
+    const power = local ? this.music.radioOn : this.isSpotify ? spotify.connected : soundcloud.configured;
+    const on = local ? this.music.radioOn : playing;
 
     return {
       station: this.station,
@@ -339,8 +395,8 @@ export class RadioSystem {
       selectorOpen: this.selectorOpen,
       inVehicle: this.inVehicle,
       paused: this.paused,
-      power: local ? this.music.radioOn : spotify.connected,
-      on: local ? this.music.radioOn : spotify.playing,
+      power,
+      on,
       playing,
       track,
       artist,
@@ -354,6 +410,19 @@ export class RadioSystem {
         error: spotify.error,
         status: spotify.status,
         redirectUri: spotify.redirectUri
+      },
+      soundcloud: {
+        configured: soundcloud.configured,
+        url: soundcloud.url,
+        status: soundcloud.status,
+        label: !soundcloud.configured
+          ? 'NO LINK'
+          : soundcloud.error
+            ? 'LINK FAILED'
+            : (SOUNDCLOUD_LABELS[soundcloud.status] || ['READY', 'idle'])[0],
+        track: soundcloud.track,
+        artist: soundcloud.artist,
+        error: soundcloud.error
       }
     };
   }

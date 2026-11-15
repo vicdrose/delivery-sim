@@ -289,6 +289,12 @@ export class Game {
       bus.on('ui:spotify-disconnect', () => {
         this.radio.disconnectSpotify();
       }),
+      bus.on('ui:soundcloud-url', (url) => {
+        this.radio.setSoundCloudUrl(url);
+      }),
+      bus.on('ui:soundcloud-clear', () => {
+        this.radio.clearSoundCloud();
+      }),
       bus.on('ui:reset-data', () => {
         this.resetAllData();
       }),

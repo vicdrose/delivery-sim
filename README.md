@@ -130,6 +130,7 @@ src/
   rhythm/index.js         Stub seam where the rhythm mode will plug in
   radio/RadioSystem.js    Station selection, vehicle/pause transitions, persistence
   radio/providers/        LocalStationProvider (DEFAULT/EP) + SpotifyProvider (PKCE)
+                          + SoundCloudProvider (embedded widget)
   audio/AudioSystem.js    Tone.js engine: engine drone, skid, horn, UI stingers
   audio/MusicManager.js   Folder-driven title/radio/EP/ambient playback
   game/
@@ -188,7 +189,8 @@ Behavior:
 - Pause → Settings → Sound sets master sound and the overall radio volume (0-200%,
   so it can go past 100%). Settings are saved per browser. When SPOTIFY is the
   selected station, the same volume setting controls Spotify's device volume
-  (mapped to Spotify's 0-100%).
+  (mapped to Spotify's 0-100%). When SOUNDCLOUD is selected it sets the embedded
+  SoundCloud player's volume.
 - Click R3 (right-stick press) during play to open the radio volume slider. Rotate
   the right stick clockwise to raise it and counterclockwise to lower it; click R3
   again to close.
@@ -199,7 +201,8 @@ Hold LB (or R) for about a quarter second to open the station selector. D-pad
 Up/Down or the arrow keys move between stations, Left/Right toggle power, and
 releasing LB/R closes the selector. A tap of LB/R still skips to the next track.
 The chosen station is saved in `snackrun_radio_station` and survives vehicle
-transitions and reloads.
+transitions and reloads. The cycle wraps in the order below, so one step past
+SPOTIFY is SOUNDCLOUD.
 
 - **DEFAULT** — the existing in-game radio playlist in `tracks/radio/`.
 - **INFINITE EP** — plays `tracks/infinite-ep/` in filename order. The folder is
@@ -207,6 +210,11 @@ transitions and reloads.
 - **SPOTIFY** — controls the Spotify app already running on your phone. SNACKRUN
   never downloads, hosts or redistributes Spotify audio; Spotify remains
   responsible for its own playback.
+- **SOUNDCLOUD** — plays a public SoundCloud profile, playlist or track inside the
+  game through SoundCloud's official embedded player. It cannot control a
+  soundcloud.com tab you already have open: browsers do not allow one site to
+  reach into another tab's audio. Paste a link once in Pause → Settings →
+  SoundCloud and the station reuses it.
 
 The HUD widget top-right shows the station, current track (and artist when
 available), and playback status. If a station has no tracks or Spotify is not
@@ -243,6 +251,35 @@ Requirements and limits:
 - The Web API path is the only Spotify integration in this milestone. A future
   native App Remote provider can slot into the same `RadioSystem` provider seam
   without changing the UI or station model.
+
+### SoundCloud setup
+
+SoundCloud has no public API for taking over playback in another app or browser
+tab, so SNACKRUN embeds SoundCloud's own player in a hidden iframe and drives it
+through the official Widget API (`w.soundcloud.com/player/api.js`). Pause →
+Settings → SoundCloud holds the setup:
+
+1. Open soundcloud.com and copy a **public** profile, playlist/set or track link.
+   For example `https://soundcloud.com/you/sets/your-playlist`.
+2. Paste it into the field and press LOAD SOUNDCLOUD. The link is saved in
+   `snackrun_soundcloud_url`.
+3. Select SOUNDCLOUD in the station selector while driving.
+
+Behaviour and limits:
+
+- The widget loads offscreen the first time the station needs to play and is
+  removed again when you clear the link. It reports the current track and artist
+  back to the HUD.
+- Play/pause, next/previous and the radio volume slider all drive the widget.
+  Leaving the vehicle pauses it, re-entering resumes it, and pausing the game
+  pauses it.
+- Only public audio works. Private tracks, likes-only profiles with no public
+  uploads, and `on.soundcloud.com` short links may fail; the widget then shows
+  `LINK FAILED`.
+- The station cannot see or control the SoundCloud Android app or an existing
+  soundcloud.com tab. It is its own player, not a remote control.
+- SoundCloud's script and iframe need network access; an ad blocker that blocks
+  `w.soundcloud.com` makes the station fail.
 
 
 ## Multiplayer co-presence
