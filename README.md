@@ -28,14 +28,14 @@ npm run preview  # serve the production build
 | E | Interact (enter building / pick up / deliver / sleep / meditate) |
 | F | Enter or exit the car |
 | Shift | Sprint on foot |
-| H | Horn |
+| H | Horn; SoundCloud shuffle while the station selector is open |
 | M | Mute audio |
 | R | Radio: tap = next track, hold = station selector |
 | P | Radio power on/off (while the station selector is open) |
 | V | Push-to-talk (multiplayer voice) |
 | Esc | Pause |
 | Enter / N | Accept / decline offer |
-| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn, LB radio / hold stations, D-pad ←/→ aux source, Y radio power while the selector is open, R3 radio volume, Select / Back push-to-talk) |
+| Gamepad | Full support (RT/LT drive, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, D-pad ←/→ aux source, Y radio power while the selector is open, R3 radio volume, Select / Back push-to-talk) |
 
 ## Gameplay loop
 
@@ -202,8 +202,9 @@ Hold LB (or R) for about a quarter second to open the station selector. D-pad
 Up/Down or the arrow keys move between the three stations. On AUX, D-pad
 Left/Right or the arrow keys switch the aux source between Spotify and
 SoundCloud. Y on the gamepad, P on the keyboard, or the POWER button in the
-selector toggles playback. Releasing LB/R closes the selector. A tap of LB/R
-still skips to the next track.
+selector toggles playback. X on the gamepad, H on the keyboard, or the SHUFFLE
+button in the selector toggles SoundCloud shuffle. Releasing LB/R closes the
+selector. A tap of LB/R still skips to the next track.
 
 The chosen station is saved in `snackrun_radio_station`; the aux source is saved
 in `snackrun_aux_source`. Both survive vehicle transitions and reloads. The
@@ -221,7 +222,12 @@ station cycle wraps in the order below.
     the game through SoundCloud's official embedded player. It cannot control a
     soundcloud.com tab you already have open: browsers do not allow one site to
     reach into another tab's audio. Paste a link once in Pause → Settings →
-    SoundCloud and the aux source reuses it.
+    SoundCloud and the aux source reuses it. Shuffle is ON by default: the
+    player visits every track once in a random order, then starts a fresh pass.
+    The selector shows the playlist position (`4 / 23`) and a SHUFFLE button;
+    X/H or the settings toggle changes it, and the HUD marks a shuffled track
+    with `↻`. With shuffle off, next/previous follow playlist order and the end
+    of the playlist wraps back to the first track.
 
 The HUD widget top-right shows the station, the AUX source when AUX is selected,
 current track (and artist when available), and playback status. If a station has
@@ -282,6 +288,14 @@ Behaviour and limits:
 - Play/pause, next/previous and the radio volume slider all drive the widget.
   Leaving the vehicle pauses it, re-entering resumes it, and pausing the game
   pauses it.
+- Shuffle is saved in `snackrun_soundcloud_shuffle` and defaults to ON. A
+  playlist link gives the widget a full track list; shuffle builds a new random
+  order from that list, plays each track once, and reshuffles after the last
+  one. It never repeats a track inside a pass. The setting works from the radio
+  selector (X/H or the button) and from Pause → Settings → SoundCloud.
+- A playlist that is left on shuffle keeps playing forever; with shuffle off it
+  also wraps at the end of the list. The HUD shows a small `↻` in front of the
+  track whenever shuffle is on.
 - Only public audio works. Private tracks, likes-only profiles with no public
   uploads, and `on.soundcloud.com` short links may fail; the widget then shows
   `LINK FAILED`.

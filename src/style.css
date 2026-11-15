@@ -170,6 +170,17 @@ body {
   background: rgba(42, 40, 35, 0.08);
 }
 
+.radio-shfl {
+  color: #fff;
+  background: var(--accent);
+}
+
+.radio-shfl-mark {
+  color: var(--accent);
+  margin-right: calc(4 * var(--u));
+  font-weight: 900;
+}
+
 .radio-state {
   display: inline-flex;
   align-items: center;
@@ -332,6 +343,13 @@ body {
   color: #fff;
 }
 
+.radio-selector-actions {
+  display: flex;
+  align-items: center;
+  gap: calc(5 * var(--u));
+  flex: 0 0 auto;
+}
+
 .radio-station-list {
   display: flex;
   flex-direction: column;
@@ -371,6 +389,17 @@ body {
 .radio-aux-btn.active {
   background: var(--ink);
   color: #fff;
+}
+
+.radio-aux-count {
+  margin-top: calc(4 * var(--u));
+}
+
+.radio-aux-figure {
+  font-size: calc(9 * var(--u));
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--ink);
 }
 
 .radio-station-row {

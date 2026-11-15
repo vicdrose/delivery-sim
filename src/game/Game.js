@@ -286,6 +286,9 @@ export class Game {
       bus.on('ui:radio-power', () => {
         this.radio.togglePower();
       }),
+      bus.on('ui:radio-shuffle', () => {
+        this.radio.toggleShuffle();
+      }),
       bus.on('ui:spotify-client-id', (id) => {
         this.radio.setSpotifyClientId(id);
       }),
@@ -406,6 +409,8 @@ export class Game {
       } else if (s.radioPowerPressed) {
         this.radio.togglePower();
         this.audio.play('ui');
+      } else if (s.radioShufflePressed) {
+        if (this.radio.toggleShuffle()) this.audio.play('ui');
       }
     } else if (!held && this._lbPrev) {
       if (this._lbSelector) {

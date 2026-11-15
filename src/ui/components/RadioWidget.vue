@@ -13,7 +13,9 @@
         {{ ui.radio.status }}
       </span>
     </div>
-    <div class="radio-track">{{ trackLine }}</div>
+    <div class="radio-track">
+      <span v-if="showShuffleMark" class="radio-shfl-mark">↻</span>{{ trackLine }}
+    </div>
     <div v-if="ui.radio.artist" class="radio-artist">{{ ui.radio.artist }}</div>
     <div class="radio-hint">{{ hintLine }}</div>
   </div>
@@ -22,6 +24,10 @@
 <script setup>
 import { computed } from 'vue';
 import { ui } from '../store.js';
+
+const showShuffleMark = computed(
+  () => ui.radio.station === 'aux' && ui.radio.auxSource === 'soundcloud' && ui.radio.shuffle
+);
 
 const trackLine = computed(() => {
   const radio = ui.radio;

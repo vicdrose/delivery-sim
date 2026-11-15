@@ -209,11 +209,24 @@
       <button v-if="ui.radio.soundcloud.configured" class="btn danger" @click="clearSoundCloud">
         CLEAR LINK
       </button>
+      <button
+        v-if="ui.radio.soundcloud.configured"
+        class="btn"
+        :class="ui.radio.shuffle ? 'primary' : 'ghost'"
+        @click="toggleShuffle"
+      >
+        SHUFFLE {{ ui.radio.shuffle ? 'ON' : 'OFF' }}
+      </button>
+      <p v-if="ui.radio.soundcloud.trackCount" class="spotify-note">
+        Loaded {{ ui.radio.soundcloud.trackCount }} tracks. Shuffle keeps the playlist
+        going in a new random order each pass.
+      </p>
       <div class="spotify-steps">
         <div>1. On soundcloud.com, copy your profile or a playlist link</div>
         <div>2. Paste it above and press LOAD SOUNDCLOUD</div>
         <div>3. In game, hold R / LB, pick AUX, then press ← / → for SOUNDCLOUD</div>
-        <div>4. Private tracks and on.soundcloud.com short links may not load</div>
+        <div>4. X on a controller or H on the keyboard toggles shuffle in the radio menu</div>
+        <div>5. Private tracks and on.soundcloud.com short links may not load</div>
       </div>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
@@ -382,6 +395,9 @@ function loadSoundCloud() {
 }
 function clearSoundCloud() {
   bus.emit('ui:soundcloud-clear');
+}
+function toggleShuffle() {
+  bus.emit('ui:radio-shuffle');
 }
 async function copyRedirect() {
   try {

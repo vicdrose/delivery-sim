@@ -1,4 +1,5 @@
 const URL_KEY = 'snackrun_soundcloud_url';
+const SHUFFLE_KEY = 'snackrun_soundcloud_shuffle';
 const SCRIPT_URL = 'https://w.soundcloud.com/player/api.js';
 const LOAD_TIMEOUT_MS = 12000;
 const SCRIPT_TIMEOUT_MS = 30000;
@@ -9,6 +10,13 @@ function readText(key) {
   } catch {
     return '';
   }
+}
+
+function readFlag(key, fallback) {
+  const raw = readText(key);
+  if (raw === '1') return true;
+  if (raw === '0') return false;
+  return fallback;
 }
 
 function writeText(key, value) {
@@ -53,7 +61,10 @@ export class SoundCloudProvider {
     this.track = null;
     this.artist = null;
     this.playing = false;
+    this.shuffle = readFlag(SHUFFLE_KEY, true);
     this.volume = 100;
+    this.trackCount = 0;
+    this.trackIndex = 0;
     this._frame = null;
     this._frameUrl = '';
     this._widget = null;
@@ -65,6 +76,12 @@ export class SoundCloudProvider {
     this._playRetries = 0;
     this._pollClock = 0;
     this._pollBusy = false;
+    this._sounds = [];
+    this._bag = [];
+    this._bagPos = 0;
+    this._history = [];
+    this._finishTimer = null;
+    this._advancing = false;
     if (this.url) this._loadScript().catch(() => void 0);
   }
 
@@ -139,6 +156,12 @@ export class SoundCloudProvider {
       this._ensureWidget();
       return;
     }
+    const count = this._sounds.length;
+    if (count > 1) {
+      const target = this.shuffle ? this._bagNext(this.trackIndex) : (this.trackIndex + 1) % count;
+      this._jump(target);
+      return;
+    }
     try {
       this._widget.next();
     } catch {
@@ -151,11 +174,34 @@ export class SoundCloudProvider {
       this._ensureWidget();
       return;
     }
+    const count = this._sounds.length;
+    if (count > 1) {
+      let target = -1;
+      if (this.shuffle && this._history.length) target = this._history.pop();
+      if (target < 0) target = (this.trackIndex - 1 + count) % count;
+      this._jump(target, false);
+      return;
+    }
     try {
       this._widget.prev();
     } catch {
       void 0;
     }
+  }
+
+  setShuffle(value) {
+    const next = !!value;
+    if (this.shuffle === next) return this.shuffle;
+    this.shuffle = next;
+    writeText(SHUFFLE_KEY, next ? '1' : '0');
+    this._bag = [];
+    this._bagPos = 0;
+    this._history = [];
+    return this.shuffle;
+  }
+
+  toggleShuffle() {
+    return this.setShuffle(!this.shuffle);
   }
 
   setVolume(percent) {
@@ -171,7 +217,7 @@ export class SoundCloudProvider {
 
   update(dt, active) {
     if (!this.configured) return;
-    if (this._wanted && this._ready && !this.playing) {
+    if (this._wanted && this._ready && !this.playing && !this._advancing) {
       const now = performance.now();
       if (this._playRetries < 4 && now >= this._retryAt) {
         this._playRetries += 1;
@@ -195,6 +241,9 @@ export class SoundCloudProvider {
       track: this.track,
       artist: this.artist,
       playing: this.playing,
+      shuffle: this.shuffle,
+      trackCount: this.trackCount,
+      trackIndex: this.trackIndex,
       error: this.error
     };
   }
@@ -215,6 +264,17 @@ export class SoundCloudProvider {
     this._playRetries = 0;
     this._widget = null;
     this._frameUrl = '';
+    this._sounds = [];
+    this._bag = [];
+    this._bagPos = 0;
+    this._history = [];
+    this.trackCount = 0;
+    this.trackIndex = 0;
+    this._advancing = false;
+    if (this._finishTimer) {
+      clearTimeout(this._finishTimer);
+      this._finishTimer = null;
+    }
     if (this._loadTimer) {
       clearTimeout(this._loadTimer);
       this._loadTimer = null;
@@ -262,6 +322,8 @@ export class SoundCloudProvider {
       settled = true;
       this._pollBusy = false;
     };
+    if (!this._sounds.length) this._fetchSounds();
+    this._readIndex();
     const timer = setTimeout(() => {
       if (!settled) done();
     }, 4000);
@@ -285,6 +347,139 @@ export class SoundCloudProvider {
       clearTimeout(timer);
       done();
     }
+  }
+
+  _fetchSounds() {
+    if (!this._ready || !this._widget) return;
+    try {
+      this._widget.getSounds((list) => {
+        if (!this._ready || !Array.isArray(list) || !list.length) return;
+        this._sounds = list.map((sound, index) => ({
+          index,
+          title: sound && sound.title ? sound.title : ''
+        }));
+        this.trackCount = this._sounds.length;
+        this._bag = [];
+        this._bagPos = 0;
+      });
+    } catch {
+      void 0;
+    }
+  }
+
+  _readIndex() {
+    if (!this._ready || !this._widget) return;
+    try {
+      this._widget.getCurrentSoundIndex((index) => {
+        if (typeof index === 'number' && index >= 0) this.trackIndex = index;
+      });
+    } catch {
+      void 0;
+    }
+  }
+
+  _jump(index, remember = true) {
+    const count = this._sounds.length;
+    if (!this._ready || !this._widget || count < 1) return;
+    const target = ((index % count) + count) % count;
+    if (remember && target !== this.trackIndex) {
+      this._history.push(this.trackIndex);
+      if (this._history.length > 50) this._history.shift();
+    }
+    this.trackIndex = target;
+    try {
+      this._widget.skip(target);
+      if (this._wanted) this._widget.play();
+      this._applyVolume();
+    } catch {
+      void 0;
+    }
+  }
+
+  _bagNext(from) {
+    const count = this._sounds.length;
+    if (!this._bag.length || this._bagPos >= this._bag.length) {
+      this._bag = this._shuffledOrder(count, from);
+      this._bagPos = 0;
+    }
+    const target = this._bag[this._bagPos];
+    this._bagPos += 1;
+    return typeof target === 'number' ? target : from;
+  }
+
+  _shuffledOrder(count, exclude) {
+    const order = [];
+    for (let i = 0; i < count; i++) order.push(i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = order[i];
+      order[i] = order[j];
+      order[j] = tmp;
+    }
+    if (count > 1 && order[0] === exclude) {
+      const j = 1 + Math.floor(Math.random() * (count - 1));
+      const tmp = order[0];
+      order[0] = order[j];
+      order[j] = tmp;
+    }
+    return order;
+  }
+
+  _onFinish() {
+    if (this._finishTimer) clearTimeout(this._finishTimer);
+    if (!this._wanted) {
+      this.playing = false;
+      this._advancing = false;
+      return;
+    }
+    const count = this._sounds.length;
+    if (count <= 1) {
+      this.playing = false;
+      this.status = 'paused';
+      this._wanted = false;
+      this._advancing = false;
+      return;
+    }
+    this._advancing = true;
+    const finishFrame = this._frame;
+    const shuffle = this.shuffle;
+    if (shuffle) {
+      try {
+        this._widget.setVolume(0);
+      } catch {
+        void 0;
+      }
+    }
+    this._finishTimer = setTimeout(() => {
+      this._finishTimer = null;
+      if (!this._ready || !this._wanted || this._frame !== finishFrame) {
+        this._advancing = false;
+        return;
+      }
+      if (shuffle) {
+        this._jump(this._bagNext(this.trackIndex));
+        this._applyVolume();
+        this._advancing = false;
+        return;
+      }
+      this._readIndex();
+      let settled = false;
+      const guard = setTimeout(() => {
+        if (!settled) this._advancing = false;
+      }, 2500);
+      try {
+        this._widget.isPaused((paused) => {
+          settled = true;
+          clearTimeout(guard);
+          this._advancing = false;
+          if (!paused || !this._ready || !this._wanted) return;
+          this._jump(0, false);
+        });
+      } catch {
+        clearTimeout(guard);
+        this._advancing = false;
+      }
+    }, 160);
   }
 
   _ensureWidget() {
@@ -333,6 +528,7 @@ export class SoundCloudProvider {
           this.error = '';
           this._applyVolume();
           if (this._wanted) this._playNow();
+          this._fetchSounds();
           this._poll();
         });
         widget.bind(SC.Widget.Events.PLAY, () => {
@@ -340,6 +536,7 @@ export class SoundCloudProvider {
           this.playing = true;
           this.status = 'playing';
           this._playRetries = 0;
+          this._readIndex();
           this._poll();
         });
         widget.bind(SC.Widget.Events.PAUSE, () => {
@@ -349,9 +546,7 @@ export class SoundCloudProvider {
         });
         widget.bind(SC.Widget.Events.FINISH, () => {
           if (this._frame !== frame) return;
-          this.playing = false;
-          this.status = 'paused';
-          this._wanted = false;
+          this._onFinish();
         });
         widget.bind(SC.Widget.Events.ERROR, () => {
           if (this._frame !== frame) return;

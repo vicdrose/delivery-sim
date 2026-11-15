@@ -294,6 +294,7 @@ export class InputManager {
       radioLeftPressed: false,
       radioRightPressed: false,
       radioPowerPressed: false,
+      radioShufflePressed: false,
       shiftHeld: false,
       musicVolumePressed: false,
       voiceHeld: false,
@@ -331,6 +332,7 @@ export class InputManager {
     state.radioHeld = this._down('KeyR');
     state.radioPressed = this._edge('KeyR');
     state.radioPowerPressed = this._edge('KeyP');
+    state.radioShufflePressed = this._edge('KeyH');
 
     const pad = this._pollPad();
     if (pad) {
@@ -357,6 +359,7 @@ export class InputManager {
       state.radioLeftPressed = state.radioLeftPressed || (pad.dpadLeft && !this._padPrev[14]);
       state.radioRightPressed = state.radioRightPressed || (pad.dpadRight && !this._padPrev[15]);
       state.radioPowerPressed = state.radioPowerPressed || (pad.enterExit && !this._padPrev[3]);
+      state.radioShufflePressed = state.radioShufflePressed || (pad.horn && !this._padPrev[2]);
       state.musicVolumePressed = state.musicVolumePressed || (pad.musicVolume && !this._padPrev[11]);
       state.rightStickX = pad.rightStickX;
       state.rightStickY = pad.rightStickY;
@@ -381,6 +384,9 @@ export class InputManager {
       state.radioLeftPressed = state.radioLeftPressed || this._edge('ArrowLeft');
       state.radioRightPressed = state.radioRightPressed || this._edge('ArrowRight');
       state.enterExitPressed = false;
+      state.interactPressed = false;
+      state.acceptPressed = false;
+      state.horn = false;
       state.steer = 0;
       state.throttle = 0;
       state.brake = 0;

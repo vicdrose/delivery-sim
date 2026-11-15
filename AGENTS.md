@@ -145,8 +145,10 @@ Current behavior worth remembering (all landed and stable):
   or arrow keys change station, release closes. On AUX, D-pad Left/Right or the
   arrow keys switch the aux source between Spotify and SoundCloud. Y on the
   gamepad, P on the keyboard, or the selector's POWER button toggles playback
-  (Y is suppressed as vehicle enter/exit while the selector is held). A short tap
-  still skips to the next track. `RadioSystem` persists the station in
+  (Y is suppressed as vehicle enter/exit while the selector is held). X on the
+  gamepad, H on the keyboard, or the selector's SHUFFLE button toggles SoundCloud
+  shuffle (H/X are suppressed as horn/interact while the selector is held). A
+  short tap still skips to the next track. `RadioSystem` persists the station in
   `snackrun_radio_station` and the aux source in `snackrun_aux_source`; entering
   a vehicle resumes it, exiting pauses it, and re-entering resumes mid-song.
   Station changes are debounced to avoid duplicate playback requests. DEFAULT uses
@@ -158,7 +160,18 @@ Current behavior worth remembering (all landed and stable):
   drives it with the Widget API. The station cycle order is DEFAULT → INFINITE EP
   → AUX. The HUD widget shows station, the AUX source chip, track/artist when
   available, and a status such as PLAYING, STANDBY, NO TRACKS, NO ACTIVE DEVICE,
-  PREMIUM REQUIRED, SET CLIENT ID, or SET LINK.
+  PREMIUM REQUIRED, SET CLIENT ID, or SET LINK. On shuffled SoundCloud the track
+  line is prefixed with `↻`.
+- **SoundCloud shuffle** = ON by default (`snackrun_soundcloud_shuffle`). On READY
+  the provider pulls the widget's full track list with `getSounds` and walks a
+  Fisher-Yates bag, `skip(index)`-ing through every track once before reshuffling;
+  the last track starts a fresh pass so the playlist never stops. `previous`
+  walks a small history in shuffle mode. With shuffle off, next/previous follow
+  playlist order and `FINISH` wraps the last track back to index 0. During the
+  shuffle FINISH gap the provider mutes the widget before jumping so the
+  widget's automatic next-track does not bleed through. The selector shows the
+  SHUFFLE button, playlist position (`4 / 23`), and the settings SoundCloud page
+  has the same toggle.
 - **SoundCloud** = official Widget API (`w.soundcloud.com/player/api.js`) in a
   hidden offscreen iframe, no OAuth and no backend. Pause → Settings → SoundCloud
   stores the public link in `snackrun_soundcloud_url`. Pick AUX in the selector

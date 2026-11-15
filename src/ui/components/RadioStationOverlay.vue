@@ -7,9 +7,19 @@
     <div class="radio-selector-head">
       <span class="radio-selector-title">RADIO</span>
       <span class="radio-selector-hint">LB + D-PAD</span>
-      <button class="radio-selector-power" :class="{ on: ui.radio.on }" @click="togglePower">
-        POWER {{ ui.radio.on ? 'ON' : 'OFF' }}
-      </button>
+      <div class="radio-selector-actions">
+        <button
+          v-if="showShuffle"
+          class="radio-selector-power"
+          :class="{ on: ui.radio.shuffle }"
+          @click="toggleShuffle"
+        >
+          SHUFFLE {{ ui.radio.shuffle ? 'ON' : 'OFF' }}
+        </button>
+        <button class="radio-selector-power" :class="{ on: ui.radio.on }" @click="togglePower">
+          POWER {{ ui.radio.on ? 'ON' : 'OFF' }}
+        </button>
+      </div>
     </div>
     <div class="radio-station-list">
       <button
@@ -44,11 +54,15 @@
         SOUNDCLOUD
       </button>
     </div>
+    <div v-if="showShuffle && ui.radio.soundcloud.trackCount" class="radio-aux-row radio-aux-count">
+      <span class="radio-aux-label">PLAYLIST</span>
+      <span class="radio-aux-figure">{{ trackCountLabel }}</span>
+    </div>
     <div class="radio-selector-now">
       <span class="radio-selector-now-label">{{ ui.radio.playing ? 'NOW PLAYING' : 'STATION' }}</span>
       <span class="radio-selector-now-track">{{ nowLine }}</span>
     </div>
-    <div class="radio-selector-foot">↑↓ station · ←→ aux source · Y/P power · release LB to close</div>
+    <div class="radio-selector-foot">{{ footHint }}</div>
   </div>
 </template>
 
@@ -59,6 +73,23 @@ import { bus } from '../../core/bus.js';
 
 const show = computed(
   () => ui.screen === 'playing' && ui.radio.selectorOpen && !ui.paused
+);
+
+const showShuffle = computed(
+  () => ui.radio.station === 'aux' && ui.radio.auxSource === 'soundcloud'
+);
+
+const trackCountLabel = computed(() => {
+  const total = ui.radio.soundcloud.trackCount || 0;
+  if (total < 1) return '';
+  const index = (ui.radio.soundcloud.trackIndex || 0) + 1;
+  return `${index} / ${total}`;
+});
+
+const footHint = computed(() =>
+  showShuffle.value
+    ? '↑↓ station · ←→ source · X/H shuffle · Y/P power · release LB to close'
+    : '↑↓ station · ←→ aux source · Y/P power · release LB to close'
 );
 
 const nowLine = computed(() => {
@@ -89,5 +120,9 @@ function pickAux(id) {
 
 function togglePower() {
   bus.emit('ui:radio-power');
+}
+
+function toggleShuffle() {
+  bus.emit('ui:radio-shuffle');
 }
 </script>

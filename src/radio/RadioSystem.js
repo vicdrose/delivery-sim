@@ -292,6 +292,13 @@ export class RadioSystem {
     this._syncUi();
   }
 
+  toggleShuffle() {
+    if (!this.soundcloud.configured) return false;
+    this.soundcloud.toggleShuffle();
+    this._syncUi();
+    return true;
+  }
+
   _pauseExternal() {
     if (!this._externalActive) return;
     this.providerFor(this._externalActive).pause();
@@ -450,6 +457,7 @@ export class RadioSystem {
       artist,
       status,
       statusKind,
+      shuffle: soundcloud.shuffle,
       spotify: {
         configured: spotify.configured,
         connected: spotify.connected,
@@ -470,6 +478,9 @@ export class RadioSystem {
             : (SOUNDCLOUD_LABELS[soundcloud.status] || ['READY', 'idle'])[0],
         track: soundcloud.track,
         artist: soundcloud.artist,
+        shuffle: soundcloud.shuffle,
+        trackCount: soundcloud.trackCount,
+        trackIndex: soundcloud.trackIndex,
         error: soundcloud.error
       }
     };

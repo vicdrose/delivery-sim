@@ -107,6 +107,7 @@ export const ui = reactive({
     paused: false,
     power: true,
     playing: false,
+    shuffle: true,
     status: 'READY',
     statusKind: 'idle',
     spotify: {
@@ -125,6 +126,9 @@ export const ui = reactive({
       label: 'NO LINK',
       track: null,
       artist: null,
+      shuffle: true,
+      trackCount: 0,
+      trackIndex: 0,
       error: ''
     }
   },
