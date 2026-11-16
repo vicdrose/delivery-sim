@@ -252,8 +252,18 @@ export class DeliveryMode {
             const veh = g.vehicle;
             const nearCar = veh.position.distanceTo(poi.door) <= CONFIG.parking.arriveRadius * 0.9;
             const parts = [];
-            if (veh.fuelLevel < veh.fuelMax) parts.push('Refuel');
-            if (veh.health < veh.healthMax && nearCar) parts.push(this._keyHint('G') + 'Repair');
+            if (veh.fuelLevel < veh.fuelMax) {
+              const quote = this._refuelQuote(veh);
+              parts.push(
+                quote.spend > 0
+                  ? `Refuel $${quote.spend.toFixed(2)} (${quote.pct}%)`
+                  : 'Refuel — no cash'
+              );
+            }
+            if (veh.health < veh.healthMax && nearCar) {
+              const repair = Math.ceil((veh.healthMax - veh.health) * CONFIG.gas.repairCostPerUnit);
+              parts.push(`${this._keyHint('G')}Repair $${repair.toFixed(2)}`);
+            }
             return parts.length ? parts.join(' · ') : null;
           },
           action: () => {
@@ -396,24 +406,47 @@ export class DeliveryMode {
     return null;
   }
 
+  _refuelQuote(veh) {
+    const missing = Math.max(0, veh.fuelMax - veh.fuelLevel);
+    const fullCost = missing * CONFIG.gas.refillCostPerUnit;
+    const bank = Math.max(0, this.g.progression.profile.bank);
+    const spend = Math.min(fullCost, Math.floor(bank * 100) / 100);
+    const added = Math.min(missing, spend / CONFIG.gas.refillCostPerUnit);
+    return {
+      missing,
+      fullCost,
+      spend,
+      added,
+      pct: veh.fuelMax > 0 ? Math.round((added / veh.fuelMax) * 100) : 0,
+      remainingCost: Math.max(0, (missing - added) * CONFIG.gas.refillCostPerUnit)
+    };
+  }
+
   _refuelAtStation() {
     const g = this.g;
     const veh = g.vehicle;
-    const missing = veh.fuelMax - veh.fuelLevel;
-    if (missing <= 0) {
+    const quote = this._refuelQuote(veh);
+    if (quote.missing <= 0) {
       toast('Tank is already full!', 'info');
       return;
     }
-    const cost = missing * CONFIG.gas.refillCostPerUnit;
-    if (g.progression.profile.bank < cost) {
-      toast('Not enough money to refuel!', 'danger');
+    if (quote.spend <= 0) {
+      toast('No cash for gas. Finish a delivery first.', 'danger');
       return;
     }
-    g.progression.addMoney(-cost);
+    g.progression.addMoney(-quote.spend);
     ui.money = g.progression.profile.bank;
-    veh.refuel(missing);
+    veh.refuel(quote.added);
     g.audio.play('cash');
-    toast(`Refueled! -$${cost.toFixed(2)}`, 'success');
+    if (quote.added >= quote.missing - 0.0001) {
+      toast(`Refueled! -$${quote.spend.toFixed(2)}`, 'success');
+    } else {
+      toast(
+        `Added ${quote.pct}% of a tank for $${quote.spend.toFixed(2)}. $${quote.remainingCost.toFixed(2)} more fills it up.`,
+        'success',
+        5000
+      );
+    }
   }
 
   _repairAtStation(poi) {
@@ -430,7 +463,7 @@ export class DeliveryMode {
     }
     const cost = Math.ceil(missing * CONFIG.gas.repairCostPerUnit);
     if (g.progression.profile.bank < cost) {
-      toast(`Not enough money to repair!`, 'danger');
+      toast(`Not enough money to repair! Need $${cost.toFixed(2)}.`, 'danger');
       return;
     }
     g.progression.addMoney(-cost);

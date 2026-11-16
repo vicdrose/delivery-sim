@@ -490,8 +490,14 @@ export class Game {
 
   resetAllData() {
     this.multiplayer?.leave();
+    const keep = new Set([
+      'snackrun_spotify_client_id',
+      'snackrun_spotify_token',
+      'snackrun_spotify_verifier',
+      'snackrun_spotify_state'
+    ]);
     for (const key of Object.keys(localStorage)) {
-      if (key.startsWith('snackrun')) localStorage.removeItem(key);
+      if (key.startsWith('snackrun') && !keep.has(key)) localStorage.removeItem(key);
     }
     this.progression = new Progression();
     for (const veh of Object.values(this.vehicles)) {

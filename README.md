@@ -51,6 +51,21 @@ The day clock advances continuously; light, sky and fog shift through morning, n
 sunset, dusk and night. Each day your earnings bank into a persistent profile
 (localStorage).
 
+## Fuel & repairs
+
+Fuel burns while driving. At any gas station, step up to the pump on foot and press E
+(or the action button) to refuel. You do not need a full tank's worth of cash: the
+pump spends what you have (up to the full price) and adds the matching share of a
+tank. The prompt quotes the exact charge and the percentage of the tank it buys,
+e.g. `Refuel $20.00 (59%)`. A partial fill toast reports what was added and what is
+left to pay for a full tank. Refueling costs `$0.85` per unit (`$34` for an empty
+40-unit tank).
+
+Vehicle repairs happen at the same pump with the car parked at it. Press G on foot
+(or E when the tank is already full) to pay `$42` per missing health point; the
+prompt shows the exact repair bill, e.g. `[G] Repair $420.00`. Fuel, health and
+sleep persist across reloads.
+
 ## Sleep & dreams
 
 A sleepiness meter (the moon row in the HUD, under fuel and vehicle health) climbs
@@ -257,6 +272,9 @@ Requirements and limits:
   station reports **NO ACTIVE DEVICE**.
 - The app needs the `user-read-playback-state`, `user-modify-playback-state`, and
   `user-read-currently-playing` scopes.
+- RESET GAME DATA keeps the Spotify client ID, token and PKCE keys, so Spotify
+  keeps working after a reset without connecting again. Use DISCONNECT SPOTIFY
+  when you actually want to clear them.
 - The radio volume slider also sets Spotify's volume (0-100%). Some Spotify
   Connect devices do not accept remote volume changes; in that case the game
   keeps playing and leaves the device volume alone.
@@ -270,21 +288,27 @@ Requirements and limits:
 
 SoundCloud has no public API for taking over playback in another app or browser
 tab, so SNACKRUN embeds SoundCloud's own player in a hidden iframe and drives it
-through the official Widget API (`w.soundcloud.com/player/api.js`). Pause →
-Settings → SoundCloud holds the setup:
+through the official Widget API (`w.soundcloud.com/player/api.js`). Every player
+starts with **Soulection Radio Sessions** built in
+(`https://soundcloud.com/soulection/sets/soulection-radio-sessions`), so the
+station is available without any setup. Pause → Settings → SoundCloud can replace
+it:
 
 1. Open soundcloud.com and copy a **public** profile, playlist/set or track link.
    For example `https://soundcloud.com/you/sets/your-playlist`.
-2. Paste it into the field and press LOAD SOUNDCLOUD. The link is saved in
-   `snackrun_soundcloud_url`.
-3. In the car, hold the station selector, pick AUX, then press ←/→ until
+2. Paste it into the field and press LOAD SOUNDCLOUD. The replacement link is saved
+   in `snackrun_soundcloud_url`.
+3. Press RESTORE BUILT-IN STATION to drop the replacement and return to Soulection
+   Radio Sessions.
+4. In the car, hold the station selector, pick AUX, then press ←/→ until
    SOUNDCLOUD is the aux source.
 
 Behaviour and limits:
 
 - The widget loads offscreen the first time the station needs to play and is
-  removed again when you clear the link. It reports the current track and artist
-  back to the HUD.
+  removed again when you restore the built-in station. It reports the current track
+  and artist back to the HUD. The built-in station does not load the SoundCloud
+  script until AUX/SOUNDCLOUD actually starts playing.
 - Play/pause, next/previous and the radio volume slider all drive the widget.
   Leaving the vehicle pauses it, re-entering resumes it, and pausing the game
   pauses it.

@@ -474,19 +474,13 @@ export class SpotifyProvider {
 
   reset() {
     this._cancelVolume();
-    this.clientId = '';
-    this.token = null;
-    this.status = 'disconnected';
+    this.status = this.connected ? 'idle' : 'disconnected';
     this.error = '';
     this.track = null;
     this.artist = null;
     this.playing = false;
     this.deviceName = '';
     this._pollTimer = 0;
-    removeText(CLIENT_KEY);
-    removeText(TOKEN_KEY);
-    removeText(VERIFIER_KEY);
-    removeText(STATE_KEY);
   }
 
   snapshot() {

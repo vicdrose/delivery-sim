@@ -469,6 +469,7 @@ export class RadioSystem {
       },
       soundcloud: {
         configured: soundcloud.configured,
+        builtIn: soundcloud.builtIn,
         url: soundcloud.url,
         status: soundcloud.status,
         label: !soundcloud.configured

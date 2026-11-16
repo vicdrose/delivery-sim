@@ -120,10 +120,11 @@ export const ui = reactive({
       redirectUri: ''
     },
     soundcloud: {
-      configured: false,
+      configured: true,
+      builtIn: true,
       url: '',
-      status: 'unset',
-      label: 'NO LINK',
+      status: 'idle',
+      label: 'READY',
       track: null,
       artist: null,
       shuffle: true,

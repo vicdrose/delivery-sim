@@ -126,7 +126,8 @@ Current behavior worth remembering (all landed and stable):
   `main` | `levels` | `settings` | `sound` | `songs` | `spotify` | `soundcloud`):
   level picker, sound, traffic, touch controls, UI size, per-song radio on/off +
   volume, Spotify connection, SoundCloud link, and **RESET GAME DATA** (wipes
-  every `snackrun*` localStorage key and rebuilds the profile;
+  every `snackrun*` localStorage key except the four Spotify keys — client ID,
+  token, PKCE verifier and state — then rebuilds the profile;
   `Game.resetAllData()`). The SOUND page holds master mute and the overall radio
   volume (0-200%); Song Choice gives every track its own 0-200% volume. Both
   persist in `snackrun_radio_volume` / `snackrun_song_volumes`.
@@ -173,18 +174,25 @@ Current behavior worth remembering (all landed and stable):
   SHUFFLE button, playlist position (`4 / 23`), and the settings SoundCloud page
   has the same toggle.
 - **SoundCloud** = official Widget API (`w.soundcloud.com/player/api.js`) in a
-  hidden offscreen iframe, no OAuth and no backend. Pause → Settings → SoundCloud
-  stores the public link in `snackrun_soundcloud_url`. Pick AUX in the selector
-  and switch the source with Left/Right. Play/pause, next/previous and the radio
-  volume slider drive the widget; leaving the vehicle pauses it. It cannot
-  control the SoundCloud Android app or an already-open soundcloud.com tab, and
-  private tracks or `on.soundcloud.com` short links may fail (`LINK FAILED`).
+  hidden offscreen iframe, no OAuth and no backend. Every player starts with
+  Soulection Radio Sessions built in
+  (`https://soundcloud.com/soulection/sets/soulection-radio-sessions`); Pause →
+  Settings → SoundCloud stores a replacement in `snackrun_soundcloud_url`, and
+  RESTORE BUILT-IN removes it and returns to the default. The built-in station
+  does not preload the widget script; a saved custom link does. Pick AUX in the
+  selector and switch the source with Left/Right. Play/pause, next/previous and
+  the radio volume slider drive the widget; leaving the vehicle pauses it. It
+  cannot control the SoundCloud Android app or an already-open soundcloud.com tab,
+  and private tracks or `on.soundcloud.com` short links may fail (`LINK FAILED`).
 - **Spotify** = Web API + PKCE from the browser, no backend and no native wrapper.
   Pause → Settings → Spotify stores the client ID (`snackrun_spotify_client_id`),
   token (`snackrun_spotify_token`), PKCE verifier/state, and shows the exact
   redirect URI. Scopes are `user-read-playback-state
   user-modify-playback-state user-read-currently-playing`. Playback control needs
   Premium and an already-active Spotify app/device; the game cannot launch Spotify.
+  `SpotifyProvider.reset()` keeps the stored credentials, and RESET GAME DATA
+  preserves the four Spotify keys, so Spotify survives a reset; DISCONNECT SPOTIFY
+  is the explicit clear.
   This is the only implementation testable without the Android SDK. A future native
   App Remote provider can plug into the same seam.
 - **HUD size is resolution-relative**, not fixed pixels. Every HUD length in
@@ -205,13 +213,21 @@ Current behavior worth remembering (all landed and stable):
   or inside with nothing to interact with, the round action button reads **RUN**
   and holding it sprints; it switches back to the contextual action (ACCEPT,
   EXIT, GET IN, etc.) as soon as one is available.
+- **Fuel & partial refuel** = 40-unit tank at `$0.85` per unit (`$34` empty to
+  full). The pump never refuses a fill because the bank is short of a full tank:
+  it spends up to the player's whole bank and adds the matching share of a tank.
+  The pump prompt quotes the exact charge and tank percentage, e.g.
+  `Refuel $20.00 (59%)`; the toast reports the amount added and the remaining
+  full-tank cost. With no cash it reads `Refuel — no cash`.
 - **Vehicle health** (`CONFIG.vehicle.healthMax` 100) is the second gas-style
   meter, gear icon above the gas. Wears while driving (`driveWearPerSec`), takes
   collision damage scaled by impact speed, and **caps top speed at 12% once
-  broken** (limp to a pump). Repairs at a gas station: `G` on foot at the pump
-  *or* `E` in the car parked at the pump, priced at `repairCostPerUnit` ($42 per
-  point of missing health). Persisted in `snackrun_health`; wear rate was cut
-  30x after day-12 breakdowns proved too fast.
+  broken** (limp to a pump). Repairs at a gas station on foot at the pump: `G`
+  repairs, or `E` does when the tank is already full, priced at
+  `repairCostPerUnit` ($42 per point of missing health). The pump prompt shows the
+  exact bill (`[G] Repair $420.00`) and an unaffordable repair toast states the
+  amount needed. Persisted in `snackrun_health`; wear rate was cut 30x after
+  day-12 breakdowns proved too fast.
 - **Sleepiness & sleep** is the third gas-style meter (moon row under fuel and
   health). It rises with time, extra while walking / sprinting / driving, warns at
   80%, caps at 100, and persists in `snackrun_sleepiness`. Each level has one sleep

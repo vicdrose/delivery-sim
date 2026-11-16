@@ -1,5 +1,6 @@
 const URL_KEY = 'snackrun_soundcloud_url';
 const SHUFFLE_KEY = 'snackrun_soundcloud_shuffle';
+const DEFAULT_URL = 'https://soundcloud.com/soulection/sets/soulection-radio-sessions';
 const SCRIPT_URL = 'https://w.soundcloud.com/player/api.js';
 const LOAD_TIMEOUT_MS = 12000;
 const SCRIPT_TIMEOUT_MS = 30000;
@@ -55,8 +56,11 @@ function normalize(raw) {
 
 export class SoundCloudProvider {
   constructor() {
-    this.url = readText(URL_KEY);
-    this.status = this.url ? 'idle' : 'unset';
+    const saved = normalize(readText(URL_KEY));
+    const custom = !!saved && saved !== DEFAULT_URL;
+    this.url = saved || DEFAULT_URL;
+    this.isCustom = custom;
+    this.status = 'idle';
     this.error = '';
     this.track = null;
     this.artist = null;
@@ -82,29 +86,39 @@ export class SoundCloudProvider {
     this._history = [];
     this._finishTimer = null;
     this._advancing = false;
-    if (this.url) this._loadScript().catch(() => void 0);
+    if (custom) this._loadScript().catch(() => void 0);
   }
 
   get configured() {
     return !!this.url;
   }
 
+  get builtIn() {
+    return !this.isCustom;
+  }
+
   setUrl(value) {
     const next = normalize(value);
     if (!next) {
       this.error = 'Paste a public soundcloud.com profile or playlist link.';
-      this.status = this.configured ? 'error' : 'unset';
+      this.status = 'error';
       return false;
     }
     this.error = '';
+    const custom = next !== DEFAULT_URL;
     if (next === this.url && this._frame) {
+      this.isCustom = custom;
+      if (custom) writeText(URL_KEY, next);
+      else removeText(URL_KEY);
       this._teardown();
       this.status = 'idle';
       if (this._wanted) this._ensureWidget();
       return true;
     }
     this.url = next;
-    writeText(URL_KEY, next);
+    this.isCustom = custom;
+    if (custom) writeText(URL_KEY, next);
+    else removeText(URL_KEY);
     this._teardown();
     this.status = 'idle';
     this._loadScript().catch(() => void 0);
@@ -112,10 +126,11 @@ export class SoundCloudProvider {
   }
 
   clear() {
-    this.url = '';
+    this.url = DEFAULT_URL;
+    this.isCustom = false;
     removeText(URL_KEY);
     this._teardown();
-    this.status = 'unset';
+    this.status = 'idle';
     this.error = '';
     this.track = null;
     this.artist = null;
@@ -236,6 +251,7 @@ export class SoundCloudProvider {
   snapshot() {
     return {
       configured: this.configured,
+      builtIn: !this.isCustom,
       url: this.url,
       status: this.status,
       track: this.track,
@@ -249,13 +265,16 @@ export class SoundCloudProvider {
   }
 
   reset() {
+    const saved = normalize(readText(URL_KEY));
+    this.url = saved || DEFAULT_URL;
+    this.isCustom = !!saved && saved !== DEFAULT_URL;
     this._wanted = false;
     this._teardown();
     this.track = null;
     this.artist = null;
     this.playing = false;
     this.error = '';
-    this.status = this.configured ? 'idle' : 'unset';
+    this.status = 'idle';
   }
 
   _teardown() {

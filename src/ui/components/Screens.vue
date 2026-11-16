@@ -186,12 +186,14 @@
       <div class="spotify-status" :class="ui.radio.soundcloud.configured ? 'ok' : 'idle'">
         <span class="spotify-dot"></span>
         <span>{{ ui.radio.soundcloud.label }}</span>
+        <span v-if="ui.radio.soundcloud.builtIn" class="spotify-device">BUILT-IN</span>
         <span v-if="ui.radio.soundcloud.artist" class="spotify-device">{{ ui.radio.soundcloud.artist }}</span>
       </div>
       <p class="spotify-note">
-        SNACKRUN plays SoundCloud inside the game through the official player. It cannot
-        take over a soundcloud.com tab that is already open, so paste a public profile,
-        playlist or track link here and load it once.
+        Soulection Radio Sessions is built in, so every player starts with a SoundCloud
+        station. Paste any public profile, playlist or track link below to replace it.
+        SNACKRUN plays SoundCloud inside the game through the official player and cannot
+        take over a soundcloud.com tab that is already open.
       </p>
       <label class="spotify-field">
         <span>PROFILE OR PLAYLIST LINK</span>
@@ -206,8 +208,8 @@
       </label>
       <p v-if="ui.radio.soundcloud.error" class="spotify-error">{{ ui.radio.soundcloud.error }}</p>
       <button class="btn primary" @click="loadSoundCloud">LOAD SOUNDCLOUD</button>
-      <button v-if="ui.radio.soundcloud.configured" class="btn danger" @click="clearSoundCloud">
-        CLEAR LINK
+      <button v-if="!ui.radio.soundcloud.builtIn" class="btn ghost" @click="clearSoundCloud">
+        RESTORE BUILT-IN STATION
       </button>
       <button
         v-if="ui.radio.soundcloud.configured"
@@ -222,8 +224,8 @@
         going in a new random order each pass.
       </p>
       <div class="spotify-steps">
-        <div>1. On soundcloud.com, copy your profile or a playlist link</div>
-        <div>2. Paste it above and press LOAD SOUNDCLOUD</div>
+        <div>1. Soulection Radio Sessions is already loaded for every player</div>
+        <div>2. Paste another public link above and press LOAD SOUNDCLOUD to replace it</div>
         <div>3. In game, hold R / LB, pick AUX, then press ← / → for SOUNDCLOUD</div>
         <div>4. X on a controller or H on the keyboard toggles shuffle in the radio menu</div>
         <div>5. Private tracks and on.soundcloud.com short links may not load</div>
@@ -316,6 +318,10 @@ const soundCloudDraft = ref(ui.radio.soundcloud.url || '');
 
 watch(() => ui.pauseMenu, (menu) => {
   if (menu === 'soundcloud') soundCloudDraft.value = ui.radio.soundcloud.url || '';
+});
+
+watch(() => ui.radio.soundcloud.url, (url) => {
+  if (ui.pauseMenu === 'soundcloud') soundCloudDraft.value = url || '';
 });
 
 watch(() => ui.paused, (v) => {
