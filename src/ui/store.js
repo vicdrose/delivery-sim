@@ -68,6 +68,8 @@ export const ui = reactive({
   healthLevel: 100,
   healthMax: 100,
   nearGasStation: false,
+  needGas: null,
+  needSleep: null,
 
   sleepiness: 15,
   sleepy: false,

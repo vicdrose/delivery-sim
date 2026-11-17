@@ -293,6 +293,15 @@ Current behavior worth remembering (all landed and stable):
   `blurFull` / `blurFadeRate`, and only runs while playing. It eases back out as
   tiredness drops (sleep or meditation), so it is a nudge to go sleep it off, not a
   block on play.
+  At `criticalAt` (100%) a pulsing **YOU REALLY NEED SLEEP** HUD banner shows the
+  relative bearing and distance to the sleep spot (`ui.needSleep`). At
+  `CONFIG.gas.criticalFrac` (5%) or less the matching **YOU REALLY NEED GAS** banner
+  points at the nearest gas POI (`ui.needGas`). `src/ui/components/CriticalNeedBanner.vue`
+  renders both at once if needed; `DeliveryMode._updateHud()` computes them from the
+  active reference position/heading (vehicle when driving, player on foot), using
+  world forward `(sin h, cos h)` and right `(cos h, -sin h)`. Banners clear when the
+  need is handled; the HUD hides them on the title screen and during the sleep fade.
+  The earlier low-fuel toast (25%) and running-on-empty toast (80%) are unchanged.
 - **NPC traffic**: ON by default in every level and mode; the pause-menu toggle
   "TRAFFIC (BETA)" remains as a debug override and persists in localStorage
   `snackrun_traffic`. Kept for debugging collisions: traffic uses lane-offset

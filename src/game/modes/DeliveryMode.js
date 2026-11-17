@@ -805,6 +805,46 @@ export class DeliveryMode {
       }
     }
 
+    const needRef = this.playerMode === 'drive' ? g.vehicle.position : g.player.pos;
+    const h = this.playerMode === 'drive' ? g.vehicle.heading : g.player.yaw;
+    const fx = Math.sin(h);
+    const fz = Math.cos(h);
+    const rx = Math.cos(h);
+    const rz = -Math.sin(h);
+    const needToward = (target) => {
+      const dx = target.x - needRef.x;
+      const dz = target.z - needRef.z;
+      return {
+        distM: Math.hypot(dx, dz),
+        bearing: Math.atan2(dx * rx + dz * rz, dx * fx + dz * fz)
+      };
+    };
+
+    if (g.vehicle.fuelFraction <= CONFIG.gas.criticalFrac) {
+      let station = null;
+      let best = Infinity;
+      for (const poi of g.city.locations.pois) {
+        if (poi.category !== 'gas') continue;
+        const d2 = needRef.distanceToSquared(poi.door);
+        if (d2 < best) {
+          best = d2;
+          station = poi;
+        }
+      }
+      ui.needGas = station
+        ? needToward(this.playerMode === 'drive' ? station.parkPos || station.door : station.door)
+        : null;
+    } else {
+      ui.needGas = null;
+    }
+
+    if (ui.sleepiness >= CONFIG.sleep.criticalAt) {
+      const spot = g.sleep.getSpot();
+      ui.needSleep = spot && spot.position ? needToward(spot.position) : null;
+    } else {
+      ui.needSleep = null;
+    }
+
     const env = g.envState;
     ui.clock = env.clock;
     ui.phase = env.name;

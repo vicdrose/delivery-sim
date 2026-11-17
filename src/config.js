@@ -123,12 +123,14 @@ export const CONFIG = {
     tankSize: 40,
     consumptionRate: 0.18,
     refillRadius: 4.5,
+    criticalFrac: 0.05,
     refillCostPerUnit: 0.85,
     repairCostPerUnit: 42
   },
 
   sleep: {
     max: 100,
+    criticalAt: 100,
     startValue: 15,
     ratePerSecond: 0.14,
     walkExtra: 0.03,

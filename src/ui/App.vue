@@ -3,6 +3,7 @@
     <MoneyDisplay />
     <ClockWidget />
     <ObjectiveBanner />
+    <CriticalNeedBanner />
     <DeliveryCard />
     <InteractionPrompt />
     <Speedometer />
@@ -28,6 +29,7 @@ import { ui, applyUiScale } from './store.js';
 import MoneyDisplay from './components/MoneyDisplay.vue';
 import ClockWidget from './components/ClockWidget.vue';
 import ObjectiveBanner from './components/ObjectiveBanner.vue';
+import CriticalNeedBanner from './components/CriticalNeedBanner.vue';
 import DeliveryCard from './components/DeliveryCard.vue';
 import InteractionPrompt from './components/InteractionPrompt.vue';
 import Speedometer from './components/Speedometer.vue';
