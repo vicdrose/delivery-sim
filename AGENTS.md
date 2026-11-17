@@ -82,6 +82,15 @@ Full architecture in `README.md` (`src/` tree). Key files:
 - `src/progression/Progression.js` — localStorage profile (bank, day, stats).
 - `src/sleep/SleepSystem.js` — sleepiness meter, sleep spot resolution (home / van),
   the fade-sleep-wake sequence, and the dream roll (`sleep:dream` bus seam).
+- `src/sleep/SleepBlur.js` — sleepiness post-process driven by `blurIntensityFor()`.
+  Only active while `ui.screen === 'playing'`. Renders the scene straight to the
+  default framebuffer, copies it to a display-space `DataTexture` via
+  `copyFramebufferToTexture`, blurs it in two half-res separable passes, and draws a
+  fullscreen composite (sharp/blur mix + radial smear + desaturation + vignette) over
+  the top. Copying the already-tone-mapped screen is deliberate: a plain render-target
+  path skips tone mapping and clears `scene.background` in linear space, which
+  over-brightens the sky once the composite tone-maps it. `Game.render()` always goes
+  through here; below the onset it short-circuits to a plain render.
 - `src/audio/AudioSystem.js` + `src/audio/MusicManager.js` — Tone.js engine.
 - `src/audio/FoleySystem.js` — ambient sound (currently waves only).
 - `src/audio/tracks/{title,pause,radio,infinite-ep}` — folder-driven music, picked
@@ -276,6 +285,13 @@ Current behavior worth remembering (all landed and stable):
   placeholder overlay for the first `dreamSeconds` of the lapse plus a `sleep:dream`
   bus event carrying `{ location, kind, hours, day, clock }` — the seam for future
   dream mini-games; no rewards or mechanics exist yet.
+  A **sleepiness blur** post-process ramps in over the 3D view only (HUD/menus stay
+  sharp): barely visible at 85% sleepiness, clear at 90%, strong at 95%, very visible
+  at 100%. It is a Gaussian blur + radial smear + desaturation + vignette composited
+  over the scene from `src/sleep/SleepBlur.js`, tuned by `CONFIG.sleep.blurOnset` /
+  `blurFull` / `blurFadeRate`, and only runs while playing. It eases back out as
+  tiredness drops (sleep or meditation), so it is a nudge to go sleep it off, not a
+  block on play.
 - **NPC traffic**: ON by default in every level and mode; the pause-menu toggle
   "TRAFFIC (BETA)" remains as a debug override and persists in localStorage
   `snackrun_traffic`. Kept for debugging collisions: traffic uses lane-offset

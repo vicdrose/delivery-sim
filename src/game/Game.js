@@ -14,6 +14,7 @@ import { Vehicle } from '../vehicle/Vehicle.js';
 import { Player } from '../player/Player.js';
 import { InteractionSystem } from '../interaction/InteractionSystem.js';
 import { SleepSystem } from '../sleep/SleepSystem.js';
+import { SleepBlur, blurIntensityFor } from '../sleep/SleepBlur.js';
 import { InteriorManager } from '../interiors/InteriorManager.js';
 import { DayNightCycle } from '../world/DayNightCycle.js';
 import { Sky } from '../world/Sky.js';
@@ -137,6 +138,7 @@ export class Game {
     this._buildFleet();
 
     this.sleep = new SleepSystem(this);
+    this.sleepBlur = new SleepBlur(this.renderer);
     this.multiplayer = new Multiplayer(this);
 
     this.generator = new DeliveryGenerator(this.city.locations);
@@ -318,6 +320,7 @@ export class Game {
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(w, h);
+      this.sleepBlur.resize();
     };
     window.addEventListener('resize', this._onResize);
 
@@ -548,6 +551,10 @@ export class Game {
 
   update(dt) {
     const s = this.input.getState();
+    this.sleepBlur.update(
+      dt,
+      ui.screen === 'playing' ? blurIntensityFor(this.sleep.value) : 0
+    );
     this.radio.update(dt);
 
     if (ui.screen === 'title') {
@@ -605,7 +612,7 @@ export class Game {
   }
 
   render() {
-    this.renderer.render(this.scene, this.camera);
+    this.sleepBlur.render(this.scene, this.camera);
   }
 
   start() {
@@ -627,6 +634,7 @@ export class Game {
     window.removeEventListener('pagehide', this._onHide);
     this.sleep.save();
     this.sleep.dispose();
+    this.sleepBlur.dispose();
     this.multiplayer.dispose();
     this.radio.dispose();
     this.music.dispose();

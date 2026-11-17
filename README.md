@@ -95,6 +95,14 @@ while you play: slowly while idle, faster while walking, sprinting or driving. A
 the row turns red and a warning toast points you toward bed. Sleepiness is capped at
 100% and persists in `snackrun_sleepiness`.
 
+From 85% upward the **game view** starts to blur and smear with tiredness (the HUD and
+menus stay sharp) — barely there at 85%, obvious by 90%, strong by 95%, and very
+visible at 100%. It is a post-process over the 3D scene only: a two-pass Gaussian
+blur plus a radial smear, slight desaturation and a vignette, faded in smoothly by
+`blurIntensityFor()`. The effect ramps from `CONFIG.sleep.blurOnset` (85) to
+`blurFull` (100) and eases with `blurFadeRate`; it only runs while playing, so the
+title screen stays crisp. Sleep it off at a sleep spot to clear it.
+
 Each level has one sleep spot:
 
 - **1-1** — the home nearest the spawn point (currently "Blue Condos Court"). A pulsing
@@ -165,6 +173,8 @@ src/
     DeliveryStateMachine.js Explicit FSM for the whole delivery flow
   progression/Progression.js  localStorage profile (bank, day, stats)
   sleep/SleepSystem.js    Sleepiness meter, sleep spots, sleep sequence, dream roll
+  sleep/SleepBlur.js      Sleepiness post-process: Gaussian blur, radial smear, vignette
+                          over the 3D view only (HUD stays sharp)
   rhythm/index.js         Stub seam where the rhythm mode will plug in
   radio/RadioSystem.js    Station selection, vehicle/pause transitions, persistence
   radio/providers/        LocalStationProvider (DEFAULT/EP) + SpotifyProvider (PKCE)
