@@ -140,7 +140,7 @@ export const CONFIG = {
     blurFadeRate: 6,
     dreamChance: 0.4,
     hoursAtFull: 8,
-    minSleep: 20,
+    minSleep: 85,
     lapseSecondsPerHour: 1.1,
     minLapseSeconds: 2.5,
     fadeSeconds: 0.9,

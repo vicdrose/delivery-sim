@@ -116,10 +116,11 @@ sky run forward in a time-lapse, the camera tilts up to the sky, and tiredness d
 linearly to 0. You wake at whatever time that is, so a short nap can end on the same
 day. Crossing midnight still advances the day and the profile day counter.
 
-At **20% or more** the spot offers sleep. Below that you are not tired enough to fall
-asleep, so it offers **meditation** instead. Meditation keeps the world running at
-normal speed and removes 1% tiredness every 10 seconds; press E or **STAND UP** to
-stop. `CONFIG.sleep` holds the tuning (`hoursAtFull`, `minSleep`,
+At **85% or more** the spot offers sleep. Anywhere below that (but above 0%) you are
+not tired enough to fall asleep, so it offers **meditation** instead — you can use it
+to meditate back down from, say, 65% to 30% rather than sleeping. Meditation keeps the
+world running at normal speed and removes 1% tiredness every 10 seconds; press E or
+**STAND UP** to stop. `CONFIG.sleep` holds the tuning (`hoursAtFull`, `minSleep`,
 `lapseSecondsPerHour`, `meditateTickSeconds`).
 
 You cannot sleep while a delivery is active — the timer would stall while in-game

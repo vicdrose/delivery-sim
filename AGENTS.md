@@ -276,9 +276,10 @@ Current behavior worth remembering (all landed and stable):
   day. Midnight during sleep still emits `day:ended`, so `progression.endDay()` and
   the today-stats reset happen naturally. The view tilts up to the sky
   (`SleepSystem.updateCamera`) and the HUD fades out for the sequence.
-  **Below `minSleep` (20%) you cannot sleep** — the spot offers meditation instead:
-  the world runs at normal speed and 1 point of tiredness drops every
-  `meditateTickSeconds` (10s); stand with E, Esc, or the STAND UP button. At 0 the
+  **Below `minSleep` (85%) you cannot sleep** — the spot offers meditation instead,
+  so you can meditate down from e.g. 65% to 30% instead of sleeping: the world runs at
+  normal speed and 1 point of tiredness drops every `meditateTickSeconds` (10s); stand
+  with E, Esc, or the STAND UP button. At 0 the
   spot prompt disappears entirely. **While a delivery is active the sleep prompt is
   hidden** (sleeping would stall the countdown) although meditation is still allowed;
   `SleepSystem.begin()` also refuses as a safety net. Each sleep is 40% dream: a
