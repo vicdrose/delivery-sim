@@ -185,8 +185,11 @@ matching folder and they are picked up automatically on the next dev reload or b
 src/audio/tracks/
   title/         Loops on the main menu
   radio/         DEFAULT station: the in-game looping playlist
-  infinite-ep/   INFINITE EP station: your own EP, played in filename order
+  infinite-ep/   INFINITE EP station: 01 COBB, 02 I Dont Waste My Time, 03 Tension
 ```
+
+Audio filenames must stay special-character free (no apostrophes, `#`, brackets,
+etc.), so track 02 is spelled "Dont" in the filename and in the HUD.
 
 Behavior:
 
@@ -226,8 +229,8 @@ in `snackrun_aux_source`. Both survive vehicle transitions and reloads. The
 station cycle wraps in the order below.
 
 - **DEFAULT** — the existing in-game radio playlist in `tracks/radio/`.
-- **INFINITE EP** — plays `tracks/infinite-ep/` in filename order. The folder is
-  empty until you drop your EP files in.
+- **INFINITE EP** — plays the three tracks in `tracks/infinite-ep/` in filename
+  order: 01 COBB, 02 I Dont Waste My Time, 03 Tension.
 - **AUX** — the aux input. Left/Right or the two source buttons in the selector
   choose which source is plugged in:
   - **SPOTIFY** — controls the Spotify app already running on your phone.

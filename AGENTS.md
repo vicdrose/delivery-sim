@@ -67,8 +67,10 @@ Full architecture in `README.md` (`src/` tree). Key files:
 - `src/audio/FoleySystem.js` — ambient sound (currently waves only).
 - `src/audio/tracks/{title,pause,radio,infinite-ep}` — folder-driven music, picked
   up automatically on reload/build. Radio = in-game looping playlist (~88 tracks;
-  a few have been dropped). `infinite-ep/` is the user's own EP station and is
-  empty until files are dropped in.
+  a few have been dropped). `infinite-ep/` holds the user's three EP tracks,
+  named `01 COBB.wav`, `02 I Dont Waste My Time.wav` and `03 Tension.wav` so the
+  HUD shows clean names and filename order is the play order. The apostrophe is
+  intentionally left out of track 02 because of the filename rule above.
 - `src/radio/RadioSystem.js` — station selection (DEFAULT / INFINITE EP / AUX,
   with AUX switching between SPOTIFY and SOUNDCLOUD), persistence
   (`snackrun_radio_station`, `snackrun_aux_source`), vehicle enter/exit and
@@ -153,8 +155,8 @@ Current behavior worth remembering (all landed and stable):
   `snackrun_radio_station` and the aux source in `snackrun_aux_source`; entering
   a vehicle resumes it, exiting pauses it, and re-entering resumes mid-song.
   Station changes are debounced to avoid duplicate playback requests. DEFAULT uses
-  `tracks/radio/`; INFINITE EP plays `tracks/infinite-ep/` in filename order
-  (empty until the user drops files in, showing `NO TRACKS`); AUX is the aux
+  `tracks/radio/`; INFINITE EP plays the three tracks in `tracks/infinite-ep/`
+  in filename order (01 COBB, 02 I Dont Waste My Time, 03 Tension); AUX is the aux
   input: SPOTIFY controls the user's active Spotify Connect device through
   `SpotifyProvider`, SOUNDCLOUD plays a public SoundCloud profile, playlist or
   track through `SoundCloudProvider`, which embeds the official player iframe and
