@@ -32,9 +32,13 @@ function write(key, value) {
 export function defaultServerUrl() {
   const env = import.meta.env.VITE_MULTIPLAYER_URL;
   if (env) return normalizeServerUrl(env);
-  const host = window.location.hostname || '127.0.0.1';
+  const protocol = window.location.protocol;
+  const host = window.location.hostname;
+  if (protocol === 'file:' || protocol === 'app:' || !host) {
+    return 'wss://snackrun-multiplayer.onrender.com';
+  }
   if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') {
-    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const proto = protocol === 'https:' ? 'wss' : 'ws';
     return `${proto}://${host}:2567`;
   }
   return 'wss://snackrun-multiplayer.onrender.com';

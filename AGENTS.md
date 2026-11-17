@@ -28,6 +28,14 @@ build them one at a time.
 - GitHub repo `vicdrose/delivery-sim`, branch `master`.
   Pushing to `master` auto-deploys to GitHub Pages
   (`https://vicdrose.github.io/delivery-sim/`) via `.github/workflows/deploy.yml`.
+- Desktop/Steam: `electron/main.cjs`, `electron/preload.cjs`,
+  `electron/steam.cjs`, `electron-builder.yml`, `scripts/electron-build.cjs`,
+  `scripts/steam-build.cjs`, and `steam/`. Commands are
+  `npm run build:electron`, `npm run electron:start`, `npm run electron:build`,
+  and `npm run steam:build`. The Electron renderer build sets
+  `ELECTRON_BUILD=1` so `vite.config.js` skips PWA generation. Steam upload is
+  still a deliberate SteamCMD/SteamPipe step; GitHub Pages pushes never update
+  the Steam depot. Full instructions live in `steam/README.md`.
 
 ### Dev server (Windows)
 
@@ -54,6 +62,17 @@ Start-Process cmd.exe /c "npx vite --host 127.0.0.1 --port 5173 --strictPort"
 
 Full architecture in `README.md` (`src/` tree). Key files:
 
+- `electron/main.cjs` — Electron main process: registers the local
+  `app://snackrun/` protocol over `dist/`, creates the game window, grants
+  microphone permission only to the game origin, opens external links in the
+  system browser, and serves the Spotify loopback callback on
+  `127.0.0.1:43879`. `electron/preload.cjs` exposes the `window.snackrun` bridge;
+  `electron/steam.cjs` lazily initializes `steamworks.js` when present.
+- `scripts/electron-build.cjs` — Electron renderer build + electron-builder
+  Windows `dir` package. `scripts/steam-build.cjs` — copies the package to
+  `steam/depot/`, writes generated SteamPipe VDFs, and zips the depot.
+- `steam/` — upload/submission/store docs and VDF examples. `steam/depot/`,
+  `steam/generated/`, and `steam/output/` are build artifacts and gitignored.
 - `src/config.js` — all tunables (city size, physics, camera, day cycle, economy).
 - `src/game/Game.js` — composition root (renderer, modes, environment sync).
 - `src/game/modes/DeliveryMode.js` — the playable mode wiring everything.

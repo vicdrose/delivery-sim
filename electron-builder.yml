@@ -1,0 +1,26 @@
+appId: com.snackrun.game
+productName: SNACKRUN
+copyright: Copyright © 2026 SNACKRUN
+asar: false
+npmRebuild: false
+directories:
+  output: release
+  buildResources: build
+files:
+  - package.json
+  - electron/**/*
+  - dist/**/*
+  - "!**/*.map"
+win:
+  executableName: SNACKRUN
+  icon: public/icon-512.png
+  target:
+    - target: dir
+      arch:
+        - x64
+linux:
+  executableName: snackrun
+  icon: public/icon-512.png
+  category: Game
+  target:
+    - dir

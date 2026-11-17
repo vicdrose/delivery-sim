@@ -1,2 +1,7 @@
 node_modules/
 dist/
+release/
+steam/depot/
+steam/generated/
+steam/output/
+steam_appid.txt

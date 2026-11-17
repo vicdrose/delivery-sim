@@ -2,9 +2,11 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
-  plugins: [
-    vue(),
+const isElectron = process.env.ELECTRON_BUILD === '1';
+const plugins = [vue()];
+
+if (!isElectron) {
+  plugins.push(
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
@@ -23,7 +25,11 @@ export default defineConfig({
         ]
       }
     })
-  ],
+  );
+}
+
+export default defineConfig({
+  plugins,
   base: './',
   server: {
     port: 5173,

@@ -18,6 +18,24 @@ npm run build    # production build to dist/
 npm run preview  # serve the production build
 ```
 
+## Desktop / Steam build
+
+The game can be wrapped in Electron for Steam. The Vite game remains the source
+of truth; the desktop build is the same compiled `dist/` output with a local app
+protocol, a Windows shell, and an optional Steamworks seam.
+
+```bash
+npm run build:electron  # renderer build without the PWA service worker
+npm run electron:start  # run the Electron app locally
+npm run electron:build  # Windows x64 package in release/win-unpacked/
+npm run steam:build     # Windows package + steam/depot/ + SteamPipe VDFs + zip
+```
+
+See [`steam/README.md`](steam/README.md) for the Steamworks/SteamCMD upload flow,
+[`steam/SUBMISSION.md`](steam/SUBMISSION.md) for the review checklist, and
+[`steam/STORE_COPY.md`](steam/STORE_COPY.md) for store-page copy. Steam updates
+are rebuilt and uploaded deliberately; GitHub Pages pushes do not update Steam.
+
 ## Controls
 
 | Input | Action |

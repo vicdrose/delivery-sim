@@ -86,11 +86,24 @@ export class SpotifyProvider {
     this._volumeTimer = 0;
     this._volumeInFlight = false;
     this._volumeQueued = null;
+    this._unsubscribeAuth = null;
+    if (
+      typeof window !== 'undefined' &&
+      window.snackrun &&
+      typeof window.snackrun.onSpotifyCallback === 'function'
+    ) {
+      this._unsubscribeAuth = window.snackrun.onSpotifyCallback((url) => {
+        this._handleAuthCallback(url).catch(() => void 0);
+      });
+    }
     this._ready = this._handleRedirect();
   }
 
   get redirectUri() {
     if (typeof window === 'undefined') return '';
+    if (window.snackrun && window.snackrun.spotifyRedirectUri) {
+      return String(window.snackrun.spotifyRedirectUri);
+    }
     const url = new URL(window.location.href);
     let path = url.pathname;
     if (path.endsWith('/index.html')) path = path.slice(0, -'index.html'.length);
@@ -141,7 +154,17 @@ export class SpotifyProvider {
       state,
       scope: SCOPES
     });
-    window.location.href = `${AUTH_URL}?${params.toString()}`;
+    const authUrl = `${AUTH_URL}?${params.toString()}`;
+    if (window.snackrun && typeof window.snackrun.openSpotifyAuth === 'function') {
+      const opened = await window.snackrun.openSpotifyAuth(authUrl);
+      if (!opened) {
+        this.status = 'auth';
+        this.error = 'Could not open Spotify login.';
+        return false;
+      }
+      return true;
+    }
+    window.location.href = authUrl;
     return true;
   }
 
@@ -161,21 +184,37 @@ export class SpotifyProvider {
   async _handleRedirect() {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
+    if (!params.get('code') && !params.get('error')) return;
+    await this._completeAuth(params, true);
+  }
+
+  async _handleAuthCallback(raw) {
+    if (!raw) return;
+    let params = null;
+    try {
+      params = new URL(raw).searchParams;
+    } catch {
+      return;
+    }
+    if (!params.get('code') && !params.get('error')) return;
+    await this._completeAuth(params, false);
+  }
+
+  async _completeAuth(params, cleanUrl) {
     const code = params.get('code');
     const state = params.get('state');
     const error = params.get('error');
-    if (!code && !error) return;
     const expected = readText(STATE_KEY);
     const verifier = readText(VERIFIER_KEY);
     removeText(STATE_KEY);
     removeText(VERIFIER_KEY);
-    this._cleanUrl();
+    if (cleanUrl) this._cleanUrl();
     if (error) {
       this.status = 'auth';
       this.error = 'Spotify authorization was cancelled.';
       return;
     }
-    if (!state || state !== expected || !verifier) {
+    if (!code || !state || state !== expected || !verifier) {
       this.status = 'auth';
       this.error = 'Spotify login could not be verified. Try connecting again.';
       return;
