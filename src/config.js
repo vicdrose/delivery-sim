@@ -34,6 +34,7 @@ export const CONFIG = {
     maxSpeed: 40.5,
     maxReverse: 9,
     brakeForce: 32,
+    reverseBrakeThreshold: 0.5,
     engineBrake: 3.2,
     dragCoef: 0.004,
     steerRateLow: 2.55,
@@ -174,7 +175,7 @@ export const CONFIG = {
     ['M', 'Mute sound'],
     ['R', 'Radio: tap next · hold stations'],
     ['Esc', 'Pause'],
-    ['Gamepad', 'RT gas · LT brake · Stick steer · A interact / accept · Y vehicle · RB handbrake · X horn · LB radio / hold stations · R3 volume']
+    ['Gamepad', 'RT gas · LT brake / hold for reverse · Stick steer · A interact / accept · Y vehicle · RB handbrake · X horn · LB radio / hold stations · R3 volume']
   ]
 };
 

@@ -1,5 +1,7 @@
 import { ui } from '../ui/store.js';
 
+const TRIGGER_DEADZONE = 0.12;
+
 export class InputManager {
   constructor(target = window) {
     this.target = target;
@@ -23,8 +25,15 @@ export class InputManager {
     };
     this._onKeyUp = (e) => this._keys.delete(e.code);
     this._onBlur = () => this._keys.clear();
-    this._onPadConnect = () => { this.padConnected = true; };
-    this._onPadDisconnect = () => { this.padConnected = false; };
+    this._onPadConnect = (e) => {
+      this.padConnected = true;
+      if (e && e.gamepad) this._padProfiles.delete(e.gamepad.index);
+    };
+    this._onPadDisconnect = (e) => {
+      this.padConnected = false;
+      if (e && e.gamepad) this._padProfiles.delete(e.gamepad.index);
+      this._padPrev.fill(false);
+    };
 
     target.addEventListener('keydown', this._onKeyDown);
     target.addEventListener('keyup', this._onKeyUp);
@@ -140,6 +149,7 @@ export class InputManager {
         standard: pad.mapping === 'standard',
         rest: Array.from(axes, (v) => (Number.isFinite(v) ? v : 0))
       };
+      profile.triggers = this._detectTriggers(pad, profile);
       this._padProfiles.set(pad.index, profile);
     }
     return profile;
@@ -153,33 +163,50 @@ export class InputManager {
       if (b && (b.pressed || (b.value || 0) > 0.3)) return;
     }
     for (let i = 0; i < axes.length && i < profile.rest.length; i++) {
+      if (profile.triggers.indices.has(i)) continue;
       const v = axes[i] || 0;
       if (Math.abs(v - profile.rest[i]) < 0.35) profile.rest[i] += (v - profile.rest[i]) * 0.1;
     }
   }
 
   _axisTravel(value, rest) {
-    const span = 1 + Math.abs(rest);
-    return Math.min(1, Math.max(0, Math.abs(value - rest) / span));
+    const magnitude = Math.abs(rest);
+    if (magnitude >= 0.6) {
+      const travel = rest > 0 ? rest - value : value - rest;
+      return Math.min(1, Math.max(0, travel / magnitude));
+    }
+    return Math.min(1, Math.max(0, Math.abs(value - rest)));
   }
 
-  _padTriggers(pad, profile) {
+  _detectTriggers(pad, profile) {
     const axes = pad.axes || [];
-    const found = { brake: null, throttle: null, combined: null, separate: [] };
+    const found = {
+      brake: null,
+      throttle: null,
+      combined: null,
+      separate: [],
+      indices: new Set()
+    };
+    const scanFrom = profile.standard ? 4 : 2;
     const combinedFrom = axes.length <= 3 ? 2 : 4;
     const zeroRest = [];
-    for (let i = 2; i < axes.length; i++) {
+    for (let i = scanFrom; i < axes.length; i++) {
       const rest = profile.rest[i] || 0;
       if (Math.abs(rest) >= 0.6) {
         const entry = { index: i, rest };
         if (!found.brake) found.brake = entry;
         else if (!found.throttle) found.throttle = entry;
+        found.indices.add(i);
       } else if (i >= combinedFrom && Math.abs(rest) < 0.2) {
         zeroRest.push({ index: i, rest });
       }
     }
-    if (zeroRest.length > 1) found.separate = zeroRest.slice(0, 2);
-    else if (zeroRest.length === 1) found.combined = zeroRest[0];
+    if (!found.brake || !found.throttle) {
+      if (zeroRest.length > 1) found.separate = zeroRest.slice(0, 2);
+      else if (zeroRest.length === 1) found.combined = zeroRest[0];
+      for (const entry of found.separate) found.indices.add(entry.index);
+      if (found.combined) found.indices.add(found.combined.index);
+    }
     return found;
   }
 
@@ -209,7 +236,7 @@ export class InputManager {
     let throttle = val(7);
     let brake = val(6);
 
-    const triggers = this._padTriggers(pad, profile);
+    const triggers = profile.triggers;
     if (triggers.combined) {
       const v = axes[triggers.combined.index] || 0;
       throttle = Math.max(throttle, Math.min(1, Math.max(0, v)));
@@ -226,6 +253,8 @@ export class InputManager {
     if (triggers.brake) {
       brake = Math.max(brake, this._axisTravel(axes[triggers.brake.index] || 0, triggers.brake.rest));
     }
+    if (throttle < TRIGGER_DEADZONE) throttle = 0;
+    if (brake < TRIGGER_DEADZONE) brake = 0;
 
     const up = btn(12);
     const down = btn(13);

@@ -282,8 +282,10 @@ export class Vehicle {
       if (fs > 0.4) {
         fs -= this.profile.brakeForce * brake * dt;
         if (fs < 0) fs = 0;
-      } else if (this.fuelLevel > 0) {
-        fs -= accel * 0.55 * brake * dt;
+      } else if (this.fuelLevel > 0 && brake >= this.profile.reverseBrakeThreshold) {
+        const reverse =
+          (brake - this.profile.reverseBrakeThreshold) / (1 - this.profile.reverseBrakeThreshold);
+        fs -= accel * 0.55 * reverse * dt;
         if (fs < -this.profile.maxReverse) fs = -this.profile.maxReverse;
       }
     }
