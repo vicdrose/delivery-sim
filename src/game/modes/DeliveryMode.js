@@ -503,7 +503,6 @@ export class DeliveryMode {
     const g = this.g;
     if (g.vehicle.id === 'bike') g.vehicle.setFoodBag(false);
     g.player.setRiding(false);
-    g.bikeViewModel.setVisible(false);
     const pos = g.vehicle.exitPosition();
     g.collision.resolveCircle(pos, 0.5, 'city');
     g.player.teleport(pos.x, pos.z, g.vehicle.heading);
@@ -525,11 +524,9 @@ export class DeliveryMode {
     if (isBike) {
       g.player.setRiding(true);
       g.player.setVisible(true);
-      g.bikeViewModel.setVisible(true);
     } else {
       g.player.setRiding(false);
       g.player.setVisible(false);
-      g.bikeViewModel.setVisible(false);
     }
     this.playerMode = 'drive';
     this._showCarBeacon = false;
@@ -587,7 +584,6 @@ export class DeliveryMode {
       veh.update(dt, { steer: s.steer, throttle: s.throttle, brake: s.brake, handbrake: s.handbrake });
       if (veh.id === 'bike') {
         g.player.syncRiding(dt, veh.steerSmooth, speedFrac, veh);
-        g.bikeViewModel.update(dt, veh.steerSmooth, speedFrac);
         veh.setFoodBag(g.fsm.hasFood);
       }
       ui.prompt = null;
@@ -941,7 +937,6 @@ export class DeliveryMode {
     this._clearTempItems();
     const g = this.g;
     g.player.setRiding(false);
-    g.bikeViewModel.setVisible(false);
     g.scene.remove(this.beaconGroup);
     g.scene.remove(this.doorstepBag);
     this.beam.geometry.dispose();

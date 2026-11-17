@@ -336,10 +336,12 @@ Current behavior worth remembering (all landed and stable):
   (~40 mph) top speed. Its mesh has a front basket: collected food rides there
   (`Vehicle.setFoodBag`) instead of in the player's hands, which are hidden while
   riding. `_buildBikeMesh` builds frame/tank/seat/fork/bars/basket and two wheels.
-  Riding uses camera mode `'bike'` (close chase, `CONFIG.camera.bike*`), a
-  camera-attached `BikeViewModel` for handlebars/grips/front-tire sliver, and
-  `Player.setRiding()` / `syncRiding()` for the arms-forward, legs-bent, leaning
-  pose. Camera and engine normalize speed by `veh.profile.maxSpeed`. Riding tires
+  Riding uses a single near-first-person camera mode `'bike'`
+  (`CONFIG.camera.bike*`: 0.85 m behind the bike center, 2.1 m high, looking 10 m
+  ahead) so the bike's own handlebars and basket read in the lower screen as part
+  of the same world view — there is no camera-attached overlay. `Player.setRiding()`
+  / `syncRiding()` still pose the arms-forward, legs-bent, leaning rider for other
+  players. Camera and engine normalize speed by `veh.profile.maxSpeed`. Riding tires
   you out fast: `SleepSystem.update()` adds `CONFIG.sleep.bikeDriveExtra` (0.28)
   instead of the car's `driveExtra` (0.02) while throttling the bike, so the moon
   meter climbs about 2.6x faster than in the car. The bike is parked against the

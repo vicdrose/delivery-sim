@@ -11,7 +11,6 @@ import { CameraRig } from '../camera/CameraRig.js';
 import { generateCity } from '../city/CityGenerator.js';
 import { getLevel, DEFAULT_LEVEL_ID, levelList } from '../levels/index.js';
 import { Vehicle } from '../vehicle/Vehicle.js';
-import { BikeViewModel } from '../vehicle/BikeViewModel.js';
 import { Player } from '../player/Player.js';
 import { InteractionSystem } from '../interaction/InteractionSystem.js';
 import { SleepSystem } from '../sleep/SleepSystem.js';
@@ -95,7 +94,6 @@ export class Game {
       2200
     );
     this.cameraRig = new CameraRig(this.camera);
-    this.scene.add(this.camera);
 
     this.sunLight = new THREE.DirectionalLight('#ffffff', 1.2);
     this.sunLight.castShadow = true;
@@ -133,7 +131,6 @@ export class Game {
     this.envState = {};
 
     this.player = new Player(this.scene);
-    this.bikeViewModel = new BikeViewModel(this.camera);
     this.interaction = new InteractionSystem();
     this.interiors = new InteriorManager(this.scene, this.collision);
 

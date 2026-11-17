@@ -66,9 +66,10 @@ the back wall. Walk up and press E to ride it. The bike tops out around 40 mph,
 turns more sharply than the car, and has its own small tank and health meter
 (`snackrun_bike_fuel` / `snackrun_bike_health`), so a fill-up is cheap. It can take
 and complete deliveries: collected food rides in a front basket instead of your
-hands. The camera sits close behind the rider, with handlebars and a sliver of the
-front tire in the lower part of the view; the character's arms, legs and lean
-animate with the steering. Riding the bike tires you out much faster than driving
+hands. The view is a single near-first-person camera just above the rider, looking
+over the bike's real handlebars and front basket in the lower part of the screen —
+no separate overlay. The character's arms, legs and lean animate with the steering
+for other players. Riding the bike tires you out much faster than driving
 the car (`CONFIG.sleep.bikeDriveExtra`), so keep an eye on the moon meter. If the
 car breaks down and repairs are out of reach, the bike keeps the gigs going.
 
@@ -179,7 +180,6 @@ src/
     Scenery.js            Beach, ocean, mountains, wing walls (level-sized)
     NPCTraffic.js         Grid-bound NPC car traffic (level-sized)
   vehicle/Vehicle.js      Arcade vehicle: car / van / bike profiles, mesh, fuel, damage
-  vehicle/BikeViewModel.js Camera-attached handlebars + front-tire view for the bike
   player/Player.js        On-foot controller + capsule mesh, riding pose for the bike
   physics/CollisionWorld.js Circle-vs-AABB solver, separate static sets
   interiors/

@@ -225,12 +225,12 @@ export class Vehicle {
     stem.position.set(0, 1.28, 0.06);
     frontSteer.add(stem);
 
-    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.07, 0.07), rimMat);
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.07, 0.07), rimMat);
     bar.position.set(0, 1.38, 0.08);
     frontSteer.add(bar);
     for (const sx of [-1, 1]) {
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.1), darkMat);
-      grip.position.set(sx * 0.36, 1.38, 0.08);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.1, 0.1), darkMat);
+      grip.position.set(sx * 0.45, 1.38, 0.08);
       frontSteer.add(grip);
     }
 
