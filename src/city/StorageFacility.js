@@ -118,6 +118,7 @@ export function buildStorageFacility(S, W, rng, f, collision, opts = {}) {
   }
 
   const vanP = p(vanSide * (AW - 2.4), unitZ(openIndex) - 1.0);
+  const bikeP = p(vanSide * (IN - 2.4), unitZ(openIndex) + 1.9);
   const carP = p(6.5, IN + 3.6);
   const footP = p(0, IN + 1.6);
   const gateP = p(0, IN + 0.6);
@@ -125,6 +126,7 @@ export function buildStorageFacility(S, W, rng, f, collision, opts = {}) {
   return {
     unitLength: unitLen,
     vanSlot: { x: vanP.x, z: vanP.z, heading: -vanSide * (Math.PI / 2) },
+    bikeSlot: { x: bikeP.x, z: bikeP.z, heading: -vanSide * (Math.PI / 2) },
     carSlot: { x: carP.x, z: carP.z, heading: -Math.PI / 2 },
     footSlot: { x: footP.x, z: footP.z, yaw: Math.PI },
     gate: new THREE.Vector3(gateP.x, 0, gateP.z),

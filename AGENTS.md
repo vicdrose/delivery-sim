@@ -331,16 +331,32 @@ Current behavior worth remembering (all landed and stable):
   In 1-2 its rear is the level's sleep spot (the `Zzz` marker moves with it).
   **The van's creative workflow is deliberately TBD** — do not invent a rhythm
   mode; that is roadmap item #10.
+- **The bike** (1-2 only) is a delivery-capable `VEHICLE_PROFILES.bike` with its
+  own `snackrun_bike_fuel` / `snackrun_bike_health`, a 12-unit tank and an 18 m/s
+  (~40 mph) top speed. Its mesh has a front basket: collected food rides there
+  (`Vehicle.setFoodBag`) instead of in the player's hands, which are hidden while
+  riding. `_buildBikeMesh` builds frame/tank/seat/fork/bars/basket and two wheels.
+  Riding uses camera mode `'bike'` (close chase, `CONFIG.camera.bike*`), a
+  camera-attached `BikeViewModel` for handlebars/grips/front-tire sliver, and
+  `Player.setRiding()` / `syncRiding()` for the arms-forward, legs-bent, leaning
+  pose. Camera and engine normalize speed by `veh.profile.maxSpeed`. Riding tires
+  you out fast: `SleepSystem.update()` adds `CONFIG.sleep.bikeDriveExtra` (0.28)
+  instead of the car's `driveExtra` (0.02) while throttling the bike, so the moon
+  meter climbs about 2.6x faster than in the car. The bike is parked against the
+  back wall of the van's open bay (`storage.bikeSlot`) and can take and complete
+  deliveries, so a broken car does not end income.
 - **Vehicle switching** happens on foot: walk up to the *other* vehicle and press
-  the action key ("Drive the Van"). Each non-active vehicle registers a live
-  interaction item at its own position (`_registerVehicleItems`). `Game.vehicle`
-  is a getter over `Game.vehicles[Game.activeVehicleId]` — always read
-  `g.vehicle`, never cache it.
+  the action key ("Drive the Van", "Drive the Bike"). Each non-active vehicle
+  registers a live interaction item at its own position (`_registerVehicleItems`).
+  `Game.vehicle` is a getter over `Game.vehicles[Game.activeVehicleId]` — always
+  read `g.vehicle`, never cache it. `_bindVehicleCallbacks` rebinds crash/skid
+  audio on every switch, not just at mode entry.
 - **Storage facility** is a gated drive-in block: 8 roll-door units facing a
   20m aisle that exits through a single gate on the street side. In 1-2 the van
   is backed into the west-front unit with its nose facing the aisle (so it can
-  pull straight out) and the car is parked at the curb outside the gate; the
-  player starts on foot at the gate (`spawn.kind: 'storage'`).
+  pull straight out), the bike shares that open bay against the back wall, and
+  the car is parked at the curb outside the gate; the player starts on foot at the
+  gate (`spawn.kind: 'storage'`).
 - **Multiplayer is presence-only co-presence.** Title → MULTIPLAYER creates or
   joins a five-character room (32 cap) on a separate Node `ws` relay
   (`server/index.js`, `render.yaml`). Everyone loads the host's level, but each
@@ -383,9 +399,10 @@ Other pillars:
 
 - **Vehicles are assets, not upgrades.** Bike -> car -> van -> SUV -> bus.
   Van = newer + sleepable + travel to next city. A broken car forces you down to
-  the bike for gigs. Chapters/story unlock by *having the right asset*, not a
-  cash number. Buying a second vehicle means parking spaces + storage units
-  (monthly billing every 30 days, like rent).
+  the bike for gigs — the bike's first pass has landed (1-2 storage bay, own
+  meters, front basket, 40 mph, delivery-capable, close riding camera). Chapters
+  unlock by *having the right asset*, not a cash number. Buying a second vehicle
+  means parking spaces + storage units (monthly billing every 30 days, like rent).
 - **Rent / parking / storage** are billed monthly on a 30-day cycle.
 - **Reputation is lightweight.** Driver reputation is barely a system. Social
   reputation is a *natural byproduct* of talking to random NPCs doing their own
@@ -426,8 +443,9 @@ their first pass land as the level-select + 1-2 / van / storage facility — see
    damage, wear, limp mode, paid repairs). Scam/refusal flavor still open.
 2. **Rent**
 3. **Secondary vehicles** — **first pass landed** as the 1-2 van (drivable, own
-   fuel/health, switch on foot). Still open: buying/owning more than one, the
-   "broken car forces you down to the bike" rule, and the van's creative workflow.
+   fuel/health, switch on foot) and the 1-2 bike (rideable, front basket, own
+   meters, delivery-capable, close camera + rider animation). Still open:
+   buying/owning more than one and the van's creative workflow.
 4. **Storage unit** — **first pass landed** as the 1-2 drive-in facility (a place
    to keep vehicles). Still open: monthly storage billing, per-unit assignment.
 5. **Parking rentals**

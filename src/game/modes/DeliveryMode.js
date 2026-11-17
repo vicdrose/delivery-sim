@@ -50,15 +50,19 @@ export class DeliveryMode {
     ctx.scene.add(this.doorstepBag);
   }
 
-  enter() {
+  _bindVehicleCallbacks(veh) {
     const g = this.g;
-    const sp = g.city.spawn;
-    const veh = g.vehicle;
     veh.onCrash = (i) => {
       g.cameraRig.shake(i);
       g.audio.play('crash');
     };
     veh.onSkid = (a) => g.audio.setSkid(a);
+  }
+
+  enter() {
+    const g = this.g;
+    const sp = g.city.spawn;
+    for (const veh of Object.values(g.vehicles)) this._bindVehicleCallbacks(veh);
     g.player.teleport(sp.x, sp.z, Math.PI);
     g.player.setVisible(true);
     this.playerMode = 'foot';
@@ -497,6 +501,9 @@ export class DeliveryMode {
 
   _exitVehicle() {
     const g = this.g;
+    if (g.vehicle.id === 'bike') g.vehicle.setFoodBag(false);
+    g.player.setRiding(false);
+    g.bikeViewModel.setVisible(false);
     const pos = g.vehicle.exitPosition();
     g.collision.resolveCircle(pos, 0.5, 'city');
     g.player.teleport(pos.x, pos.z, g.vehicle.heading);
@@ -513,10 +520,20 @@ export class DeliveryMode {
 
   _enterVehicle() {
     const g = this.g;
-    g.player.setVisible(false);
+    const isBike = g.vehicle.id === 'bike';
+    this._bindVehicleCallbacks(g.vehicle);
+    if (isBike) {
+      g.player.setRiding(true);
+      g.player.setVisible(true);
+      g.bikeViewModel.setVisible(true);
+    } else {
+      g.player.setRiding(false);
+      g.player.setVisible(false);
+      g.bikeViewModel.setVisible(false);
+    }
     this.playerMode = 'drive';
     this._showCarBeacon = false;
-    g.cameraRig.setMode('car');
+    g.cameraRig.setMode(isBike ? 'bike' : 'car');
     g.cameraRig.snapBehind(g.vehicle.position, g.vehicle.heading);
     g.audio.play('enter');
     g.radio.setInVehicle(true);
@@ -565,16 +582,17 @@ export class DeliveryMode {
     const veh = g.vehicle;
 
     if (this.playerMode === 'drive') {
+      const speedFrac = Math.min(1, Math.abs(veh.speed) / veh.profile.maxSpeed);
       veh.setBrakeLights(s.brake > 0 || s.handbrake);
       veh.update(dt, { steer: s.steer, throttle: s.throttle, brake: s.brake, handbrake: s.handbrake });
+      if (veh.id === 'bike') {
+        g.player.syncRiding(dt, veh.steerSmooth, speedFrac, veh);
+        g.bikeViewModel.update(dt, veh.steerSmooth, speedFrac);
+        veh.setFoodBag(g.fsm.hasFood);
+      }
       ui.prompt = null;
       g.audio.horn(s.horn);
-      g.audio.setEngine(
-        Math.min(1, Math.abs(veh.speed) / CONFIG.vehicle.maxSpeed),
-        s.throttle,
-        true,
-        veh.healthFrac
-      );
+      g.audio.setEngine(speedFrac, s.throttle, true, veh.healthFrac);
       if (s.enterExitPressed && Math.abs(veh.speed) < 1.6) {
         this._exitVehicle();
       }
@@ -665,7 +683,7 @@ export class DeliveryMode {
         dt,
         veh.position,
         veh.heading,
-        Math.min(1, Math.abs(veh.speed) / CONFIG.vehicle.maxSpeed)
+        Math.min(1, Math.abs(veh.speed) / veh.profile.maxSpeed)
       );
     } else {
       g.cameraRig.update(dt, g.player.pos, this.camYawFoot);
@@ -922,6 +940,8 @@ export class DeliveryMode {
     this._unsubs = [];
     this._clearTempItems();
     const g = this.g;
+    g.player.setRiding(false);
+    g.bikeViewModel.setVisible(false);
     g.scene.remove(this.beaconGroup);
     g.scene.remove(this.doorstepBag);
     this.beam.geometry.dispose();

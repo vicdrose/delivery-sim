@@ -249,7 +249,9 @@ export class SleepSystem {
       if (moving && (s.sprint || s.sprintRT)) rate += SLEEP.sprintExtra;
       else if (moving) rate += SLEEP.walkExtra;
     } else if (ui.playerMode === 'drive' && s && s.throttle > 0.05) {
-      rate += SLEEP.driveExtra;
+      rate += this.g.vehicle && this.g.vehicle.id === 'bike'
+        ? SLEEP.bikeDriveExtra
+        : SLEEP.driveExtra;
     }
 
     const before = this.value;

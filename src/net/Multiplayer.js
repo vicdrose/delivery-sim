@@ -276,7 +276,7 @@ export class Multiplayer {
       z = g.vehicle.position.z;
       yaw = g.vehicle.heading;
       pose = 0;
-      veh = g.activeVehicleId === 'van' ? 1 : 0;
+      veh = g.activeVehicleId === 'van' ? 1 : g.activeVehicleId === 'bike' ? 2 : 0;
       speed = Math.abs(g.vehicle.speed);
       this._lastFootValid = false;
     } else {

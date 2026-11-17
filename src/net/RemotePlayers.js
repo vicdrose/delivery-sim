@@ -70,7 +70,8 @@ function disposeGroup(group) {
 }
 
 function buildVehicleMesh(style, color) {
-  const profile = style === 'van' ? VEHICLE_PROFILES.van : VEHICLE_PROFILES.car;
+  const profile =
+    style === 'van' ? VEHICLE_PROFILES.van : style === 'bike' ? VEHICLE_PROFILES.bike : VEHICLE_PROFILES.car;
   const B = profile.bodyWidth;
   const L = profile.bodyLength;
   const group = new THREE.Group();
@@ -80,6 +81,33 @@ function buildVehicleMesh(style, color) {
   const darkMat = new THREE.MeshLambertMaterial({ color: '#22262c' });
   const tireMat = new THREE.MeshLambertMaterial({ color: '#1a1d21' });
   const rimMat = new THREE.MeshLambertMaterial({ color: '#d8d8d8' });
+
+  if (style === 'bike') {
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, L * 0.7), darkMat);
+    frame.position.y = 0.68;
+    group.add(frame);
+    const tank = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.32, 0.66), bodyMat);
+    tank.position.set(0, 1.02, 0.06);
+    group.add(tank);
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.1, 0.6), darkMat);
+    seat.position.set(0, 1.12, -0.42);
+    group.add(seat);
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.06, 0.06), rimMat);
+    bar.position.set(0, 1.38, L * 0.36 + 0.08);
+    group.add(bar);
+    const basketMat = new THREE.MeshLambertMaterial({ color: '#b9844e' });
+    const basket = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.3, 0.44), basketMat);
+    basket.position.set(0, 1.2, L * 0.48);
+    group.add(basket);
+    const wr = profile.wheelRadius;
+    const wheelGeo = new THREE.CylinderGeometry(wr, wr, 0.12, 10).rotateZ(Math.PI / 2);
+    for (const sz of [L * 0.36, -L * 0.36]) {
+      const wheel = new THREE.Mesh(wheelGeo, tireMat);
+      wheel.position.set(0, wr, sz);
+      group.add(wheel);
+    }
+    return group;
+  }
 
   if (style === 'van') {
     const lower = new THREE.Mesh(new THREE.BoxGeometry(B, 0.66, L), bodyMat);
@@ -208,12 +236,12 @@ class Remote {
     const hidden = this.mode === 3;
     let tagY = 2.1;
     if (this.mode === 0) {
-      this._ensureVehicle(this.veh ? 'van' : 'car');
+      this._ensureVehicle(this.veh === 2 ? 'bike' : this.veh === 1 ? 'van' : 'car');
       this.person.setVisible(false);
       this.vehicle.visible = !hidden;
       this.vehicle.position.set(this.x, 0, this.z);
       this.vehicle.rotation.y = this.yaw;
-      tagY = this.veh ? 3.35 : 2.95;
+      tagY = this.veh === 2 ? 2.5 : this.veh ? 3.35 : 2.95;
     } else {
       if (this.vehicle) this.vehicle.visible = false;
       this.person.setVisible(!hidden);

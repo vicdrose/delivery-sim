@@ -59,6 +59,19 @@ On a gamepad, LT only reverses once the car is stopped and the trigger is held
 past halfway. Small trigger drift and analog noise are ignored, so a resting or
 partly pressed trigger cannot make the car creep backward.
 
+### The bike (level 1-2)
+
+The storage unit in "THE MOVE" keeps a bike in the van's open bay, parked against
+the back wall. Walk up and press E to ride it. The bike tops out around 40 mph,
+turns more sharply than the car, and has its own small tank and health meter
+(`snackrun_bike_fuel` / `snackrun_bike_health`), so a fill-up is cheap. It can take
+and complete deliveries: collected food rides in a front basket instead of your
+hands. The camera sits close behind the rider, with handlebars and a sliver of the
+front tire in the lower part of the view; the character's arms, legs and lean
+animate with the steering. Riding the bike tires you out much faster than driving
+the car (`CONFIG.sleep.bikeDriveExtra`), so keep an eye on the moon meter. If the
+car breaks down and repairs are out of reach, the bike keeps the gigs going.
+
 ## Gameplay loop
 
 1. Title screen - press Start. The game spawns you in your hatchback.
@@ -165,8 +178,9 @@ src/
     Sky.js                Gradient dome + sun/moon sprites
     Scenery.js            Beach, ocean, mountains, wing walls (level-sized)
     NPCTraffic.js         Grid-bound NPC car traffic (level-sized)
-  vehicle/Vehicle.js      Arcade vehicle: car + van profiles, mesh, fuel, damage
-  player/Player.js        On-foot character controller + capsule mesh
+  vehicle/Vehicle.js      Arcade vehicle: car / van / bike profiles, mesh, fuel, damage
+  vehicle/BikeViewModel.js Camera-attached handlebars + front-tire view for the bike
+  player/Player.js        On-foot controller + capsule mesh, riding pose for the bike
   physics/CollisionWorld.js Circle-vs-AABB solver, separate static sets
   interiors/
     InteriorManager.js    One shared interior room placed far outside the city

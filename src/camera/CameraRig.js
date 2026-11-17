@@ -29,6 +29,8 @@ export class CameraRig {
   update(dt, focus, heading, speed01 = 0) {
     let desired;
     let look;
+    let kPos = 1 - Math.exp(-C.smoothPos * dt);
+    let kLook = 1 - Math.exp(-C.smoothLook * dt);
     if (this.mode === 'car') {
       const yaw = heading + this.orbitYaw;
       const fx = Math.sin(yaw);
@@ -48,6 +50,22 @@ export class CameraRig {
         focus.z - Math.cos(yaw) * dist
       );
       look = this._tmpB.set(focus.x + Math.sin(yaw) * 2.2, 1.5, focus.z + Math.cos(yaw) * 2.2);
+    } else if (this.mode === 'bike') {
+      const yaw = heading + this.orbitYaw;
+      const fx = Math.sin(yaw);
+      const fz = Math.cos(yaw);
+      desired = this._tmpA.set(
+        focus.x - fx * C.bikeDist,
+        C.bikeHeight,
+        focus.z - fz * C.bikeDist
+      );
+      look = this._tmpB.set(
+        focus.x + fx * C.bikeLookAhead,
+        C.bikeLookHeight,
+        focus.z + fz * C.bikeLookAhead
+      );
+      kPos = 1 - Math.exp(-C.bikeSmoothPos * dt);
+      kLook = 1 - Math.exp(-C.bikeSmoothLook * dt);
     } else {
       const yaw = heading + this.orbitYaw;
       const dist = 4.4;
@@ -59,8 +77,6 @@ export class CameraRig {
       look = this._tmpB.set(focus.x, 1.0, focus.z);
     }
 
-    const kPos = 1 - Math.exp(-C.smoothPos * dt);
-    const kLook = 1 - Math.exp(-C.smoothLook * dt);
     this._pos.lerp(desired, kPos);
     this._look.lerp(look, kLook);
 
@@ -75,7 +91,9 @@ export class CameraRig {
     this.camera.position.copy(this._pos).add(this._shakeVec);
     this.camera.lookAt(this._look);
 
-    const targetFov = this.baseFov + (this.mode === 'car' ? speed01 * C.speedFovBoost : 0);
+    const boost =
+      this.mode === 'car' ? C.speedFovBoost : this.mode === 'bike' ? C.speedFovBoost * 0.7 : 0;
+    const targetFov = this.baseFov + speed01 * boost;
     if (Math.abs(this.camera.fov - targetFov) > 0.05) {
       this.camera.fov += (targetFov - this.camera.fov) * Math.min(1, 4 * dt);
       this.camera.updateProjectionMatrix();
@@ -85,10 +103,15 @@ export class CameraRig {
   snapBehind(focus, heading) {
     const fx = Math.sin(heading);
     const fz = Math.cos(heading);
-    const dist = this.mode === 'car' ? C.carDist : C.footDist;
-    const h = this.mode === 'car' ? C.carHeight : C.footHeight;
+    const bike = this.mode === 'bike';
+    const dist = bike ? C.bikeDist : this.mode === 'car' ? C.carDist : C.footDist;
+    const h = bike ? C.bikeHeight : this.mode === 'car' ? C.carHeight : C.footHeight;
     this._pos.set(focus.x - fx * dist, h, focus.z - fz * dist);
-    this._look.set(focus.x + fx * 2, 1.4, focus.z + fz * 2);
+    this._look.set(
+      focus.x + fx * (bike ? C.bikeLookAhead : 2),
+      bike ? C.bikeLookHeight : 1.4,
+      focus.z + fz * (bike ? C.bikeLookAhead : 2)
+    );
     this.camera.position.copy(this._pos);
     this.camera.lookAt(this._look);
   }

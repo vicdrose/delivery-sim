@@ -11,6 +11,8 @@ export class Player {
     this.yaw = 0;
     this.walkPhase = 0;
     this.visible = false;
+    this._riding = false;
+    this._rideTime = 0;
 
     const skinMat = new THREE.MeshLambertMaterial({ color: '#e8b98a' });
     const shirtMat = new THREE.MeshLambertMaterial({ color: '#2a9d8f' });
@@ -107,9 +109,51 @@ export class Player {
     this.bodyNode.position.y = Math.abs(Math.sin(this.walkPhase)) * 0.04;
   }
 
+  setRiding(active) {
+    this._riding = !!active;
+    if (active) {
+      this.heldBag.visible = false;
+      return;
+    }
+    this.bodyNode.rotation.set(0, 0, 0);
+    this.armL.scale.set(1, 1, 1);
+    this.armR.scale.set(1, 1, 1);
+    this.legL.scale.set(1, 1, 1);
+    this.legR.scale.set(1, 1, 1);
+    this.heldBag.visible = this._holdingBag;
+    this.syncMesh();
+  }
+
+  syncRiding(dt, steer, speedFrac, vehicle) {
+    if (!this._riding || !vehicle) return;
+    const fx = Math.sin(vehicle.heading);
+    const fz = Math.cos(vehicle.heading);
+    this.pos.set(vehicle.position.x - fx * 0.26, 0, vehicle.position.z - fz * 0.26);
+    this.yaw = vehicle.heading;
+    this.group.position.set(this.pos.x, 0, this.pos.z);
+    this.group.rotation.y = this.yaw;
+
+    this._rideTime += dt * (3 + speedFrac * 12);
+    const bob = Math.sin(this._rideTime) * 0.012 * speedFrac;
+    const lean = THREE.MathUtils.clamp(steer, -1, 1);
+    this.bodyNode.position.y = 0.54 + bob;
+    this.bodyNode.rotation.x = -0.26;
+    this.bodyNode.rotation.z = lean * 0.18;
+    this.armL.scale.y = 1.6;
+    this.armR.scale.y = 1.6;
+    this.armL.rotation.x = -1.42;
+    this.armR.rotation.x = -1.42;
+    this.armL.rotation.z = -0.12;
+    this.armR.rotation.z = 0.12;
+    this.legL.scale.y = 1.14;
+    this.legR.scale.y = 1.14;
+    this.legL.rotation.x = -0.55;
+    this.legR.rotation.x = -0.55;
+  }
+
   setHoldingBag(v) {
     this._holdingBag = v;
-    this.heldBag.visible = v;
+    this.heldBag.visible = v && !this._riding;
   }
 
   _buildHeldBag() {

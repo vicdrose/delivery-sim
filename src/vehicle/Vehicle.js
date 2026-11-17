@@ -38,6 +38,7 @@ export class Vehicle {
     const rimMat = new THREE.MeshLambertMaterial({ color: '#d8d8d8' });
 
     if (profile.style === 'van') this._buildVanMesh(bodyMat, cabinMat, darkMat, tireMat, rimMat);
+    else if (profile.style === 'bike') this._buildBikeMesh(bodyMat, cabinMat, darkMat, tireMat, rimMat);
     else this._buildCarMesh(bodyMat, cabinMat, darkMat, tireMat, rimMat);
 
     this.group.add(this.tiltNode);
@@ -182,6 +183,126 @@ export class Vehicle {
     this.tiltNode.add(rack);
 
     this._buildWheels(B, L, tireMat, rimMat, 0.3, 0.2);
+  }
+
+  _buildBikeMesh(bodyMat, cabinMat, darkMat, tireMat, rimMat) {
+    const L = this.bodyLength;
+
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, L * 0.68), darkMat);
+    frame.position.set(0, 0.68, -0.06);
+    frame.castShadow = true;
+    this.tiltNode.add(frame);
+
+    const engine = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.3, 0.42), cabinMat);
+    engine.position.set(0, 0.7, -0.12);
+    this.tiltNode.add(engine);
+
+    const downTube = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.66, 0.14), bodyMat);
+    downTube.position.set(0, 0.96, 0.3);
+    downTube.rotation.x = -0.48;
+    this.tiltNode.add(downTube);
+
+    const tank = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.34, 0.7), bodyMat);
+    tank.position.set(0, 1.04, 0.08);
+    tank.castShadow = true;
+    this.tiltNode.add(tank);
+
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.12, 0.64), darkMat);
+    seat.position.set(0, 1.14, -0.44);
+    this.tiltNode.add(seat);
+
+    const frontSteer = new THREE.Group();
+    frontSteer.position.set(0, 0, L * 0.36);
+    this.tiltNode.add(frontSteer);
+    this.steerGroups = [frontSteer];
+
+    const fork = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), rimMat);
+    fork.position.set(0, 0.86, 0.02);
+    fork.rotation.x = -0.22;
+    frontSteer.add(fork);
+
+    const stem = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.08), rimMat);
+    stem.position.set(0, 1.28, 0.06);
+    frontSteer.add(stem);
+
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.07, 0.07), rimMat);
+    bar.position.set(0, 1.38, 0.08);
+    frontSteer.add(bar);
+    for (const sx of [-1, 1]) {
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.1), darkMat);
+      grip.position.set(sx * 0.36, 1.38, 0.08);
+      frontSteer.add(grip);
+    }
+
+    const basketMat = new THREE.MeshLambertMaterial({ color: '#b9844e' });
+    const basket = new THREE.Group();
+    basket.position.set(0, 1.08, L * 0.48);
+    this.tiltNode.add(basket);
+    basket.add(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.05, 0.44), basketMat));
+    for (const sx of [-1, 1]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.44), basketMat);
+      rail.position.set(sx * 0.29, 0.17, 0);
+      basket.add(rail);
+    }
+    for (const sz of [-1, 1]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.32, 0.04), basketMat);
+      rail.position.set(0, 0.17, sz * 0.21);
+      basket.add(rail);
+    }
+    this.foodBag = new THREE.Mesh(
+      new THREE.BoxGeometry(0.32, 0.28, 0.22),
+      new THREE.MeshLambertMaterial({ color: '#c9915a' })
+    );
+    this.foodBag.position.set(0, 0.2, 0);
+    this.foodBag.visible = false;
+    basket.add(this.foodBag);
+
+    this.headlightMats = [];
+    const hlMat = new THREE.MeshLambertMaterial({ color: '#fff8dc', emissive: '#fff2c2', emissiveIntensity: 0 });
+    const hl = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), hlMat);
+    hl.position.set(0, 1.2, L * 0.44);
+    this.tiltNode.add(hl);
+    this.headlightMats.push(hlMat);
+
+    this.taillightMats = [];
+    const tlMat = new THREE.MeshLambertMaterial({ color: '#7a1f1f', emissive: '#ff3326', emissiveIntensity: 0.15 });
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.06), tlMat);
+    tl.position.set(0, 1.14, -L * 0.48);
+    this.tiltNode.add(tl);
+    this.taillightMats.push(tlMat);
+
+    this._buildBikeWheels(tireMat, rimMat);
+  }
+
+  _buildBikeWheels(tireMat, rimMat) {
+    const wr = this.profile.wheelRadius;
+    this.wheelGeo = new THREE.CylinderGeometry(wr, wr, 0.12, 12);
+    this.wheelGeo.rotateZ(Math.PI / 2);
+    this.wheels = [];
+    this._wheelRadius = wr;
+    const positions = [
+      { z: this.bodyLength * 0.36, front: true },
+      { z: -this.bodyLength * 0.36, front: false }
+    ];
+    for (const { z, front } of positions) {
+      const mount = front ? this.steerGroups[0] : new THREE.Group();
+      if (!front) {
+        mount.position.z = z;
+        this.tiltNode.add(mount);
+      }
+      const pivot = new THREE.Group();
+      pivot.position.y = wr;
+      const tire = new THREE.Mesh(this.wheelGeo, tireMat);
+      tire.castShadow = true;
+      pivot.add(tire);
+      const rim = new THREE.Mesh(
+        new THREE.CylinderGeometry(wr * 0.55, wr * 0.55, 0.14, 8).rotateZ(Math.PI / 2),
+        rimMat
+      );
+      pivot.add(rim);
+      mount.add(pivot);
+      this.wheels.push({ pivot, tire, front });
+    }
   }
 
   _buildWheels(B, L, tireMat, rimMat, wzFactor, rimR) {
@@ -381,7 +502,8 @@ export class Vehicle {
     this.parkedDwell = absFs < this.profile.parkedSpeedThreshold ? this.parkedDwell + dt : 0;
 
     if (this.fuelLevel > 0 && Math.abs(newFs) > 1) {
-      this.fuelLevel = Math.max(0, this.fuelLevel - G.consumptionRate * dt * (Math.abs(newFs) / this.profile.maxSpeed));
+      const burn = this.profile.consumptionRate ?? G.consumptionRate;
+      this.fuelLevel = Math.max(0, this.fuelLevel - burn * dt * (Math.abs(newFs) / this.profile.maxSpeed));
       this._saveFuel();
     }
 
@@ -415,6 +537,10 @@ export class Vehicle {
     } else if (smokeMat.opacity > 0) {
       smokeMat.opacity = Math.max(0, smokeMat.opacity - dt * 0.8);
     }
+  }
+
+  setFoodBag(visible) {
+    if (this.foodBag) this.foodBag.visible = !!visible;
   }
 
   setNightFactor(f) {

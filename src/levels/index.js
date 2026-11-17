@@ -54,8 +54,8 @@ export const LEVELS = [
   {
     id: '1-2',
     name: 'THE MOVE',
-    sub: 'Bigger city, fresh block. The car runs deliveries. The van is the studio.',
-    vehicles: ['car', 'van'],
+    sub: 'Bigger city, fresh block. The car runs deliveries. The van is the studio. The bike gets you there.',
+    vehicles: ['car', 'van', 'bike'],
     deliveryVehicle: 'car',
     seed: 20261102,
     grid: makeGrid(12, { zoneOf: zoneOfWide }),
