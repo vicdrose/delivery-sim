@@ -5,7 +5,7 @@
     :class="[ui.radio.statusKind, { off: !ui.radio.power, freestyle: freestyleActive }]"
   >
     <div class="radio-head">
-      <span class="radio-name">{{ nameLine }}</span>
+      <span class="radio-name">RADIO</span>
       <span class="radio-station">{{ ui.radio.stationName }}</span>
       <span v-if="!freestyleActive && ui.radio.station === 'aux'" class="radio-source">{{ ui.radio.auxSourceName }}</span>
       <span class="radio-state">
@@ -27,8 +27,6 @@ import { computed } from 'vue';
 import { ui } from '../store.js';
 
 const freestyleActive = computed(() => ui.radio.freestyle && ui.radio.freestyle.active);
-
-const nameLine = computed(() => (freestyleActive.value ? 'FREESTYLE KING' : 'RADIO'));
 
 const showShuffleMark = computed(
   () =>

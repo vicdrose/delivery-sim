@@ -204,11 +204,14 @@ Current behavior worth remembering (all landed and stable):
   257-beat generated list in `src/radio/freestyleBeats.js`, picks a random beat,
   and plays it from `https://freestylekingapp.com/wp-content/themes/thrive-nouveau/audios//`
   through an HTML audio element until `ended`, then picks another random beat.
-  The HUD name and selector title become FREESTYLE KING, the track name is shown,
-  shuffle is always on, and the word controller is a visible PLACEHOLDER for a
-  later pass. Normal radio/external playback is paused while this mode is active;
-  exiting Freestyle King restores the previous station when in a vehicle. B is
-  suppressed as offer decline while LB is held so the combo has no side effect.
+  A short LB/R tap while the mode is active calls `freestyle.next()` and skips to
+  another random beat without toggling the mode. The HUD keeps RADIO and shows FK
+  in the red station slot with the beat name below it; the selector title is
+  FREESTYLE KING. Shuffle is always on, and the word controller is a visible
+  PLACEHOLDER for a later pass. Normal radio/external playback is paused while
+  this mode is active; exiting Freestyle King restores the previous station when
+  in a vehicle. B is suppressed as offer decline while LB is held so the combo
+  has no side effect.
 - **SoundCloud shuffle** = ON by default (`snackrun_soundcloud_shuffle`). On READY
   the provider pulls the widget's full track list with `getSounds` and walks a
   Fisher-Yates bag, `skip(index)`-ing through every track once before reshuffling;

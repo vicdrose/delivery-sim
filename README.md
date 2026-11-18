@@ -347,10 +347,11 @@ instead of failing.
 
 Hold LB (or R) and press B (or keyboard B) to switch the radio into **FREESTYLE
 KING**. The same combo turns it off. It works on foot as well as in the car, and
-pauses normal radio/aux playback while active. The top-right widget and the radio
-selector both change their title to FREESTYLE KING, show the current beat name,
-and mark shuffle as ON. The selector also shows a **WORD — PLACEHOLDER** block;
-actually controlling the displayed word is a later feature.
+pauses normal radio/aux playback while active. The top-right widget keeps the
+`RADIO` label, shows `FK` in the station slot, then the current beat name and a
+shuffle mark; the radio selector title becomes FREESTYLE KING. The selector also
+shows a **WORD — PLACEHOLDER** block; actually controlling the displayed word is a
+later feature.
 
 This mirrors the Freestyle King site's Auto Beats button. The site does not expose
 a JSON API: it writes a generated `beatShuffler` array into the page and
@@ -358,7 +359,8 @@ a JSON API: it writes a generated `beatShuffler` array into the page and
 `ended`. SNACKRUN ships a snapshot of that 257-beat list in
 `src/radio/freestyleBeats.js` and plays from the same
 `https://freestylekingapp.com/wp-content/themes/thrive-nouveau/audios//`
-endpoint. Each beat plays through before another random beat begins.
+endpoint. Each beat plays through before another random beat begins; a tap of
+LB/R skips straight to another random beat.
 
 ### Spotify setup
 

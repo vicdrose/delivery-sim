@@ -265,7 +265,12 @@ export class RadioSystem {
   }
 
   nextTrack() {
-    if (this.isFreestyle || !this.inVehicle || this.paused) return;
+    if (this.isFreestyle) {
+      this.freestyle.next();
+      this._syncUi();
+      return;
+    }
+    if (!this.inVehicle || this.paused) return;
     if (this.isLocal) this.music.nextLocal(this.localGroup, false);
     else this.providerFor().next();
     this._syncUi();
@@ -544,7 +549,7 @@ export class RadioSystem {
       const mapped = FREESTYLE_LABELS[freestyle.status] || ['READY', 'idle'];
       Object.assign(state, {
         station: 'freestyle',
-        stationName: 'FREESTYLE KING',
+        stationName: 'FK',
         stationDetail: 'AUTO BEATS',
         playing: freestyle.playing,
         track: freestyle.track,
