@@ -87,6 +87,11 @@ body {
   transform: translateY(1px);
 }
 
+.menu-focus {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .btn.primary {
   background: var(--accent);
   color: #fff;

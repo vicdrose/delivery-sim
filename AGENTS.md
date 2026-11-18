@@ -180,6 +180,12 @@ Current behavior worth remembering (all landed and stable):
   `snackrun_freestyle_auto_wrap`. The UI page holds TOUCH CONTROLS and UI SIZE.
   The settings hub also has RIGHT STICK CAMERA: SNAP BACK (default) or FREE,
   persisted in `snackrun_camera_snap_back`; RESET GAME DATA returns it to SNAP BACK.
+- **Menu navigation** = title and pause menus are gamepad-driven from
+  `Game._updateMenuInput()`, which turns the InputManager's menu edges into
+  `ui:menu-*` bus events. `Screens.vue` highlights the focused button/input
+  (`.menu-focus`), cycles with D-pad or arrow keys, activates with A/Enter, goes
+  back with B/N, and nudges focused range inputs with D-pad left/right. Initial
+  focus prefers the primary button (START SHIFT, CREATE ROOM, RESUME).
 - **Radio volume on the controller** = R3 toggles a radio-volume slider overlay;
   rotating the right stick clockwise raises it, counterclockwise lowers it (a full
   turn spans 0-200%). The slider stays open until R3 is pressed again; while it is

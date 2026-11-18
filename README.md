@@ -58,6 +58,10 @@ are rebuilt and uploaded deliberately; GitHub Pages pushes do not update Steam.
 | Enter / N | Accept / decline offer |
 | Gamepad | Full support (RT accelerate, LT brake / reverse, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, LB + B Freestyle King / Auto Beats, D-pad ←/→ aux source, D-pad ↑/↓/←/→ random word in Freestyle King, Y radio power while the selector is open, right stick camera look, R3 radio volume, Select / Back push-to-talk) |
 
+Menus are controller-friendly too: on the title screen and every pause page,
+D-pad or arrow keys move the highlight, A (or Enter) activates the highlighted
+button, B (or N) goes back, and D-pad left/right adjusts a focused volume slider.
+
 On a gamepad, LT only reverses once the car is stopped and the trigger is held
 past halfway. Small trigger drift and analog noise are ignored, so a resting or
 partly pressed trigger cannot make the car creep backward.

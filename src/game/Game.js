@@ -592,6 +592,15 @@ export class Game {
     ui.padName = this.input.padName;
   }
 
+  _updateMenuInput(s) {
+    if (s.menuUpPressed) bus.emit('ui:menu-up');
+    if (s.menuDownPressed) bus.emit('ui:menu-down');
+    if (s.menuLeftPressed) bus.emit('ui:menu-left');
+    if (s.menuRightPressed) bus.emit('ui:menu-right');
+    if (s.menuAcceptPressed) bus.emit('ui:menu-accept');
+    if (s.menuBackPressed) bus.emit('ui:menu-back');
+  }
+
   update(dt) {
     const s = this.input.getState();
     this.sleepBlur.update(
@@ -610,14 +619,13 @@ export class Game {
       this.camera.lookAt(0, 0, 0);
       this.sky.update(dt);
       this.scenery.update(dt);
-      if (s.acceptPressed || s.interactPressed || s.enterExitPressed) {
-        bus.emit('ui:start');
-      }
+      this._updateMenuInput(s);
       return;
     }
 
     if (s.pausePressed && !this.sleep.blocking) this.setPaused(!ui.paused);
     if (ui.paused) {
+      this._updateMenuInput(s);
       return;
     }
     if (s.mutePressed) {

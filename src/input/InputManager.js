@@ -315,6 +315,12 @@ export class InputManager {
       pausePressed: false,
       acceptPressed: false,
       declinePressed: false,
+      menuUpPressed: false,
+      menuDownPressed: false,
+      menuLeftPressed: false,
+      menuRightPressed: false,
+      menuAcceptPressed: false,
+      menuBackPressed: false,
       mutePressed: false,
       radioHeld: false,
       radioPressed: false,
@@ -427,6 +433,13 @@ export class InputManager {
       state.sprint = false;
       state.sprintRT = false;
     }
+
+    state.menuUpPressed = state.radioUpPressed || this._edge('ArrowUp');
+    state.menuDownPressed = state.radioDownPressed || this._edge('ArrowDown');
+    state.menuLeftPressed = state.radioLeftPressed || this._edge('ArrowLeft');
+    state.menuRightPressed = state.radioRightPressed || this._edge('ArrowRight');
+    state.menuAcceptPressed = state.acceptPressed || state.interactPressed;
+    state.menuBackPressed = state.declinePressed || this._edge('Backspace');
 
     state.anyInput =
       state.steer !== 0 ||

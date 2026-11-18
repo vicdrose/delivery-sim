@@ -1,5 +1,5 @@
 <template>
-  <div v-if="ui.screen === 'title'" class="overlay title-screen">
+  <div v-if="ui.screen === 'title'" data-menu-root class="overlay title-screen">
     <div v-if="!ui.multiplayer.panelOpen" class="title-inner">
       <h1 class="game-title">SNACK<span>RUN</span></h1>
       <p class="tagline">drive · dash · deliver · repeat</p>
@@ -84,7 +84,7 @@
     </div>
   </div>
 
-  <div v-if="ui.screen === 'playing' && ui.paused" class="overlay pause-screen">
+  <div v-if="ui.screen === 'playing' && ui.paused" data-menu-root class="overlay pause-screen">
     <div v-if="ui.pauseMenu === 'main'" class="pause-card">
       <h2>PAUSED</h2>
       <button class="btn primary" @click="resume">RESUME</button>
@@ -337,7 +337,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { ui, toggleTraffic, toggleCameraSnapBack, setMobile, detectMobile, cycleUiScale, uiScaleLabel, toast } from '../store.js';
 import { bus } from '../../core/bus.js';
 import { CONFIG } from '../../config.js';
@@ -351,6 +351,118 @@ const autoWrapLabel = computed(
 );
 const detectedMobile = detectMobile();
 const soundCloudDraft = ref(ui.radio.soundcloud.url || '');
+
+const menuKey = computed(() =>
+  ui.screen === 'title'
+    ? `title:${ui.multiplayer.panelOpen ? 'mp' : 'main'}`
+    : `pause:${ui.paused ? ui.pauseMenu : 'none'}`
+);
+const focusIndex = ref(0);
+let menuOff = [];
+
+function menuElements() {
+  return Array.from(
+    document.querySelectorAll(
+      '[data-menu-root] button:not([disabled]), [data-menu-root] input:not([disabled])'
+    )
+  );
+}
+
+function applyMenuFocus() {
+  const els = menuElements();
+  if (!els.length) return;
+  focusIndex.value = Math.max(0, Math.min(focusIndex.value, els.length - 1));
+  for (const el of els) el.classList.remove('menu-focus');
+  const el = els[focusIndex.value];
+  el.classList.add('menu-focus');
+  el.focus({ preventScroll: true });
+  el.scrollIntoView?.({ block: 'nearest' });
+}
+
+function resetMenuFocus() {
+  nextTick(() => {
+    const els = menuElements();
+    const preferred = els.findIndex((el) => el.classList.contains('primary'));
+    focusIndex.value = preferred >= 0 ? preferred : 0;
+    applyMenuFocus();
+  });
+}
+
+function moveMenuFocus(delta) {
+  const els = menuElements();
+  if (!els.length) return;
+  focusIndex.value = (focusIndex.value + delta + els.length) % els.length;
+  applyMenuFocus();
+}
+
+function activateMenuFocus() {
+  const el = menuElements()[focusIndex.value];
+  if (el) el.click();
+}
+
+function adjustMenuFocus(delta) {
+  const el = menuElements()[focusIndex.value];
+  if (!el || el.type !== 'range') return;
+  const min = Number(el.min);
+  const max = Number(el.max);
+  const step = Number(el.step) || 1;
+  const next = Math.max(min, Math.min(max, Number(el.value) + delta * step));
+  el.value = String(next);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function menuBack() {
+  if (ui.screen === 'title') {
+    if (ui.multiplayer.panelOpen) closeMultiplayer();
+    return;
+  }
+  if (!ui.paused) return;
+  if (ui.pauseMenu === 'main') {
+    resume();
+    return;
+  }
+  const parents = {
+    levels: 'main',
+    settings: 'main',
+    ui: 'settings',
+    sound: 'settings',
+    songs: 'settings',
+    freestyle: 'sound',
+    spotify: 'sound',
+    soundcloud: 'sound',
+    multiplayer: 'main'
+  };
+  ui.pauseMenu = parents[ui.pauseMenu] || 'main';
+}
+
+function onMenuFocusIn(e) {
+  const els = menuElements();
+  const i = els.indexOf(e.target);
+  if (i < 0) return;
+  focusIndex.value = i;
+  for (const el of els) el.classList.remove('menu-focus');
+  e.target.classList.add('menu-focus');
+}
+
+watch(menuKey, () => resetMenuFocus());
+
+onMounted(() => {
+  menuOff = [
+    bus.on('ui:menu-up', () => moveMenuFocus(-1)),
+    bus.on('ui:menu-down', () => moveMenuFocus(1)),
+    bus.on('ui:menu-left', () => adjustMenuFocus(-1)),
+    bus.on('ui:menu-right', () => adjustMenuFocus(1)),
+    bus.on('ui:menu-accept', () => activateMenuFocus()),
+    bus.on('ui:menu-back', () => menuBack())
+  ];
+  document.addEventListener('focusin', onMenuFocusIn);
+  resetMenuFocus();
+});
+
+onUnmounted(() => {
+  for (const off of menuOff) off();
+  document.removeEventListener('focusin', onMenuFocusIn);
+});
 
 watch(() => ui.pauseMenu, (menu) => {
   if (menu === 'soundcloud') soundCloudDraft.value = ui.radio.soundcloud.url || '';
