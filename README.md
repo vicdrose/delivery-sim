@@ -118,10 +118,10 @@ blur plus a radial smear, slight desaturation and a vignette, faded in smoothly 
 title screen stays crisp. Sleep it off at a sleep spot to clear it.
 
 At 100% sleepiness a pulsing **YOU REALLY NEED SLEEP** banner appears in the HUD with
-an arrow and distance to your sleep spot. At 5% fuel or less a **YOU REALLY NEED GAS**
-banner does the same for the nearest gas station. Both can show at once; the arrow is
-relative to your current heading and reads AHEAD / RIGHT / LEFT / BEHIND. Each banner
-clears as soon as the need is handled (sleep or refuel). The thresholds are
+the distance to your sleep spot. At 5% fuel or less a **YOU REALLY NEED GAS** banner
+does the same for the nearest gas station. Both can show at once; they show distance
+only — no arrow or directional wording. Each banner clears as soon as the need is
+handled (sleep or refuel). The thresholds are
 `CONFIG.sleep.criticalAt` (100) and `CONFIG.gas.criticalFrac` (0.05); the one-time low
 fuel / running-on-empty toasts still fire earlier at 25% and 80% respectively.
 

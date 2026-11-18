@@ -30,8 +30,6 @@ export class DeliveryMode {
     this._showCarBeacon = false;
     this._fuelWarned = false;
     this._brokenWarned = false;
-    this._needForward = new THREE.Vector3(0, 0, 1);
-    this._needDir = new THREE.Vector3();
 
     const beamMat = makeMarkerMaterial('#ffd23f', 0.20);
     const ringMat = makeMarkerMaterial('#ffd23f', 0.5);
@@ -822,22 +820,9 @@ export class DeliveryMode {
     }
 
     const needRef = this.playerMode === 'drive' ? g.vehicle.position : g.player.pos;
-    g.camera.getWorldDirection(this._needDir);
-    const fx = this._needDir.x;
-    const fz = this._needDir.z;
-    const flat = Math.hypot(fx, fz);
-    if (flat > 0.001) this._needForward.set(fx / flat, 0, fz / flat);
-    const cf = this._needForward;
-    const rx = cf.z;
-    const rz = -cf.x;
-    const needToward = (target) => {
-      const dx = target.x - needRef.x;
-      const dz = target.z - needRef.z;
-      return {
-        distM: Math.hypot(dx, dz),
-        bearing: Math.atan2(dx * rx + dz * rz, dx * cf.x + dz * cf.z)
-      };
-    };
+    const needToward = (target) => ({
+      distM: Math.hypot(target.x - needRef.x, target.z - needRef.z)
+    });
 
     if (g.vehicle.fuelFraction <= CONFIG.gas.criticalFrac) {
       let station = null;

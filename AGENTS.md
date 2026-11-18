@@ -294,15 +294,13 @@ Current behavior worth remembering (all landed and stable):
   tiredness drops (sleep or meditation), so it is a nudge to go sleep it off, not a
   block on play.
   At `criticalAt` (100%) a pulsing **YOU REALLY NEED SLEEP** HUD banner shows the
-  relative bearing and distance to the sleep spot (`ui.needSleep`). At
-  `CONFIG.gas.criticalFrac` (5%) or less the matching **YOU REALLY NEED GAS** banner
-  points at the nearest gas POI (`ui.needGas`). `src/ui/components/CriticalNeedBanner.vue`
-  renders both at once if needed; `DeliveryMode._updateHud()` measures distance from
-  the active reference position (vehicle when driving, player on foot) but takes the
-  arrow's heading from `camera.getWorldDirection()` flattened to XZ, with right
-  `(fz, -fx)`. The arrow is therefore camera-relative: orbiting the camera turns it,
-  but spinning the character on the spot does not. Banners clear when the
-  need is handled; the HUD hides them on the title screen and during the sleep fade.
+  distance to the sleep spot (`ui.needSleep`). At `CONFIG.gas.criticalFrac` (5%) or
+  less the matching **YOU REALLY NEED GAS** banner shows the distance to the nearest
+  gas POI (`ui.needGas`). `src/ui/components/CriticalNeedBanner.vue` renders both at
+  once if needed. Distance is measured from the active reference position (vehicle
+  when driving, player on foot) in `DeliveryMode._updateHud()`; the banners are
+  distance-only — no arrow and no AHEAD/RIGHT/LEFT/BEHIND wording. Banners clear when
+  the need is handled; the HUD hides them on the title screen and during the sleep fade.
   The earlier low-fuel toast (25%) and running-on-empty toast (80%) are unchanged.
 - **NPC traffic**: ON by default in every level and mode; the pause-menu toggle
   "TRAFFIC (BETA)" remains as a debug override and persists in localStorage

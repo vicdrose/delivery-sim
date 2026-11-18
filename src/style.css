@@ -703,18 +703,6 @@ body {
   animation-name: need-pulse-sleep;
 }
 
-.need-arrow {
-  display: inline-block;
-  font-size: calc(24 * var(--u));
-  line-height: 1;
-  color: #ff6b6b;
-  transition: transform 0.12s linear;
-}
-
-.critical-need.sleep .need-arrow {
-  color: #d68cff;
-}
-
 .need-body {
   display: flex;
   flex-direction: column;
