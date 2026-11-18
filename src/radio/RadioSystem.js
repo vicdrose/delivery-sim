@@ -276,6 +276,13 @@ export class RadioSystem {
     this._syncUi();
   }
 
+  rollFreestyleWord(bank) {
+    if (!this.isFreestyle) return null;
+    const word = this.freestyle.rollWord(bank);
+    this._syncUi();
+    return word;
+  }
+
   previousTrack() {
     if (this.isFreestyle || !this.inVehicle || this.paused) return;
     if (this.isLocal) this.music.previousLocal(this.localGroup);

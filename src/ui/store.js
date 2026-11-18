@@ -141,7 +141,8 @@ export const ui = reactive({
       playing: false,
       shuffle: true,
       count: 0,
-      word: 'PLACEHOLDER'
+      word: null,
+      wordBank: 'compound'
     }
   },
 

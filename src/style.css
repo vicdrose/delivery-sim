@@ -543,8 +543,7 @@ body {
   gap: calc(6 * var(--u));
 }
 
-.radio-freestyle-row,
-.radio-freestyle-word {
+.radio-freestyle-row {
   display: flex;
   align-items: baseline;
   gap: calc(10 * var(--u));
@@ -569,21 +568,42 @@ body {
 }
 
 .radio-freestyle-word {
-  margin-top: calc(2 * var(--u));
-  padding: calc(7 * var(--u)) calc(9 * var(--u));
-  border-radius: calc(9 * var(--u));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(3 * var(--u));
+  min-height: calc(58 * var(--u));
+  margin-top: calc(4 * var(--u));
+  padding: calc(10 * var(--u)) calc(12 * var(--u));
+  border-radius: calc(10 * var(--u));
   background: #ece8dd;
+  text-align: center;
 }
 
-.radio-freestyle-placeholder {
-  min-width: 0;
-  font-size: calc(9 * var(--u));
+.radio-freestyle-bank {
+  font-size: calc(8 * var(--u));
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   color: #8a8578;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.radio-freestyle-word-text {
+  max-width: 100%;
+  font-size: calc(20 * var(--u));
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+  color: var(--accent2);
+}
+
+.radio-freestyle-controls {
+  font-size: calc(8 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: #8a8578;
 }
 
 .volume-overlay {

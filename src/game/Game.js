@@ -425,7 +425,19 @@ export class Game {
         this.audio.play('ui');
       }
     }
-    if (held && this._lbSelector && !this.radio.isFreestyle) {
+    if (held && this.radio.isFreestyle) {
+      let wordBank = null;
+      if (s.radioUpPressed) wordBank = 'adjective';
+      else if (s.radioDownPressed) wordBank = 'verb';
+      else if (s.radioLeftPressed) wordBank = 'emotion';
+      else if (s.radioRightPressed) wordBank = 'compound';
+      if (wordBank) {
+        this.radio.rollFreestyleWord(wordBank);
+        this.audio.play('ui');
+        this._lbSelector = true;
+        this.radio.openSelector();
+      }
+    } else if (held && this._lbSelector) {
       if (s.radioUpPressed) {
         this.radio.selectNext();
         this.audio.play('ui');

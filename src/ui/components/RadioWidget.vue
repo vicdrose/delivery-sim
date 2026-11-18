@@ -17,7 +17,7 @@
       <span v-if="showShuffleMark" class="radio-shfl-mark">↻</span>{{ trackLine }}
     </div>
     <div v-if="ui.radio.artist" class="radio-artist">{{ ui.radio.artist }}</div>
-    <div v-if="freestyleActive" class="radio-word">WORD · {{ ui.radio.freestyle.word }}</div>
+    <div v-if="freestyleActive" class="radio-word">{{ wordLine }}</div>
     <div class="radio-hint">{{ hintLine }}</div>
   </div>
 </template>
@@ -33,6 +33,11 @@ const showShuffleMark = computed(
     freestyleActive.value ||
     (ui.radio.station === 'aux' && ui.radio.auxSource === 'soundcloud' && ui.radio.shuffle)
 );
+
+const wordLine = computed(() => {
+  const word = ui.radio.freestyle?.word;
+  return word ? `WORD · ${word}` : 'WORD · ROLL';
+});
 
 const trackLine = computed(() => {
   const radio = ui.radio;
@@ -50,7 +55,7 @@ const trackLine = computed(() => {
 });
 
 const hintLine = computed(() => {
-  if (freestyleActive.value) return 'Hold LB + B: exit Freestyle King · R3: volume';
+  if (freestyleActive.value) return 'Hold LB + D-pad: words · tap: next beat · R3: volume';
   if (ui.radio.station === 'aux') return 'Hold LB: stations · ←→: Spotify / SoundCloud · R3: volume';
   return 'Hold LB: stations · tap: next · R3: volume';
 });

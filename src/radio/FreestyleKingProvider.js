@@ -1,6 +1,8 @@
 import { FREESTYLE_BEATS } from './freestyleBeats.js';
+import { FREESTYLE_WORD_BANKS } from './freestyleWords.js';
 
 const BEAT_BASE = 'https://freestylekingapp.com/wp-content/themes/thrive-nouveau/audios//';
+const DEFAULT_WORD_BANK = 'compound';
 
 function beatName(path) {
   const file = path.split('/').pop() || path;
@@ -22,6 +24,8 @@ export class FreestyleKingProvider {
     this.track = null;
     this.status = 'idle';
     this.volume = 1;
+    this.word = null;
+    this.wordBank = DEFAULT_WORD_BANK;
     this._started = false;
     this._wanted = false;
     this._token = 0;
@@ -59,6 +63,7 @@ export class FreestyleKingProvider {
     this.active = true;
     this._wanted = true;
     this.status = 'loading';
+    this.rollWord(DEFAULT_WORD_BANK);
     if (this._started) this._resume();
     else this.next();
     return true;
@@ -71,6 +76,7 @@ export class FreestyleKingProvider {
     this._started = false;
     this.track = null;
     this.status = 'idle';
+    this.word = null;
     this.el.pause();
   }
 
@@ -103,6 +109,15 @@ export class FreestyleKingProvider {
     this._resume();
   }
 
+  rollWord(bank = DEFAULT_WORD_BANK) {
+    const selected = FREESTYLE_WORD_BANKS[bank] ? bank : DEFAULT_WORD_BANK;
+    const words = FREESTYLE_WORD_BANKS[selected];
+    if (!words.length) return null;
+    this.wordBank = selected;
+    this.word = words[Math.floor(Math.random() * words.length)];
+    return this.word;
+  }
+
   setVolume(value) {
     const next = Math.min(1, Math.max(0, Number(value) || 0));
     this.volume = next;
@@ -117,7 +132,8 @@ export class FreestyleKingProvider {
       playing: this.playing,
       shuffle: true,
       count: FREESTYLE_BEATS.length,
-      word: 'PLACEHOLDER'
+      word: this.word,
+      wordBank: this.wordBank
     };
   }
 

@@ -50,11 +50,12 @@ are rebuilt and uploaded deliberately; GitHub Pages pushes do not update Steam.
 | M | Mute audio |
 | R | Radio: tap = next track, hold = station selector |
 | Hold R, then B | Toggle Freestyle King / Auto Beats on or off (works on foot or in a car) |
+| Hold R in Freestyle King, then ↑ / ↓ / ← / → | Random word: adjective / verb / emotion / compound word |
 | P | Radio power on/off (while the station selector is open) |
 | V | Push-to-talk (multiplayer voice) |
 | Esc | Pause |
 | Enter / N | Accept / decline offer |
-| Gamepad | Full support (RT accelerate, LT brake / reverse, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, LB + B Freestyle King / Auto Beats, D-pad ←/→ aux source, Y radio power while the selector is open, R3 radio volume, Select / Back push-to-talk) |
+| Gamepad | Full support (RT accelerate, LT brake / reverse, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, LB + B Freestyle King / Auto Beats, D-pad ←/→ aux source, D-pad ↑/↓/←/→ random word in Freestyle King, Y radio power while the selector is open, R3 radio volume, Select / Back push-to-talk) |
 
 On a gamepad, LT only reverses once the car is stopped and the trigger is held
 past halfway. Small trigger drift and analog noise are ignored, so a resting or
@@ -348,10 +349,15 @@ instead of failing.
 Hold LB (or R) and press B (or keyboard B) to switch the radio into **FREESTYLE
 KING**. The same combo turns it off. It works on foot as well as in the car, and
 pauses normal radio/aux playback while active. The top-right widget keeps the
-`RADIO` label, shows `FK` in the station slot, then the current beat name and a
-shuffle mark; the radio selector title becomes FREESTYLE KING. The selector also
-shows a **WORD — PLACEHOLDER** block; actually controlling the displayed word is a
-later feature.
+`RADIO` label, shows `FK` in the station slot, then the current beat name, a
+shuffle mark and the current word. The radio selector title stays FREESTYLE KING;
+while LB is held, its center shows the current word.
+
+While Freestyle King is active, hold LB (or R) and press a D-pad direction (or an
+arrow key on the keyboard) to roll a new word: **Up = adjective, Down = verb,
+Left = emotion, Right = compound word**. The same word appears in the top-right
+radio under the beat title. Freestyle King starts with a random compound word.
+A short LB/R tap still skips to another random beat.
 
 This mirrors the Freestyle King site's Auto Beats button. The site does not expose
 a JSON API: it writes a generated `beatShuffler` array into the page and
@@ -361,6 +367,11 @@ a JSON API: it writes a generated `beatShuffler` array into the page and
 `https://freestylekingapp.com/wp-content/themes/thrive-nouveau/audios//`
 endpoint. Each beat plays through before another random beat begins; a tap of
 LB/R skips straight to another random beat.
+
+The word controller mirrors the same site's Rap-tab word buttons. SNACKRUN ships
+snapshots of its adjective (1,115), verb (330), emotion (444) and compound-word
+(846) banks in `src/radio/freestyleWords.js`, and each D-pad press picks a random
+entry with the site's `array[Math.floor(Math.random() * array.length)]` logic.
 
 ### Spotify setup
 

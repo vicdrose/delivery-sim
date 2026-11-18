@@ -32,9 +32,10 @@
           <span class="radio-freestyle-value">ON · {{ ui.radio.freestyle.count }} BEATS</span>
         </div>
         <div class="radio-freestyle-word">
-          <span class="radio-freestyle-label">WORD</span>
-          <span class="radio-freestyle-placeholder">{{ ui.radio.freestyle.word }} — CONTROL COMING SOON</span>
+          <span class="radio-freestyle-bank">{{ wordBankLabel }}</span>
+          <span class="radio-freestyle-word-text">{{ wordLine }}</span>
         </div>
+        <div class="radio-freestyle-controls">{{ wordHint }}</div>
       </div>
     </template>
     <template v-else>
@@ -97,7 +98,7 @@ const freestyleActive = computed(() => !!(ui.radio.freestyle && ui.radio.freesty
 
 const titleLine = computed(() => (freestyleActive.value ? 'FREESTYLE KING' : 'RADIO'));
 
-const hintLine = computed(() => (freestyleActive.value ? 'LB + B' : 'LB + D-PAD'));
+const hintLine = computed(() => (freestyleActive.value ? 'LB + B · WORDS' : 'LB + D-PAD'));
 
 const showShuffle = computed(
   () =>
@@ -111,6 +112,20 @@ const beatLine = computed(() => {
   return '';
 });
 
+const wordBankLabel = computed(() => {
+  const labels = {
+    adjective: 'ADJECTIVE',
+    verb: 'VERB',
+    emotion: 'EMOTION',
+    compound: 'COMPOUND WORD'
+  };
+  return labels[ui.radio.freestyle?.wordBank] || 'COMPOUND WORD';
+});
+
+const wordLine = computed(() => ui.radio.freestyle?.word || 'ROLL A WORD');
+
+const wordHint = computed(() => '↑ adjective · ↓ verb · ← emotion · → compound');
+
 const trackCountLabel = computed(() => {
   const total = ui.radio.soundcloud.trackCount || 0;
   if (total < 1) return '';
@@ -119,7 +134,9 @@ const trackCountLabel = computed(() => {
 });
 
 const footHint = computed(() => {
-  if (freestyleActive.value) return 'Hold LB + B to exit Freestyle King · release LB to close';
+  if (freestyleActive.value) {
+    return '↑ adjective · ↓ verb · ← emotion · → compound · LB + B exit · release LB to close';
+  }
   return showShuffle.value
     ? '↑↓ station · ←→ source · X/H shuffle · Y/P power · release LB to close'
     : '↑↓ station · ←→ aux source · Y/P power · release LB to close';

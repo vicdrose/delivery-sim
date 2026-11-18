@@ -207,11 +207,16 @@ Current behavior worth remembering (all landed and stable):
   A short LB/R tap while the mode is active calls `freestyle.next()` and skips to
   another random beat without toggling the mode. The HUD keeps RADIO and shows FK
   in the red station slot with the beat name below it; the selector title is
-  FREESTYLE KING. Shuffle is always on, and the word controller is a visible
-  PLACEHOLDER for a later pass. Normal radio/external playback is paused while
-  this mode is active; exiting Freestyle King restores the previous station when
-  in a vehicle. B is suppressed as offer decline while LB is held so the combo
-  has no side effect.
+  FREESTYLE KING. Shuffle is always on. The auto-rap word controller mirrors the
+  site's Rap-tab word buttons with snapshots of the adjective (1,115), verb (330),
+  emotion (444) and compound-word (846) banks in
+  `src/radio/freestyleWords.js`; while LB/R is held in Freestyle King, D-pad/arrow
+  Up rolls an adjective, Down a verb, Left an emotion and Right a compound word.
+  The selected word is centered in the popup and repeated in the top-right HUD
+  under the beat title; activating the mode starts with a random compound word.
+  Normal radio/external playback is paused while this mode is active; exiting
+  Freestyle King restores the previous station when in a vehicle. B is suppressed
+  as offer decline while LB is held so the combo has no side effect.
 - **SoundCloud shuffle** = ON by default (`snackrun_soundcloud_shuffle`). On READY
   the provider pulls the widget's full track list with `getSounds` and walks a
   Fisher-Yates bag, `skip(index)`-ing through every track once before reshuffling;
