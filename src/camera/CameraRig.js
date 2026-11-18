@@ -2,6 +2,14 @@ import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 
 const C = CONFIG.camera;
+const TAU = Math.PI * 2;
+
+function wrapAngle(value) {
+  let a = value;
+  while (a > Math.PI) a -= TAU;
+  while (a < -Math.PI) a += TAU;
+  return a;
+}
 
 export class CameraRig {
   constructor(camera) {
@@ -11,6 +19,8 @@ export class CameraRig {
     this._look = new THREE.Vector3();
     this.trauma = 0;
     this.orbitYaw = 0;
+    this.lookYaw = 0;
+    this.lookPitch = 0;
     this.baseFov = CONFIG.render.fov;
     this._shakeVec = new THREE.Vector3();
     this._tmpA = new THREE.Vector3();
@@ -20,6 +30,31 @@ export class CameraRig {
   setMode(mode) {
     this.mode = mode;
     this.orbitYaw = 0;
+    this.resetLook();
+  }
+
+  resetLook() {
+    this.lookYaw = 0;
+    this.lookPitch = 0;
+  }
+
+  updateLook(dt, x, y, snapBack) {
+    const ix = Number.isFinite(x) ? x : 0;
+    const iy = Number.isFinite(y) ? y : 0;
+    if (Math.hypot(ix, iy) > 0.01) {
+      this.lookYaw = wrapAngle(this.lookYaw + ix * C.stickLookYawSpeed * dt);
+      this.lookPitch = Math.min(
+        C.stickLookPitchLimit,
+        Math.max(-C.stickLookPitchLimit, this.lookPitch - iy * C.stickLookPitchSpeed * dt)
+      );
+      return;
+    }
+    if (!snapBack) return;
+    const k = 1 - Math.exp(-C.stickLookReturn * dt);
+    this.lookYaw = wrapAngle(this.lookYaw * (1 - k));
+    this.lookPitch *= 1 - k;
+    if (Math.abs(this.lookYaw) < 0.0005) this.lookYaw = 0;
+    if (Math.abs(this.lookPitch) < 0.0005) this.lookPitch = 0;
   }
 
   shake(amount) {
@@ -32,7 +67,7 @@ export class CameraRig {
     let kPos = 1 - Math.exp(-C.smoothPos * dt);
     let kLook = 1 - Math.exp(-C.smoothLook * dt);
     if (this.mode === 'car') {
-      const yaw = heading + this.orbitYaw;
+      const yaw = heading + this.orbitYaw + this.lookYaw;
       const fx = Math.sin(yaw);
       const fz = Math.cos(yaw);
       desired = this._tmpA.set(
@@ -42,7 +77,7 @@ export class CameraRig {
       );
       look = this._tmpB.set(focus.x + fx * C.carLookAhead, 1.4, focus.z + fz * C.carLookAhead);
     } else if (this.mode === 'foot') {
-      const yaw = heading + this.orbitYaw;
+      const yaw = heading + this.orbitYaw + this.lookYaw;
       const dist = C.footDist;
       desired = this._tmpA.set(
         focus.x - Math.sin(yaw) * dist,
@@ -51,7 +86,7 @@ export class CameraRig {
       );
       look = this._tmpB.set(focus.x + Math.sin(yaw) * 2.2, 1.5, focus.z + Math.cos(yaw) * 2.2);
     } else if (this.mode === 'bike') {
-      const yaw = heading + this.orbitYaw;
+      const yaw = heading + this.orbitYaw + this.lookYaw;
       const fx = Math.sin(yaw);
       const fz = Math.cos(yaw);
       desired = this._tmpA.set(
@@ -67,7 +102,7 @@ export class CameraRig {
       kPos = 1 - Math.exp(-C.bikeSmoothPos * dt);
       kLook = 1 - Math.exp(-C.bikeSmoothLook * dt);
     } else {
-      const yaw = heading + this.orbitYaw;
+      const yaw = heading + this.orbitYaw + this.lookYaw;
       const dist = 4.4;
       desired = this._tmpA.set(
         focus.x - Math.sin(yaw) * dist,
@@ -76,6 +111,16 @@ export class CameraRig {
       );
       look = this._tmpB.set(focus.x, 1.0, focus.z);
     }
+
+    const pitchLook =
+      this.mode === 'car'
+        ? C.carLookAhead
+        : this.mode === 'bike'
+          ? C.bikeLookAhead
+          : this.mode === 'foot'
+            ? 2.2
+            : 4.4;
+    look.y += Math.sin(this.lookPitch) * pitchLook;
 
     this._pos.lerp(desired, kPos);
     this._look.lerp(look, kLook);
@@ -101,6 +146,7 @@ export class CameraRig {
   }
 
   snapBehind(focus, heading) {
+    this.resetLook();
     const fx = Math.sin(heading);
     const fz = Math.cos(heading);
     const bike = this.mode === 'bike';

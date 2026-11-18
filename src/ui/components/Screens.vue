@@ -108,6 +108,9 @@
       <button class="btn ghost" @click="ui.pauseMenu = 'spotify'">SPOTIFY</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'soundcloud'">SOUNDCLOUD</button>
       <button class="btn ghost" @click="handleToggleTraffic">TRAFFIC (BETA): {{ ui.trafficEnabled ? 'ON' : 'OFF' }}</button>
+      <button class="btn ghost" @click="toggleCameraSnapBack">
+        RIGHT STICK CAMERA: {{ ui.cameraSnapBack ? 'SNAP BACK' : 'FREE' }}
+      </button>
       <button class="btn ghost" @click="handleToggleMobile">TOUCH CONTROLS: {{ ui.mobileOverride === null ? (detectedMobile ? 'AUTO (ON)' : 'AUTO (OFF)') : (ui.mobileOverride ? 'ON' : 'OFF') }}</button>
       <button class="btn ghost" @click="handleUiScale">{{ uiScaleLabel() }}</button>
       <button class="btn danger" @click="handleReset">{{ resetArmed ? 'CONFIRM RESET?' : 'RESET GAME DATA' }}</button>
@@ -329,7 +332,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { ui, toggleTraffic, setMobile, detectMobile, cycleUiScale, uiScaleLabel, toast } from '../store.js';
+import { ui, toggleTraffic, toggleCameraSnapBack, setMobile, detectMobile, cycleUiScale, uiScaleLabel, toast } from '../store.js';
 import { bus } from '../../core/bus.js';
 import { CONFIG } from '../../config.js';
 

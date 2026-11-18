@@ -81,7 +81,11 @@ export const CONFIG = {
     interiorAngle: 0.62,
     smoothPos: 5.5,
     smoothLook: 7.0,
-    speedFovBoost: 11
+    speedFovBoost: 11,
+    stickLookYawSpeed: 1.5,
+    stickLookPitchSpeed: 1.1,
+    stickLookReturn: 6.5,
+    stickLookPitchLimit: 0.7
   },
 
   interaction: {
@@ -187,7 +191,7 @@ export const CONFIG = {
     ['M', 'Mute sound'],
     ['R', 'Radio: tap next · hold stations'],
     ['Esc', 'Pause'],
-    ['Gamepad', 'RT gas · LT brake / hold for reverse · Stick steer · A interact / accept · Y vehicle · RB handbrake · X horn · LB radio / hold stations · R3 volume']
+    ['Gamepad', 'RT gas · LT brake / hold for reverse · Stick steer · A interact / accept · Y vehicle · RB handbrake · X horn · LB radio / hold stations · Right stick camera · R3 volume']
   ]
 };
 

@@ -27,7 +27,7 @@ import { DeliveryMode } from './modes/DeliveryMode.js';
 import { registerRhythmModes } from '../rhythm/index.js';
 import { RadioSystem } from '../radio/RadioSystem.js';
 import { Multiplayer } from '../net/Multiplayer.js';
-import { ui, toast, applyUiScale } from '../ui/store.js';
+import { ui, toast, applyUiScale, resetCameraSnapBack } from '../ui/store.js';
 
 const MINIMAP_ZONE_COLORS = {
   residential: '#79a860',
@@ -555,6 +555,8 @@ export class Game {
     this.multiplayer?.resetSettings();
     ui.musicVolumeActive = false;
     ui.trafficEnabled = true;
+    resetCameraSnapBack();
+    this.cameraRig.resetLook();
     ui.mobileOverride = null;
     applyUiScale();
     ui.money = 0;
@@ -625,6 +627,12 @@ export class Game {
     }
     this._updateRadio(dt, s);
     this._updateMusicVolume(s);
+    this.cameraRig.updateLook(
+      dt,
+      ui.musicVolumeActive ? 0 : s.rightStickX,
+      ui.musicVolumeActive ? 0 : s.rightStickY,
+      ui.cameraSnapBack
+    );
     this.foley.update(dt);
 
     this.sleep.update(dt, s);

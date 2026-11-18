@@ -157,6 +157,11 @@ Current behavior worth remembering (all landed and stable):
   stick axes are considered triggers, so the right stick is never brake/throttle.
   The title screen prints the detected pad name (`ui.padName`) — if nothing shows
   there, the browser is not exposing the pad at all, which no game code can fix.
+  The right stick (`rightStickX/Y`, axes 2/3) drives an additive camera look
+  offset in `CameraRig` whenever the R3 volume overlay is closed. In SNAP BACK
+  mode (default) the offset decays smoothly to zero once the stick is neutral;
+  in FREE mode it holds. This offset never changes driving/walking input,
+  `orbitYaw`, mode transitions or `snapBehind()` behavior; mode changes clear it.
 - **Settings** = pause menu is an eight-page stack (`ui.pauseMenu` =
   `main` | `levels` | `settings` | `sound` | `freestyle` | `songs` | `spotify` | `soundcloud`):
   level picker, sound, Freestyle King, traffic, touch controls, UI size,
@@ -167,11 +172,14 @@ Current behavior worth remembering (all landed and stable):
   overall radio volume (0-200%); Song Choice gives every track its own 0-200%
   volume. Both persist in `snackrun_radio_volume` / `snackrun_song_volumes`.
   The FREESTYLE KING page sets AUTO WRAP (250-5000ms in 250ms steps, default
-  1000ms), persisted in `snackrun_freestyle_auto_wrap`.
+  1000ms), persisted in `snackrun_freestyle_auto_wrap`. The settings hub also has
+  RIGHT STICK CAMERA: SNAP BACK (default) or FREE, persisted in
+  `snackrun_camera_snap_back`; RESET GAME DATA returns it to SNAP BACK.
 - **Radio volume on the controller** = R3 toggles a radio-volume slider overlay;
   rotating the right stick clockwise raises it, counterclockwise lowers it (a full
-  turn spans 0-200%). The slider stays open until R3 is pressed again. The Web Audio
-  gain stage is what allows values above 100% (`MusicManager`), and each song's
+  turn spans 0-200%). The slider stays open until R3 is pressed again; while it is
+  open the right stick is dedicated to volume and camera look is suppressed. The Web
+  Audio gain stage is what allows values above 100% (`MusicManager`), and each song's
   volume multiplies on top of the global radio volume. While SPOTIFY is the active
   station, the same setting is mapped to Spotify's device volume (0-100%) and sent
   through `PUT /me/player/volume`, debounced and coalesced so dragging the slider
@@ -521,5 +529,7 @@ it as the shipped game, not a prototype**; do not rework it.
 
 **Phase 2** (current) is everything on top of that baseline: the level registry,
 level select, 1-2 "THE MOVE", 1-3 "EXPANSION", the van, the bike, and the storage
-facility. When phase 2 is done, tag it `milestone-2` and start the next phase
-from there.
+facility. `milestone-2` marks the current shipped build: that phase-2 first pass,
+presence-only multiplayer, Freestyle King / Auto Beats with word banks and auto
+wrap, and the right-stick camera with SNAP BACK / FREE settings. The remaining
+phase-2 systems work continues from this baseline.

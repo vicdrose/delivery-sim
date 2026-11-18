@@ -2,6 +2,16 @@ import { reactive } from 'vue';
 import { loadName, loadServerUrl, loadVoiceEnabled, loadMicMuted } from '../net/settings.js';
 
 let toastId = 1;
+const CAMERA_SNAP_KEY = 'snackrun_camera_snap_back';
+
+function loadCameraSnapBack() {
+  try {
+    const raw = localStorage.getItem(CAMERA_SNAP_KEY);
+    return raw === null ? true : raw !== '0';
+  } catch {
+    return true;
+  }
+}
 
 export function detectMobile() {
   const ua = (navigator.userAgent || '');
@@ -26,6 +36,7 @@ export const ui = reactive({
 
   mobileOverride: null,
   playerMode: 'drive',
+  cameraSnapBack: loadCameraSnapBack(),
   musicVolumeActive: false,
 
   uiScale: 1,
@@ -219,6 +230,24 @@ export function showShiftFlash(text) {
 export function toggleTraffic() {
   ui.trafficEnabled = !ui.trafficEnabled;
   localStorage.setItem('snackrun_traffic', JSON.stringify(ui.trafficEnabled));
+}
+
+export function toggleCameraSnapBack() {
+  ui.cameraSnapBack = !ui.cameraSnapBack;
+  try {
+    localStorage.setItem(CAMERA_SNAP_KEY, ui.cameraSnapBack ? '1' : '0');
+  } catch {
+    void 0;
+  }
+}
+
+export function resetCameraSnapBack() {
+  ui.cameraSnapBack = true;
+  try {
+    localStorage.removeItem(CAMERA_SNAP_KEY);
+  } catch {
+    void 0;
+  }
 }
 
 export function setMobile(force) {
