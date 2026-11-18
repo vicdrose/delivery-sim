@@ -302,6 +302,9 @@ Behavior:
   SPOTIFY, the same volume setting controls Spotify's device volume (mapped to
   Spotify's 0-100%). When AUX is set to SOUNDCLOUD it sets the embedded
   SoundCloud player's volume.
+- Pause → Settings → Freestyle King sets AUTO WRAP, the interval between random
+  words in the current bank (0.25s to 5s in 0.25s steps, default 1s). The choice
+  is saved per browser.
 - Click R3 (right-stick press) during play to open the radio volume slider. Rotate
   the right stick clockwise to raise it and counterclockwise to lower it; click R3
   again to close.
@@ -358,6 +361,13 @@ arrow key on the keyboard) to roll a new word: **Up = adjective, Down = verb,
 Left = emotion, Right = compound word**. The same word appears in the top-right
 radio under the beat title. Freestyle King starts with a random compound word.
 A short LB/R tap still skips to another random beat.
+
+Auto wrap is always on: while Freestyle King is active, the current word bank
+rolls a new random word every AUTO WRAP interval, which defaults to one second.
+Every word command selects its bank and restarts the timer, so pressing Right
+then doing nothing keeps pulling fresh compound words once a second. Pausing the
+game freezes the timer; resuming starts a fresh interval. Change the interval in
+Pause → Settings → Freestyle King.
 
 This mirrors the Freestyle King site's Auto Beats button. The site does not expose
 a JSON API: it writes a generated `beatShuffler` array into the page and

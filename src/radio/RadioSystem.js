@@ -283,6 +283,11 @@ export class RadioSystem {
     return word;
   }
 
+  setFreestyleAutoWrap(ms) {
+    this.freestyle.setAutoWrapMs(ms);
+    this._syncUi();
+  }
+
   previousTrack() {
     if (this.isFreestyle || !this.inVehicle || this.paused) return;
     if (this.isLocal) this.music.previousLocal(this.localGroup);
@@ -408,7 +413,10 @@ export class RadioSystem {
   }
 
   update(dt) {
-    if (this.isFreestyle) this._applyFreestyleVolume();
+    if (this.isFreestyle) {
+      this._applyFreestyleVolume();
+      this.freestyle.updateWord(dt);
+    }
     const active = this.inVehicle && !this.paused;
     this.spotify.update(dt, active);
     this.soundcloud.update(dt, active);
@@ -423,6 +431,7 @@ export class RadioSystem {
   reset() {
     this._cancelApply();
     this.freestyle.deactivate();
+    this.freestyle.resetAutoWrap();
     this.station = 'default';
     this.auxSource = 'spotify';
     this.inVehicle = false;

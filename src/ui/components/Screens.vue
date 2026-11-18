@@ -104,6 +104,7 @@
       <h2>SETTINGS</h2>
       <button class="btn ghost" @click="ui.pauseMenu = 'songs'">SONG CHOICE</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'sound'">SOUND</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'freestyle'">FREESTYLE KING</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'spotify'">SPOTIFY</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'soundcloud'">SOUNDCLOUD</button>
       <button class="btn ghost" @click="handleToggleTraffic">TRAFFIC (BETA): {{ ui.trafficEnabled ? 'ON' : 'OFF' }}</button>
@@ -134,6 +135,29 @@
         <div class="volume-scale"><span>0%</span><span>100%</span><span>200%</span></div>
       </div>
       <p class="volume-note">R3 in game opens the radio volume slider. Rotate the right stick clockwise to raise it, counterclockwise to lower it. When AUX is set to SPOTIFY, this also sets Spotify's volume (0-100%).</p>
+      <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
+    </div>
+
+    <div v-else-if="ui.pauseMenu === 'freestyle'" class="pause-card sound-card">
+      <h2>FREESTYLE KING</h2>
+      <div class="volume-setting">
+        <div class="volume-setting-head">
+          <span>AUTO WRAP</span>
+          <span class="volume-setting-value">{{ autoWrapLabel }}</span>
+        </div>
+        <input
+          class="volume-range"
+          type="range"
+          min="250"
+          max="5000"
+          step="250"
+          aria-label="Freestyle King auto wrap interval"
+          :value="ui.radio.freestyle.autoWrapMs"
+          @input="onAutoWrap"
+        />
+        <div class="volume-scale"><span>0.25s</span><span>2.5s</span><span>5s</span></div>
+      </div>
+      <p class="volume-note">Auto wrap rolls a new random word from the current bank on this interval. Holding LB and pressing Up, Down, Left or Right picks a bank and restarts the timer.</p>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
 
@@ -313,6 +337,9 @@ const controls = CONFIG.controlsHelp;
 const padConnected = computed(() => ui.padConnected);
 const padName = computed(() => ui.padName);
 const radioVolumePct = computed(() => Math.round((ui.radio.volume ?? 1) * 100));
+const autoWrapLabel = computed(
+  () => `${((ui.radio.freestyle?.autoWrapMs ?? 1000) / 1000).toFixed(2).replace(/0$/, '')}s`
+);
 const detectedMobile = detectMobile();
 const soundCloudDraft = ref(ui.radio.soundcloud.url || '');
 
@@ -383,6 +410,9 @@ function songVolumePct(t) {
 }
 function onRadioVolume(e) {
   bus.emit('ui:radio-volume', Number(e.target.value) / 100);
+}
+function onAutoWrap(e) {
+  bus.emit('ui:freestyle-auto-wrap', Number(e.target.value));
 }
 function onSongVolume(t, e) {
   bus.emit('ui:song-volume', { name: t.name, volume: Number(e.target.value) / 100 });

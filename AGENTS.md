@@ -157,15 +157,17 @@ Current behavior worth remembering (all landed and stable):
   stick axes are considered triggers, so the right stick is never brake/throttle.
   The title screen prints the detected pad name (`ui.padName`) — if nothing shows
   there, the browser is not exposing the pad at all, which no game code can fix.
-- **Settings** = pause menu is a seven-page stack (`ui.pauseMenu` =
-  `main` | `levels` | `settings` | `sound` | `songs` | `spotify` | `soundcloud`):
-  level picker, sound, traffic, touch controls, UI size, per-song radio on/off +
-  volume, Spotify connection, SoundCloud link, and **RESET GAME DATA** (wipes
-  every `snackrun*` localStorage key except the four Spotify keys — client ID,
-  token, PKCE verifier and state — then rebuilds the profile;
-  `Game.resetAllData()`). The SOUND page holds master mute and the overall radio
-  volume (0-200%); Song Choice gives every track its own 0-200% volume. Both
-  persist in `snackrun_radio_volume` / `snackrun_song_volumes`.
+- **Settings** = pause menu is an eight-page stack (`ui.pauseMenu` =
+  `main` | `levels` | `settings` | `sound` | `freestyle` | `songs` | `spotify` | `soundcloud`):
+  level picker, sound, Freestyle King, traffic, touch controls, UI size,
+  per-song radio on/off + volume, Spotify connection, SoundCloud link, and
+  **RESET GAME DATA** (wipes every `snackrun*` localStorage key except the four
+  Spotify keys — client ID, token, PKCE verifier and state — then rebuilds the
+  profile; `Game.resetAllData()`). The SOUND page holds master mute and the
+  overall radio volume (0-200%); Song Choice gives every track its own 0-200%
+  volume. Both persist in `snackrun_radio_volume` / `snackrun_song_volumes`.
+  The FREESTYLE KING page sets AUTO WRAP (250-5000ms in 250ms steps, default
+  1000ms), persisted in `snackrun_freestyle_auto_wrap`.
 - **Radio volume on the controller** = R3 toggles a radio-volume slider overlay;
   rotating the right stick clockwise raises it, counterclockwise lowers it (a full
   turn spans 0-200%). The slider stays open until R3 is pressed again. The Web Audio
@@ -214,8 +216,12 @@ Current behavior worth remembering (all landed and stable):
   Up rolls an adjective, Down a verb, Left an emotion and Right a compound word.
   The selected word is centered in the popup and repeated in the top-right HUD
   under the beat title; activating the mode starts with a random compound word.
-  Normal radio/external playback is paused while this mode is active; exiting
-  Freestyle King restores the previous station when in a vehicle. B is suppressed
+  Auto wrap is always on: while the mode is active the current bank rolls a new
+  random word every AUTO WRAP interval (default 1s), and any D-pad/arrow word
+  command picks that bank and restarts the timer. Game pause freezes the timer;
+  resume restarts it. Normal radio/external playback is paused while this mode
+  is active; exiting Freestyle King restores the previous station when in a
+  vehicle. B is suppressed
   as offer decline while LB is held so the combo has no side effect.
 - **SoundCloud shuffle** = ON by default (`snackrun_soundcloud_shuffle`). On READY
   the provider pulls the widget's full track list with `getSounds` and walks a

@@ -142,7 +142,8 @@ export const ui = reactive({
       shuffle: true,
       count: 0,
       word: null,
-      wordBank: 'compound'
+      wordBank: 'compound',
+      autoWrapMs: 1000
     }
   },
 

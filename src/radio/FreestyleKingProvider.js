@@ -3,6 +3,28 @@ import { FREESTYLE_WORD_BANKS } from './freestyleWords.js';
 
 const BEAT_BASE = 'https://freestylekingapp.com/wp-content/themes/thrive-nouveau/audios//';
 const DEFAULT_WORD_BANK = 'compound';
+const AUTO_WRAP_KEY = 'snackrun_freestyle_auto_wrap';
+const DEFAULT_AUTO_WRAP = 1000;
+const MIN_AUTO_WRAP = 250;
+const MAX_AUTO_WRAP = 5000;
+const AUTO_WRAP_STEP = 250;
+
+function clampAutoWrap(value) {
+  const raw = Number(value);
+  if (!Number.isFinite(raw)) return DEFAULT_AUTO_WRAP;
+  const stepped = Math.round(raw / AUTO_WRAP_STEP) * AUTO_WRAP_STEP;
+  return Math.min(MAX_AUTO_WRAP, Math.max(MIN_AUTO_WRAP, stepped));
+}
+
+function readAutoWrap() {
+  try {
+    const raw = localStorage.getItem(AUTO_WRAP_KEY);
+    if (raw === null || raw === '') return DEFAULT_AUTO_WRAP;
+    return clampAutoWrap(raw);
+  } catch {
+    return DEFAULT_AUTO_WRAP;
+  }
+}
 
 function beatName(path) {
   const file = path.split('/').pop() || path;
@@ -26,6 +48,8 @@ export class FreestyleKingProvider {
     this.volume = 1;
     this.word = null;
     this.wordBank = DEFAULT_WORD_BANK;
+    this.autoWrapMs = readAutoWrap();
+    this._wordTimer = 0;
     this._started = false;
     this._wanted = false;
     this._token = 0;
@@ -77,6 +101,7 @@ export class FreestyleKingProvider {
     this.track = null;
     this.status = 'idle';
     this.word = null;
+    this._wordTimer = 0;
     this.el.pause();
   }
 
@@ -91,6 +116,7 @@ export class FreestyleKingProvider {
   resume() {
     if (!this.active) return;
     this._wanted = true;
+    this._wordTimer = 0;
     if (!this._started || this.el.ended) {
       this.next();
       return;
@@ -115,7 +141,35 @@ export class FreestyleKingProvider {
     if (!words.length) return null;
     this.wordBank = selected;
     this.word = words[Math.floor(Math.random() * words.length)];
+    this._wordTimer = 0;
     return this.word;
+  }
+
+  updateWord(dt) {
+    if (!this.active || !this._wanted) return;
+    this._wordTimer += Math.max(0, Number(dt) || 0) * 1000;
+    if (this._wordTimer >= this.autoWrapMs) this.rollWord(this.wordBank);
+  }
+
+  setAutoWrapMs(value) {
+    this.autoWrapMs = clampAutoWrap(value);
+    this._wordTimer = 0;
+    try {
+      localStorage.setItem(AUTO_WRAP_KEY, String(this.autoWrapMs));
+    } catch {
+      void 0;
+    }
+    return this.autoWrapMs;
+  }
+
+  resetAutoWrap() {
+    this.autoWrapMs = DEFAULT_AUTO_WRAP;
+    this._wordTimer = 0;
+    try {
+      localStorage.removeItem(AUTO_WRAP_KEY);
+    } catch {
+      void 0;
+    }
   }
 
   setVolume(value) {
@@ -133,7 +187,8 @@ export class FreestyleKingProvider {
       shuffle: true,
       count: FREESTYLE_BEATS.length,
       word: this.word,
-      wordBank: this.wordBank
+      wordBank: this.wordBank,
+      autoWrapMs: this.autoWrapMs
     };
   }
 

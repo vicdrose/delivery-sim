@@ -299,6 +299,9 @@ export class Game {
       bus.on('ui:song-volume', ({ name, volume }) => {
         this.music.setSongVolume(name, volume);
       }),
+      bus.on('ui:freestyle-auto-wrap', (ms) => {
+        this.radio.setFreestyleAutoWrap(ms);
+      }),
       bus.on('ui:radio-select', (id) => {
         this.radio.selectStation(id);
       }),
