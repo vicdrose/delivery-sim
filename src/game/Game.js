@@ -302,6 +302,14 @@ export class Game {
       bus.on('ui:freestyle-auto-wrap', (ms) => {
         this.radio.setFreestyleAutoWrap(ms);
       }),
+      bus.on('ui:astro-flip', () => {
+        this.radio.pressAstroBeats();
+        this.audio.play('ui');
+      }),
+      bus.on('ui:astro-exit', () => {
+        this.radio.deactivateAstroBeats();
+        this.audio.play('ui');
+      }),
       bus.on('ui:radio-select', (id) => {
         this.radio.selectStation(id);
       }),
@@ -412,10 +420,23 @@ export class Game {
 
   _updateRadio(dt, s) {
     const held = !!s.radioHeld;
+    const astroExit = held && this.radio.isAstroBeats && s.radioPowerPressed;
     if (held && s.autoBeatsPressed) {
       this.radio.toggleFreestyle();
       this.audio.play('ui');
       this._freestyleToggled = true;
+    }
+    if (held && s.astroBeatsPressed) {
+      this.radio.pressAstroBeats();
+      this.audio.play('ui');
+      this._lbSelector = true;
+      this._astroBeatsToggled = true;
+    }
+    if (astroExit) {
+      this.radio.deactivateAstroBeats();
+      this.audio.play('ui');
+      this._lbSelector = true;
+      this._astroBeatsToggled = true;
     }
     if (held && !this._lbPrev) {
       this._lbHold = 0;
@@ -440,7 +461,7 @@ export class Game {
         this._lbSelector = true;
         this.radio.openSelector();
       }
-    } else if (held && this._lbSelector) {
+    } else if (held && this._lbSelector && !astroExit) {
       if (s.radioUpPressed) {
         this.radio.selectNext();
         this.audio.play('ui');
@@ -458,11 +479,12 @@ export class Game {
     } else if (!held && this._lbPrev) {
       if (this._lbSelector) {
         this.radio.closeSelector();
-      } else if (!this._freestyleToggled) {
+      } else if (!this._freestyleToggled && !this._astroBeatsToggled) {
         this.radio.nextTrack();
         this.audio.play('ui');
       }
       this._freestyleToggled = false;
+      this._astroBeatsToggled = false;
     }
     this._lbPrev = held;
   }

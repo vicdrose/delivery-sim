@@ -2,12 +2,12 @@
   <div
     v-if="ui.screen === 'playing'"
     class="radio-widget"
-    :class="[ui.radio.statusKind, { off: !ui.radio.power, freestyle: freestyleActive }]"
+    :class="[ui.radio.statusKind, { off: !ui.radio.power, freestyle: freestyleActive, astro: astroActive }]"
   >
     <div class="radio-head">
       <span class="radio-name">RADIO</span>
       <span class="radio-station">{{ ui.radio.stationName }}</span>
-      <span v-if="!freestyleActive && ui.radio.station === 'aux'" class="radio-source">{{ ui.radio.auxSourceName }}</span>
+      <span v-if="!freestyleActive && !astroActive && ui.radio.station === 'aux'" class="radio-source">{{ ui.radio.auxSourceName }}</span>
       <span class="radio-state">
         <span v-if="ui.radio.playing" class="radio-bars"><i></i><i></i><i></i></span>
         {{ ui.radio.status }}
@@ -18,6 +18,7 @@
     </div>
     <div v-if="ui.radio.artist" class="radio-artist">{{ ui.radio.artist }}</div>
     <div v-if="freestyleActive" class="radio-word">{{ wordLine }}</div>
+    <div v-if="astroActive" class="radio-word astro-word">{{ astroLine }}</div>
     <div class="radio-hint">{{ hintLine }}</div>
   </div>
 </template>
@@ -27,12 +28,20 @@ import { computed } from 'vue';
 import { ui } from '../store.js';
 
 const freestyleActive = computed(() => ui.radio.freestyle && ui.radio.freestyle.active);
+const astroActive = computed(() => ui.radio.astroBeats && ui.radio.astroBeats.active);
 
 const showShuffleMark = computed(
   () =>
     freestyleActive.value ||
     (ui.radio.station === 'aux' && ui.radio.auxSource === 'soundcloud' && ui.radio.shuffle)
 );
+
+const astroLine = computed(() => {
+  const astro = ui.radio.astroBeats;
+  if (!astro?.flipped) return 'CARDS · FACE DOWN';
+  const names = astro.spreadLine || astro.cards?.map((card) => card.name).join(' · ');
+  return `SPREAD · ${names || 'READY'}`;
+});
 
 const wordLine = computed(() => {
   const word = ui.radio.freestyle?.word;
@@ -56,6 +65,7 @@ const trackLine = computed(() => {
 
 const hintLine = computed(() => {
   if (freestyleActive.value) return 'Hold LB + D-pad: words · tap: next beat · R3: volume';
+  if (astroActive.value) return 'Hold LB + A: flip / shuffle · LB + B: Freestyle King · R3: volume';
   if (ui.radio.station === 'aux') return 'Hold LB: stations · ←→: Spotify / SoundCloud · R3: volume';
   return 'Hold LB: stations · tap: next · R3: volume';
 });

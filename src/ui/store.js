@@ -155,6 +155,13 @@ export const ui = reactive({
       word: null,
       wordBank: 'compound',
       autoWrapMs: 1000
+    },
+    astroBeats: {
+      active: false,
+      flipped: false,
+      draw: 0,
+      cards: [],
+      spreadLine: ''
     }
   },
 

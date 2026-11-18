@@ -3,6 +3,13 @@ import { LocalStationProvider } from './providers/LocalStationProvider.js';
 import { SpotifyProvider } from './providers/SpotifyProvider.js';
 import { SoundCloudProvider } from './providers/SoundCloudProvider.js';
 import { FreestyleKingProvider } from './FreestyleKingProvider.js';
+import {
+  ASTRO_CARD_BACK,
+  ASTRO_BODY_CARDS,
+  ASTRO_SIGN_CARDS,
+  ASTRO_HOUSE_CARDS,
+  ASTRO_CRYSTAL_CARDS
+} from './astroBeatsCards.js';
 
 const STATION_KEY = 'snackrun_radio_station';
 const AUX_KEY = 'snackrun_aux_source';
@@ -66,6 +73,10 @@ const SOUNDCLOUD_LABELS = {
   error: ['LINK FAILED', 'error']
 };
 
+function pickCard(cards) {
+  return cards[Math.floor(Math.random() * cards.length)];
+}
+
 const FREESTYLE_LABELS = {
   idle: ['READY', 'idle'],
   loading: ['LOADING', 'idle'],
@@ -86,6 +97,12 @@ export class RadioSystem {
     this.spotify = new SpotifyProvider();
     this.soundcloud = new SoundCloudProvider();
     this.freestyle = new FreestyleKingProvider();
+    this.astroBeats = {
+      active: false,
+      flipped: false,
+      draw: 0,
+      cards: []
+    };
     this.providers = {
       default: new LocalStationProvider(music, 'radio'),
       ep: new LocalStationProvider(music, 'ep'),
@@ -122,6 +139,10 @@ export class RadioSystem {
     return this.freestyle.active;
   }
 
+  get isAstroBeats() {
+    return this.astroBeats.active;
+  }
+
   get auxProvider() {
     return this.providers[this.auxSource];
   }
@@ -135,6 +156,9 @@ export class RadioSystem {
     this.inVehicle = false;
     this.paused = false;
     this.freestyle.deactivate();
+    this.astroBeats.active = false;
+    this.astroBeats.flipped = false;
+    this.astroBeats.cards = [];
     this.closeSelector();
     this._cancelApply();
     this.music.pauseLocalStations();
@@ -149,7 +173,7 @@ export class RadioSystem {
     if (this.inVehicle === next) return;
     this.inVehicle = next;
     this._syncUi();
-    if (this.paused || this.isFreestyle) return;
+    if (this.paused || this.isFreestyle || this.isAstroBeats) return;
     this._scheduleApply(next ? 220 : 180);
   }
 
@@ -169,7 +193,7 @@ export class RadioSystem {
     this.paused = false;
     this.freestyle.resume();
     this.music.resumeGame(false);
-    if (this.inVehicle && !this.isFreestyle) this._scheduleApply(160);
+    if (this.inVehicle && !this.isFreestyle && !this.isAstroBeats) this._scheduleApply(160);
     this._syncUi();
   }
 
@@ -186,6 +210,8 @@ export class RadioSystem {
   }
 
   toggleFreestyle() {
+    const wasAstroBeats = this.isAstroBeats;
+    if (wasAstroBeats) this.deactivateAstroBeats(false);
     if (this.isFreestyle) {
       this.freestyle.deactivate();
       if (this.inVehicle && !this.paused) this._scheduleApply(120);
@@ -199,8 +225,85 @@ export class RadioSystem {
     this._syncUi();
   }
 
+  pressAstroBeats() {
+    if (!this.isAstroBeats) this.activateAstroBeats();
+    else this.flipAstroBeats();
+  }
+
+  activateAstroBeats() {
+    if (this.isFreestyle) this.freestyle.deactivate();
+    this._cancelApply();
+    this._pauseExternal();
+    this.music.pauseLocalStations();
+    this.astroBeats.active = true;
+    this.astroBeats.flipped = false;
+    this.astroBeats.draw += 1;
+    this._drawAstroBeats();
+    this.openSelector();
+    this._syncUi();
+  }
+
+  flipAstroBeats() {
+    if (!this.isAstroBeats) return;
+    if (this.astroBeats.flipped) {
+      this.astroBeats.flipped = false;
+      this.astroBeats.draw += 1;
+      this._drawAstroBeats();
+    } else {
+      this.astroBeats.flipped = true;
+    }
+    this.openSelector();
+    this._syncUi();
+  }
+
+  deactivateAstroBeats(restore = true) {
+    if (!this.isAstroBeats) return;
+    this.astroBeats.active = false;
+    this.astroBeats.flipped = false;
+    this.astroBeats.cards = [];
+    if (restore && this.inVehicle && !this.paused) this._scheduleApply(120);
+    this._syncUi();
+  }
+
+  _drawAstroBeats() {
+    const body = pickCard(ASTRO_BODY_CARDS);
+    const sign = pickCard(ASTRO_SIGN_CARDS);
+    const house = pickCard(ASTRO_HOUSE_CARDS);
+    const crystal = pickCard(ASTRO_CRYSTAL_CARDS);
+    this.astroBeats.cards = [
+      {
+        key: 'body',
+        kind: 'BODY',
+        name: body.name,
+        front: ASTRO_CARD_BACK,
+        back: body.image
+      },
+      {
+        key: 'sign',
+        kind: 'SIGN',
+        name: sign.name,
+        front: ASTRO_CARD_BACK,
+        back: sign.image
+      },
+      {
+        key: 'house',
+        kind: 'HOUSE',
+        name: house.name,
+        front: ASTRO_CARD_BACK,
+        back: house.image
+      },
+      {
+        key: 'crystal',
+        kind: 'CRYSTAL',
+        name: crystal.name,
+        front: crystal.front,
+        back: crystal.back
+      }
+    ];
+  }
+
   selectStation(id) {
-    if (this.isFreestyle || !STATION_IDS.has(id) || id === this.station) return;
+    if (this.isFreestyle || this.isAstroBeats || !STATION_IDS.has(id) || id === this.station) return;
     this._stopCurrent();
     this.station = id;
     try {
@@ -213,19 +316,19 @@ export class RadioSystem {
   }
 
   selectNext() {
-    if (this.isFreestyle) return;
+    if (this.isFreestyle || this.isAstroBeats) return;
     const index = RADIO_STATIONS.findIndex((s) => s.id === this.station);
     this.selectStation(RADIO_STATIONS[(index + 1) % RADIO_STATIONS.length].id);
   }
 
   selectPrevious() {
-    if (this.isFreestyle) return;
+    if (this.isFreestyle || this.isAstroBeats) return;
     const index = RADIO_STATIONS.findIndex((s) => s.id === this.station);
     this.selectStation(RADIO_STATIONS[(index - 1 + RADIO_STATIONS.length) % RADIO_STATIONS.length].id);
   }
 
   selectAuxSource(id) {
-    if (this.isFreestyle || !AUX_SOURCES.includes(id) || id === this.auxSource) return false;
+    if (this.isFreestyle || this.isAstroBeats || !AUX_SOURCES.includes(id) || id === this.auxSource) return false;
     this._pauseExternal();
     this.auxSource = id;
     try {
@@ -239,12 +342,12 @@ export class RadioSystem {
   }
 
   cycleAuxSource() {
-    if (this.isFreestyle || this.station !== 'aux') return false;
+    if (this.isFreestyle || this.isAstroBeats || this.station !== 'aux') return false;
     return this.selectAuxSource(this.auxSource === 'spotify' ? 'soundcloud' : 'spotify');
   }
 
   togglePower() {
-    if (this.isFreestyle) return;
+    if (this.isFreestyle || this.isAstroBeats) return;
     if (!this.isLocal) {
       if (!this.inVehicle || this.paused) return;
       const provider = this.providerFor();
@@ -270,7 +373,7 @@ export class RadioSystem {
       this._syncUi();
       return;
     }
-    if (!this.inVehicle || this.paused) return;
+    if (this.isAstroBeats || !this.inVehicle || this.paused) return;
     if (this.isLocal) this.music.nextLocal(this.localGroup, false);
     else this.providerFor().next();
     this._syncUi();
@@ -289,7 +392,7 @@ export class RadioSystem {
   }
 
   previousTrack() {
-    if (this.isFreestyle || !this.inVehicle || this.paused) return;
+    if (this.isFreestyle || this.isAstroBeats || !this.inVehicle || this.paused) return;
     if (this.isLocal) this.music.previousLocal(this.localGroup);
     else this.providerFor().previous();
     this._syncUi();
@@ -301,6 +404,7 @@ export class RadioSystem {
       this.freestyle.setVolume(this._freestyleVolume());
       return;
     }
+    if (this.isAstroBeats) return;
     if (this.isLocal || !this.inVehicle || this.paused) return;
     this.providerFor().setVolume(percent);
   }
@@ -310,7 +414,7 @@ export class RadioSystem {
       this._applyFreestyleVolume();
       return;
     }
-    if (this.isLocal) return;
+    if (this.isAstroBeats || this.isLocal) return;
     this.providerFor().setVolume(Math.min(100, Math.max(0, Math.round(this.music.radioVolume * 100))));
   }
 
@@ -360,7 +464,7 @@ export class RadioSystem {
   }
 
   toggleShuffle() {
-    if (this.isFreestyle || !this.soundcloud.configured) return false;
+    if (this.isFreestyle || this.isAstroBeats || !this.soundcloud.configured) return false;
     this.soundcloud.toggleShuffle();
     this._syncUi();
     return true;
@@ -393,7 +497,7 @@ export class RadioSystem {
   }
 
   _applyNow() {
-    if (this.paused || this.isFreestyle) return;
+    if (this.paused || this.isFreestyle || this.isAstroBeats) return;
     if (!this.inVehicle) {
       this.music.pauseLocalStations();
       this._pauseExternal();
@@ -432,6 +536,9 @@ export class RadioSystem {
     this._cancelApply();
     this.freestyle.deactivate();
     this.freestyle.resetAutoWrap();
+    this.astroBeats.active = false;
+    this.astroBeats.flipped = false;
+    this.astroBeats.cards = [];
     this.station = 'default';
     this.auxSource = 'spotify';
     this.inVehicle = false;
@@ -451,6 +558,7 @@ export class RadioSystem {
     const spotify = this.spotify.snapshot();
     const soundcloud = this.soundcloud.snapshot();
     const freestyle = this.freestyle.snapshot();
+    const astroBeats = this._astroSnapshot();
     const available = local ? this.music.localHasTracks(group) : this.providerFor().configured;
     let track = null;
     let artist = null;
@@ -558,7 +666,8 @@ export class RadioSystem {
         trackIndex: soundcloud.trackIndex,
         error: soundcloud.error
       },
-      freestyle
+      freestyle,
+      astroBeats
     };
 
     if (freestyle.active) {
@@ -578,7 +687,33 @@ export class RadioSystem {
       });
     }
 
+    if (astroBeats.active) {
+      Object.assign(state, {
+        station: 'astro',
+        stationName: 'ASTRO',
+        stationDetail: 'CARDS',
+        playing: false,
+        track: astroBeats.flipped ? astroBeats.spreadLine : 'FOUR CARDS READY',
+        artist: null,
+        status: astroBeats.flipped ? 'REVEALED' : 'FACE DOWN',
+        statusKind: 'idle',
+        power: true,
+        on: true,
+        shuffle: true
+      });
+    }
+
     return state;
+  }
+
+  _astroSnapshot() {
+    return {
+      active: this.astroBeats.active,
+      flipped: this.astroBeats.flipped,
+      draw: this.astroBeats.draw,
+      cards: this.astroBeats.cards.map((card) => ({ ...card })),
+      spreadLine: this.astroBeats.cards.map((card) => card.name).join(' · ')
+    };
   }
 
   _applyUi(state) {

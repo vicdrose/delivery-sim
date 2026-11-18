@@ -51,16 +51,25 @@ are rebuilt and uploaded deliberately; GitHub Pages pushes do not update Steam.
 | R | Radio: tap = next track, hold = station selector |
 | Hold R, then B | Toggle Freestyle King / Auto Beats on or off (works on foot or in a car) |
 | Hold R in Freestyle King, then ↑ / ↓ / ← / → | Random word: adjective / verb / emotion / compound word |
+| Hold R, then E | Open Astro Beats, then flip / shuffle the four cards |
+| Hold R in Astro Beats, then P | Close Astro Beats and restore the radio |
 | P | Radio power on/off (while the station selector is open) |
 | Right stick | Look around with the camera (inverted X, 3x sensitivity); R3 opens the radio volume slider |
 | V | Push-to-talk (multiplayer voice) |
 | Esc | Pause |
 | Enter / N | Accept / decline offer |
-| Gamepad | Full support (RT accelerate, LT brake / reverse, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, LB + B Freestyle King / Auto Beats, D-pad ←/→ aux source, D-pad ↑/↓/←/→ random word in Freestyle King, Y radio power while the selector is open, right stick camera look, R3 radio volume, Select / Back push-to-talk) |
+| Gamepad | Full support (RT accelerate, LT brake / reverse, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, LB + B Freestyle King / Auto Beats, LB + A Astro Beats flip / shuffle, D-pad ←/→ aux source, D-pad ↑/↓/←/→ random word in Freestyle King, Y radio power or Astro Beats close while the selector is open, right stick camera look, R3 radio volume, Select / Back push-to-talk) |
 
 Menus are controller-friendly too: on the title screen and every pause page,
 D-pad or arrow keys move the highlight, A (or Enter) activates the highlighted
 button, B (or N) goes back, and D-pad left/right adjusts a focused volume slider.
+
+Astro Beats uses the same radio popup as Freestyle King. Hold LB / R and press A
+/ E once to open a shuffled four-card spread face-down. The next press flips all
+cards to reveal the body, sign, house and crystal. Press it again to flip them
+back and draw a fresh spread, then again to reveal the new cards. LB + B switches
+to Freestyle King; Y / P or the popup's CLOSE button exits Astro Beats and
+restores the previous radio station.
 
 On a gamepad, LT only reverses once the car is stopped and the trigger is held
 past halfway. Small trigger drift and analog noise are ignored, so a resting or

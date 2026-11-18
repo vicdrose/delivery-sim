@@ -2,12 +2,15 @@
   <div
     v-if="show"
     class="radio-selector"
-    :class="[ui.radio.statusKind, { freestyle: freestyleActive }]"
+    :class="[ui.radio.statusKind, { freestyle: freestyleActive, astro: astroActive }]"
   >
     <div class="radio-selector-head">
       <span class="radio-selector-title">{{ titleLine }}</span>
       <span class="radio-selector-hint">{{ hintLine }}</span>
-      <div v-if="!freestyleActive" class="radio-selector-actions">
+      <div v-if="astroActive" class="radio-selector-actions">
+        <button class="radio-selector-power" @click="exitAstro">CLOSE</button>
+      </div>
+      <div v-else-if="!freestyleActive" class="radio-selector-actions">
         <button
           v-if="showShuffle"
           class="radio-selector-power"
@@ -36,6 +39,47 @@
           <span class="radio-freestyle-word-text">{{ wordLine }}</span>
         </div>
         <div class="radio-freestyle-controls">{{ wordHint }}</div>
+      </div>
+    </template>
+    <template v-else-if="astroActive">
+      <div class="radio-astro">
+        <div class="radio-astro-status">
+          <span class="radio-astro-status-label">{{ astroStatusLabel }}</span>
+          <span class="radio-astro-status-value">{{ astroStatusValue }}</span>
+        </div>
+        <div class="radio-astro-cards" :class="{ flipped: astroFlipped }">
+          <div
+            v-for="(card, index) in astroCards"
+            :key="`${astroDraw}-${card.key}`"
+            class="astro-card"
+            role="button"
+            tabindex="0"
+            @click="flipAstro"
+            @keydown.enter.prevent="flipAstro"
+          >
+            <div class="astro-card-inner">
+              <div class="astro-card-face astro-card-front">
+                <img
+                  v-if="!astroImageErrors[index]"
+                  :src="card.front"
+                  :alt="`${card.kind} card back`"
+                  @error="astroImageErrors[index] = true"
+                />
+                <div v-else class="astro-card-fallback">{{ card.kind }}</div>
+              </div>
+              <div class="astro-card-face astro-card-back">
+                <img
+                  v-if="!astroImageErrors[index]"
+                  :src="card.back"
+                  :alt="card.name"
+                  @error="astroImageErrors[index] = true"
+                />
+                <div v-else class="astro-card-fallback">{{ card.name }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="radio-astro-controls">{{ astroControlsLine }}</div>
       </div>
     </template>
     <template v-else>
@@ -86,7 +130,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { ui } from '../store.js';
 import { bus } from '../../core/bus.js';
 
@@ -95,14 +139,30 @@ const show = computed(
 );
 
 const freestyleActive = computed(() => !!(ui.radio.freestyle && ui.radio.freestyle.active));
+const astroActive = computed(() => !!(ui.radio.astroBeats && ui.radio.astroBeats.active));
+const astroFlipped = computed(() => !!ui.radio.astroBeats?.flipped);
+const astroCards = computed(() => ui.radio.astroBeats?.cards || []);
+const astroDraw = computed(() => ui.radio.astroBeats?.draw || 0);
+const astroImageErrors = ref([false, false, false, false]);
 
-const titleLine = computed(() => (freestyleActive.value ? 'FREESTYLE KING' : 'RADIO'));
+watch(astroDraw, () => {
+  astroImageErrors.value = [false, false, false, false];
+});
 
-const hintLine = computed(() => (freestyleActive.value ? 'LB + B · WORDS' : 'LB + D-PAD'));
+const titleLine = computed(() => {
+  if (astroActive.value) return 'ASTRO BEATS';
+  return freestyleActive.value ? 'FREESTYLE KING' : 'RADIO';
+});
+
+const hintLine = computed(() => {
+  if (astroActive.value) return 'LB + A · FLIP';
+  return freestyleActive.value ? 'LB + B · WORDS' : 'LB + D-PAD';
+});
 
 const showShuffle = computed(
   () =>
     !freestyleActive.value &&
+    !astroActive.value &&
     ui.radio.station === 'aux' &&
     ui.radio.auxSource === 'soundcloud'
 );
@@ -126,6 +186,19 @@ const wordLine = computed(() => ui.radio.freestyle?.word || 'ROLL A WORD');
 
 const wordHint = computed(() => '↑ adjective · ↓ verb · ← emotion · → compound');
 
+const astroStatusLabel = computed(() => (astroFlipped.value ? 'SPREAD' : 'DECK'));
+
+const astroStatusValue = computed(() => {
+  if (!astroFlipped.value) return '4 CARDS · FACE DOWN';
+  return ui.radio.astroBeats?.spreadLine || astroCards.value.map((card) => card.name).join(' · ');
+});
+
+const astroControlsLine = computed(() =>
+  astroFlipped.value
+    ? 'LB + A: flip back and shuffle · LB + B: Freestyle King'
+    : 'LB + A: reveal cards · LB + B: Freestyle King'
+);
+
 const trackCountLabel = computed(() => {
   const total = ui.radio.soundcloud.trackCount || 0;
   if (total < 1) return '';
@@ -134,6 +207,9 @@ const trackCountLabel = computed(() => {
 });
 
 const footHint = computed(() => {
+  if (astroActive.value) {
+    return 'LB + A flip / shuffle · LB + B Freestyle King · Y/P close · release LB to close';
+  }
   if (freestyleActive.value) {
     return '↑ adjective · ↓ verb · ← emotion · → compound · LB + B exit · release LB to close';
   }
@@ -144,6 +220,7 @@ const footHint = computed(() => {
 
 const nowLine = computed(() => {
   const radio = ui.radio;
+  if (astroActive.value) return radio.astroBeats?.flipped ? astroStatusValue.value : 'FOUR CARDS READY';
   if (freestyleActive.value) return radio.freestyle.track || 'Freestyle King';
   if (radio.track && radio.artist) return `${radio.track} — ${radio.artist}`;
   if (radio.track) return radio.track;
@@ -160,6 +237,14 @@ const nowLine = computed(() => {
   if (radio.station === 'ep' && !radio.epHasTracks) return 'Drop EP files into src/audio/tracks/infinite-ep/';
   return radio.stationDetail;
 });
+
+function flipAstro() {
+  bus.emit('ui:astro-flip');
+}
+
+function exitAstro() {
+  bus.emit('ui:astro-exit');
+}
 
 function pick(id) {
   bus.emit('ui:radio-select', id);
