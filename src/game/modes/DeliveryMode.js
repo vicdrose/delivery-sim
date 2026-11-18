@@ -247,6 +247,16 @@ export class DeliveryMode {
           },
           action: () => this._deliverAtDoor(poi)
         });
+      } else if (poi.category === 'gym') {
+        g.interaction.add({
+          position: poi.door,
+          radius: 3.4,
+          label: () => (this.playerMode === 'foot' ? `Enter ${poi.name}` : null),
+          action: () => this._enterBuilding(poi, {
+            counterLabel: 'Talk to Trainer',
+            idleToast: 'The gym is quiet. Maybe after your shift.'
+          })
+        });
       } else if (poi.category === 'gas') {
         g.interaction.add({
           position: poi.door,
@@ -284,8 +294,10 @@ export class DeliveryMode {
     }
   }
 
-  _enterBuilding(poi) {
+  _enterBuilding(poi, opts = {}) {
     const g = this.g;
+    const counterLabel = opts.counterLabel || 'Browse Menu';
+    const idleToast = opts.idleToast || 'Smells amazing. Maybe after your shift.';
     g.audio.play('door');
     this.doorstepBag.visible = false;
     const res = g.interiors.enter(poi, g.player.pos.clone());
@@ -314,7 +326,7 @@ export class DeliveryMode {
           if (this.playerMode !== 'inside') return null;
           if (isTarget() && g.fsm.state === DeliveryState.COLLECTING) return 'Pick Up Order';
           if (isTarget() && g.fsm.state === DeliveryState.ON_FOOT_PICKUP) return 'Talk to Staff';
-          return 'Browse Menu';
+          return counterLabel;
         },
         action: () => {
           const fsm = g.fsm;
@@ -323,7 +335,7 @@ export class DeliveryMode {
           } else if (isTarget()) {
             if (fsm.enterBuilding()) toast('The staff is whipping it up...', 'info');
           } else {
-            toast('Smells amazing. Maybe after your shift.', 'info');
+            toast(idleToast, 'info');
             g.audio.play('ui');
           }
         }

@@ -159,11 +159,277 @@ function flatPlane(w, d, x, y, z, hex, opacity = 1) {
   return mesh;
 }
 
+function makeMesa(rng, radius, height, tint) {
+  const seg = 6 + Math.floor(rng.float(0, 3));
+  const parts = [];
+  const bands = rng.int(3, 5);
+  const tones = ['#c98f6b', '#b56c50', '#d2a27a', '#a85f45', '#dcb08a'];
+  let y = 0;
+  let r = radius;
+  for (let i = 0; i < bands; i++) {
+    const bh = (height / bands) * rng.float(0.82, 1.22);
+    const topR = r * rng.float(0.58, 0.82);
+    const g = new THREE.CylinderGeometry(topR, r, bh, seg, 1);
+    g.translate(0, y + bh / 2, 0);
+    paint(g, tones[rng.int(0, tones.length - 1)], tint);
+    parts.push(g);
+    y += bh;
+    r = topR;
+  }
+  const merged = mergeGeometries(parts, false);
+  parts.forEach((p) => p.dispose());
+  return merged;
+}
+
+function buildMesas(rng, H) {
+  const parts = [];
+  const ringCount = 44;
+  for (let i = 0; i < ringCount; i++) {
+    const a = (i / ringCount) * Math.PI * 2 + rng.float(-0.14, 0.14);
+    const near = i % 5 === 0;
+    const dist = H + (near ? rng.float(26, 72) : rng.float(130, 250));
+    const r = near ? rng.float(9, 18) : rng.float(22, 46);
+    const h = near ? rng.float(16, 34) : rng.float(38, 88);
+    parts.push(makeMesa(rng, r, h, rng.float(0.9, 1.06)).translate(
+      Math.cos(a) * dist,
+      -5,
+      Math.sin(a) * dist
+    ));
+  }
+  for (let i = 0; i < 12; i++) {
+    const a = rng.float(0, Math.PI * 2);
+    const dist = H + rng.float(13, 38);
+    parts.push(makeMesa(rng, rng.float(4, 9), rng.float(9, 20), rng.float(0.9, 1.05)).translate(
+      Math.cos(a) * dist,
+      -3,
+      Math.sin(a) * dist
+    ));
+  }
+  const merged = mergeGeometries(parts, false);
+  parts.forEach((p) => p.dispose());
+  const mesh = new THREE.Mesh(
+    merged,
+    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })
+  );
+  mesh.frustumCulled = false;
+  return mesh;
+}
+
+function makeCactusGeometry() {
+  const parts = [];
+  const trunk = paint(new THREE.CylinderGeometry(0.32, 0.42, 3.6, 7), '#4f7a4d');
+  trunk.translate(0, 1.8, 0);
+  parts.push(trunk);
+  for (const sx of [-1, 1]) {
+    const arm = paint(new THREE.CylinderGeometry(0.2, 0.24, 1.25, 6), '#4f7a4d');
+    arm.rotateZ(Math.PI / 2);
+    arm.translate(sx * 0.62, 2.1, 0);
+    parts.push(arm);
+    const up = paint(new THREE.CylinderGeometry(0.19, 0.22, 1.1, 6), '#4f7a4d');
+    up.translate(sx * 1.18, 2.6, 0);
+    parts.push(up);
+  }
+  const merged = mergeGeometries(parts, false);
+  parts.forEach((p) => p.dispose());
+  return merged;
+}
+
+function buildCactuses(rng, H) {
+  const spots = [];
+  for (let i = 0; i < 210; i++) {
+    const a = rng.float(0, Math.PI * 2);
+    const dist = H + rng.float(16, 270);
+    spots.push({
+      x: Math.cos(a) * dist,
+      z: Math.sin(a) * dist,
+      s: rng.float(0.65, 1.5),
+      ry: rng.float(0, Math.PI * 2)
+    });
+  }
+  for (let c = 0; c < 16; c++) {
+    const a = rng.float(0, Math.PI * 2);
+    const dist = H + rng.float(20, 100);
+    const cx = Math.cos(a) * dist;
+    const cz = Math.sin(a) * dist;
+    const n = rng.int(2, 5);
+    for (let k = 0; k < n; k++) {
+      spots.push({
+        x: cx + rng.float(-9, 9),
+        z: cz + rng.float(-9, 9),
+        s: rng.float(0.7, 1.3),
+        ry: rng.float(0, Math.PI * 2)
+      });
+    }
+  }
+  const mesh = new THREE.InstancedMesh(
+    makeCactusGeometry(),
+    new THREE.MeshLambertMaterial({ vertexColors: true }),
+    spots.length
+  );
+  mesh.frustumCulled = false;
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const eu = new THREE.Euler();
+  const pos = new THREE.Vector3();
+  const sc = new THREE.Vector3();
+  const col = new THREE.Color();
+  const tints = ['#ffffff', '#dbe6c9', '#c7d8ae'];
+  for (let i = 0; i < spots.length; i++) {
+    const p = spots[i];
+    q.setFromEuler(eu.set(0, p.ry, 0));
+    m.compose(pos.set(p.x, -0.04, p.z), q, sc.set(p.s, p.s, p.s));
+    mesh.setMatrixAt(i, m);
+    col.set(tints[i % tints.length]);
+    mesh.setColorAt(i, col);
+  }
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  return mesh;
+}
+
+function makeDesertTreeGeometry() {
+  const parts = [];
+  const trunk = paint(new THREE.CylinderGeometry(0.18, 0.3, 2.6, 6).toNonIndexed(), '#6b5136');
+  trunk.translate(0, 1.3, 0);
+  parts.push(trunk);
+  const crown = paint(new THREE.IcosahedronGeometry(1.85, 0), '#6f8f5a');
+  crown.translate(0, 3.25, 0);
+  parts.push(crown);
+  const merged = mergeGeometries(parts, false);
+  parts.forEach((p) => p.dispose());
+  return merged;
+}
+
+function buildDesertTrees(rng, H) {
+  const spots = [];
+  for (let g = 0; g < 18; g++) {
+    const a = rng.float(0, Math.PI * 2);
+    const dist = H + rng.float(45, 230);
+    const cx = Math.cos(a) * dist;
+    const cz = Math.sin(a) * dist;
+    const n = rng.int(2, 6);
+    for (let k = 0; k < n; k++) {
+      spots.push({
+        x: cx + rng.float(-14, 14),
+        z: cz + rng.float(-14, 14),
+        s: rng.float(0.7, 1.45),
+        ry: rng.float(0, Math.PI * 2)
+      });
+    }
+  }
+  const mesh = new THREE.InstancedMesh(
+    makeDesertTreeGeometry(),
+    new THREE.MeshLambertMaterial({ vertexColors: true }),
+    spots.length
+  );
+  mesh.frustumCulled = false;
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const eu = new THREE.Euler();
+  const pos = new THREE.Vector3();
+  const sc = new THREE.Vector3();
+  const col = new THREE.Color();
+  const tints = ['#ffffff', '#dbe6c9', '#b9c99a'];
+  for (let i = 0; i < spots.length; i++) {
+    const p = spots[i];
+    q.setFromEuler(eu.set(0, p.ry, 0));
+    m.compose(pos.set(p.x, -0.04, p.z), q, sc.set(p.s, p.s, p.s));
+    mesh.setMatrixAt(i, m);
+    col.set(tints[i % tints.length]);
+    mesh.setColorAt(i, col);
+  }
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  return mesh;
+}
+
+function buildBoulders(rng, H) {
+  const spots = [];
+  for (let i = 0; i < 170; i++) {
+    const a = rng.float(0, Math.PI * 2);
+    const dist = H + rng.float(12, 260);
+    spots.push({
+      x: Math.cos(a) * dist,
+      z: Math.sin(a) * dist,
+      s: rng.float(0.4, 2.2),
+      ry: rng.float(0, Math.PI * 2)
+    });
+  }
+  const geo = paint(new THREE.IcosahedronGeometry(1, 0), '#9a8874');
+  geo.translate(0, 0.55, 0);
+  const mesh = new THREE.InstancedMesh(
+    geo,
+    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
+    spots.length
+  );
+  mesh.frustumCulled = false;
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const eu = new THREE.Euler();
+  const pos = new THREE.Vector3();
+  const sc = new THREE.Vector3();
+  const col = new THREE.Color();
+  const tints = ['#ffffff', '#d8bfa2', '#c4a98c'];
+  for (let i = 0; i < spots.length; i++) {
+    const p = spots[i];
+    q.setFromEuler(eu.set(0, p.ry, 0));
+    m.compose(pos.set(p.x, -0.05, p.z), q, sc.set(p.s, p.s, p.s));
+    mesh.setMatrixAt(i, m);
+    col.set(tints[i % tints.length]);
+    mesh.setColorAt(i, col);
+  }
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  return mesh;
+}
+
+function createDesertScenery(scene, collision, seed, H) {
+  const rng = new RNG(seed + 77);
+  const group = new THREE.Group();
+
+  group.add(flatPlane(1700, 1700, 0, -0.075, 0, '#d9bd8c'));
+  const patches = ['#d2b483', '#e0c597', '#cfae7c'];
+  for (let i = 0; i < 18; i++) {
+    const a = rng.float(0, Math.PI * 2);
+    const dist = H + rng.float(60, 420);
+    group.add(flatPlane(
+      rng.float(70, 190),
+      rng.float(70, 190),
+      Math.cos(a) * dist,
+      -0.07 + i * 0.0002,
+      Math.sin(a) * dist,
+      patches[i % patches.length]
+    ));
+  }
+
+  group.add(buildMesas(rng, H));
+  group.add(buildBoulders(rng, H));
+  group.add(buildCactuses(rng, H));
+  group.add(buildDesertTrees(rng, H));
+
+  const bound = H + 250;
+  collision.addBox(0, -bound, bound + 30, 1);
+  collision.addBox(0, bound, bound + 30, 1);
+  collision.addBox(-bound, 0, 1, bound + 30);
+  collision.addBox(bound, 0, 1, bound + 30);
+
+  scene.add(group);
+  return {
+    group,
+    update() {},
+    dispose() {
+      scene.remove(group);
+      group.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) obj.material.dispose();
+      });
+    }
+  };
+}
+
 export function createScenery(scene, collision, level) {
   const grid = level ? level.grid : CONFIG.city;
   const seed = level ? level.seed : CONFIG.city.seed;
   const m = gridMetrics(grid);
   const H = m.H;
+  if (level && level.biome === 'desert') return createDesertScenery(scene, collision, seed, H);
   const SHORE_X = -(H + 95);
   const rng = new RNG(seed + 77);
   const group = new THREE.Group();

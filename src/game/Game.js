@@ -34,7 +34,17 @@ const MINIMAP_ZONE_COLORS = {
   commercial: '#b8b2a4',
   business: '#9aa4ad',
   campus: '#6ba06b',
-  industrial: '#7d7466'
+  industrial: '#7d7466',
+  gym: '#c98b4b'
+};
+
+const MINIMAP_ZONE_COLORS_DESERT = {
+  residential: '#b59a6f',
+  commercial: '#c2ad8b',
+  business: '#a89476',
+  campus: '#9b9a6a',
+  industrial: '#8e7c64',
+  gym: '#d08a4a'
 };
 
 function buildMinimapStatic(minimapData) {
@@ -46,26 +56,34 @@ function buildMinimapStatic(minimapData) {
   const half = minimapData.half;
   const scale = size / (half * 2);
   const toPx = (v) => (v + half) * scale;
+  const desert = minimapData.biome === 'desert';
+  const zoneColors = desert ? MINIMAP_ZONE_COLORS_DESERT : MINIMAP_ZONE_COLORS;
 
-  ctx.fillStyle = '#31363d';
+  ctx.fillStyle = desert ? '#4a4034' : '#31363d';
   ctx.fillRect(0, 0, size, size);
 
   for (const b of minimapData.blocks) {
-    ctx.fillStyle = MINIMAP_ZONE_COLORS[b.zone] || '#888';
+    ctx.fillStyle = zoneColors[b.zone] || '#888';
     ctx.fillRect(toPx(b.x - b.w / 2), toPx(b.z - b.d / 2), b.w * scale, b.d * scale);
   }
 
   for (const p of minimapData.pois) {
     ctx.beginPath();
     ctx.arc(toPx(p.x), toPx(p.z), 2.6, 0, Math.PI * 2);
-    ctx.fillStyle = p.category === 'food' ? '#ffd23f' : p.category === 'gas' ? '#4cc9f0' : '#ff8fab';
+    ctx.fillStyle = p.category === 'food'
+      ? '#ffd23f'
+      : p.category === 'gas'
+        ? '#4cc9f0'
+        : p.category === 'gym'
+          ? '#ff9f1c'
+          : '#ff8fab';
     ctx.fill();
   }
 
   const edge = 13;
-  ctx.fillStyle = '#3f7f9e';
+  ctx.fillStyle = desert ? '#a98658' : '#3f7f9e';
   ctx.fillRect(0, 0, edge, size);
-  ctx.fillStyle = '#82876f';
+  ctx.fillStyle = desert ? '#b9a27a' : '#82876f';
   ctx.fillRect(0, 0, size, edge);
   ctx.fillRect(0, size - edge, size, edge);
   ctx.fillRect(size - edge, 0, edge, size);
@@ -127,6 +145,7 @@ export class Game {
     ui.levels = levelList(this.progression);
 
     this.sky = new Sky(this.scene);
+    this.sky.setBiome(this.level.biome);
     this.dayCycle = new DayNightCycle(bus);
     this.envState = {};
 
@@ -172,7 +191,9 @@ export class Game {
       const v = new Vehicle(this.scene, this.collision, profile);
       v.resolveNpc = (x, z, r) => this.npcTraffic.resolveCircle(x, z, r);
       const slot = slots ? slots[id + 'Slot'] : null;
+      const gymSlot = !slot && this.city.gym ? this.city.gym[id + 'Slot'] : null;
       if (slot) v.reset(slot.x, slot.z, slot.heading);
+      else if (gymSlot) v.reset(gymSlot.x, gymSlot.z, gymSlot.heading);
       else v.reset(this.city.spawn.x + 6, this.city.spawn.z - 5, Math.PI);
       this.vehicles[id] = v;
     }
@@ -215,7 +236,7 @@ export class Game {
       this.city = null;
     }
     if (this.scenery) {
-      this.scene.remove(this.scenery.group);
+      this.scenery.dispose();
       this.scenery = null;
     }
     if (this.npcTraffic) {
@@ -227,6 +248,7 @@ export class Game {
 
     this.level = next;
     ui.levelId = next.id;
+    this.sky.setBiome(next.biome);
     this.fsm.reset();
     this._buildWorld();
     this._buildFleet();

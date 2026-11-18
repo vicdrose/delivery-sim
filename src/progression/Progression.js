@@ -9,7 +9,7 @@ const DEFAULT_PROFILE = {
   unlocks: {
     vehicles: ['car', 'van'],
     cities: ['metro'],
-    levels: ['1-1', '1-2'],
+    levels: ['1-1', '1-2', '1-3'],
     songs: [],
     upgrades: []
   }
@@ -25,7 +25,11 @@ export class Progression {
       const raw = localStorage.getItem(KEY);
       if (!raw) return structuredClone(DEFAULT_PROFILE);
       const data = JSON.parse(raw);
-      return { ...structuredClone(DEFAULT_PROFILE), ...data, unlocks: { ...DEFAULT_PROFILE.unlocks, ...(data.unlocks || {}) } };
+      const base = structuredClone(DEFAULT_PROFILE);
+      const unlocks = { ...base.unlocks, ...(data.unlocks || {}) };
+      const savedLevels = Array.isArray(unlocks.levels) ? unlocks.levels : [];
+      unlocks.levels = [...new Set([...savedLevels, ...base.unlocks.levels])];
+      return { ...base, ...data, unlocks };
     } catch {
       return structuredClone(DEFAULT_PROFILE);
     }

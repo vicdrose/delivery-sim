@@ -73,6 +73,34 @@ for other players. Riding the bike tires you out much faster than driving
 the car (`CONFIG.sleep.bikeDriveExtra`), so keep an eye on the moon meter. If the
 car breaks down and repairs are out of reach, the bike keeps the gigs going.
 
+## Levels
+
+Pick a level on the title screen or from Pause → LEVELS. All three are unlocked for
+debug. Each level owns its own grid, seed, gas stations and vehicle set.
+
+- **1-1 SHIFT START** — the original 6×6 island city (360×360 m), one car and the
+  ocean/beach scenery. This level's generator output is the shipped baseline and
+  must stay unchanged.
+- **1-2 THE MOVE** — a 12×12 city (708×708 m) with car, van and bike, four corner
+  gas stations, a campus district and a drive-in storage facility. The van is the
+  mobile studio/sleep spot; the bike lives in the van's open bay.
+- **1-3 EXPANSION** — a 1.5× wider desert city (18×18 grid, 1056×1056 m, about
+  2.25× the area of 1-2). The layout is seeded but randomized: commercial and
+  business blocks are scattered across the rings, gas stations sit in shuffled
+  corners, and the college campus is a 3–4×3–4 block district in a seeded random
+  spot. The van and bike park in a dedicated gym lot; you start on foot at the gym
+  door. The desert sits outside the perimeter with beige/red mesas, cactuses,
+  scattered desert trees and boulders — no ocean and no green island mountains.
+  The sky and fog take a sandy tint, and the city ground, lots and minimap use
+  warm desert palettes.
+
+The **gym** is a first-party store archetype, not a delivery pickup. Its lot has
+marked van, bike and car stalls, lamps and a wide approach so the van can park
+without threading a curb. Walk up to the gym door and press E to step inside. The
+college campus uses the same hall buildings as the earlier levels, clustered into
+a walkable district; it is scenery and lives to give the expansion a different
+silhouette, not a new delivery system.
+
 ## Gameplay loop
 
 1. Title screen - press Start. The game spawns you in your hatchback.
@@ -131,6 +159,8 @@ Each level has one sleep spot:
   `Zzz` marker sits on the doorstep; stand on it and press E.
 - **1-2** — the rear of the van. The spot and marker follow the van wherever it is
   parked, so the van works as a bed on the move.
+- **1-3** — the rear of the van in the gym parking lot, same as 1-2. The van's
+  dedicated van stall makes it easy to get back to when it is time to sleep.
 
 Sleep is time-based, not a day skip. **100% tiredness is 8 in-game hours of sleep**,
 and the length scales with the meter (60% = 4 hr 48 min). During sleep the clock and

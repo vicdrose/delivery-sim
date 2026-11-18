@@ -294,6 +294,76 @@ export function warehouseStore(S, W, rng, f) {
   return { hw: w / 2, hd: d / 2, poiCategory: 'food', doorLocal: { dx: -w / 4, dz: d / 2 + 0.15 } };
 }
 
+export function gymStore(S, W, rng, f) {
+  const w = rng.float(20, 23);
+  const d = rng.float(12, 14);
+  const h = rng.float(7, 8.5);
+  const body = rng.pick(['#d9c39a', '#cbb694', '#e0cba6', '#c2ad8d']);
+  addPlinth(S, f, w, d);
+  const c = l2w(f, 0, 0);
+  S.box(w, h, d, c.x, h / 2 + 0.22, c.z, body, f.ry);
+  S.box(w + 0.4, 1.1, d + 0.4, c.x, h + 0.45, c.z, '#9c5b45', f.ry);
+  windowStrip(W, f, w - 2.5, h * 0.72, d / 2 + 0.07, PALETTES.glassStorefront);
+  windowStrip(W, f, w - 2.5, h * 0.45, d / 2 + 0.07, PALETTES.glassStorefront);
+  windowGrid(W, f, d / 2 + 0.07, w - 3, h - 3.4, 3.1, Math.max(4, Math.floor(w / 3)), 1);
+  addDoor(S, f, 0, d / 2 + 0.05, 3.0, 3.0);
+  const signP = l2w(f, 0, d / 2 + 0.17);
+  S.wallQuad(8.5, 1.5, signP.x, h + 0.45, signP.z, f.ry, '#2f3b46');
+  S.wallQuad(7.4, 0.3, signP.x, h + 0.45, signP.z, f.ry, '#f2a541');
+  for (const sx of [-1, 1]) {
+    const colP = l2w(f, sx * (w / 2 - 1.2), d / 2 + 0.4);
+    S.box(0.8, h - 1, 0.8, colP.x, (h - 1) / 2 + 0.22, colP.z, '#b08a63', f.ry);
+  }
+  roofClutter(S, rng, f, w / 2 - 2, d / 2 - 1.5, h + 1.0);
+
+  const lotD = 18;
+  const lotW = Math.max(w + 12, 34);
+  const lotZ = d / 2 + lotD / 2 + 0.8;
+  const lotP = l2w(f, 0, lotZ);
+  S.groundQuad(lotW, lotD, lotP.x, 0.035, lotP.z, '#54575c');
+  const stallCount = 8;
+  for (let i = 0; i <= stallCount; i++) {
+    const q = l2w(f, -lotW / 2 + (i * lotW) / stallCount, lotZ);
+    S.groundQuad(0.2, 6.2, q.x, 0.05, q.z, '#e8e6df');
+  }
+  const vanLocalZ = d / 2 + 7;
+  const vanP = l2w(f, 0, vanLocalZ);
+  S.groundQuad(4.6, 8.4, vanP.x, 0.052, vanP.z, '#4a4d52');
+  const stripeP = l2w(f, 2.35, vanLocalZ);
+  S.groundQuad(0.22, 8.4, stripeP.x, 0.055, stripeP.z, '#f2a541');
+  const bikeP = l2w(f, -5.6, vanLocalZ + 1);
+  const carP = l2w(f, 5.8, vanLocalZ + 1);
+  const footP = l2w(f, 3.2, d / 2 + 2.2);
+  const lampL = l2w(f, -lotW / 2 + 1.5, lotZ + lotD / 2 - 2);
+  const lampR = l2w(f, lotW / 2 - 1.5, lotZ + lotD / 2 - 2);
+  S.cyl(0.12, 0.16, 6, 6, lampL.x, 3, lampL.z, '#545c64');
+  S.cyl(0.12, 0.16, 6, 6, lampR.x, 3, lampR.z, '#545c64');
+  S.box(1.2, 0.2, 0.5, lampL.x, 6.05, lampL.z, '#ffd9a0', f.ry);
+  S.box(1.2, 0.2, 0.5, lampR.x, 6.05, lampR.z, '#ffd9a0', f.ry);
+
+  return {
+    hw: w / 2,
+    hd: d / 2,
+    poiCategory: 'gym',
+    doorLocal: { dx: 0, dz: d / 2 + 0.25 },
+    parkOverride: { x: vanP.x, z: vanP.z },
+    lot: {
+      centerX: lotP.x,
+      centerZ: lotP.z,
+      width: lotW,
+      depth: lotD,
+      vanSlot: { x: vanP.x, z: vanP.z, heading: f.ry },
+      bikeSlot: { x: bikeP.x, z: bikeP.z, heading: f.ry },
+      carSlot: { x: carP.x, z: carP.z, heading: f.ry },
+      footSlot: { x: footP.x, z: footP.z, yaw: f.ry },
+      lampSpots: [
+        { x: lampL.x, z: lampL.z, ry: f.ry },
+        { x: lampR.x, z: lampR.z, ry: f.ry }
+      ]
+    }
+  };
+}
+
 export function gasStation(S, W, rng, f) {
   const w = rng.float(10, 12);
   const d = rng.float(8, 9);

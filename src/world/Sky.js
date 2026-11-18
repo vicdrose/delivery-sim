@@ -4,6 +4,9 @@ import { RNG } from '../core/RNG.js';
 export class Sky {
   constructor(scene) {
     this.scene = scene;
+    this.biome = 'default';
+    this._sandSky = new THREE.Color('#e8c79a');
+    this._sandFog = new THREE.Color('#d8bb8f');
     scene.background = new THREE.Color('#8ecae6');
     scene.fog = new THREE.Fog('#cfe8f5', 130, 560);
 
@@ -65,9 +68,17 @@ export class Sky {
     }
   }
 
+  setBiome(biome) {
+    this.biome = biome || 'default';
+  }
+
   apply(state, cameraPos) {
     this.scene.background.copy(state.sky);
     this.scene.fog.color.copy(state.fog);
+    if (this.biome === 'desert') {
+      this.scene.background.lerp(this._sandSky, 0.14);
+      this.scene.fog.color.lerp(this._sandFog, 0.2);
+    }
     this.starMat.opacity = state.starAlpha;
 
     const sd = state.sunDir;

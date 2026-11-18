@@ -319,9 +319,18 @@ Current behavior worth remembering (all landed and stable):
   `37f6a53545122e02f6eb6123c33a75ad8ec9bd26b4843eecbef815005d89135d`
   (61 POIs, 126 colliders, 36 blocks, 62596 verts, half 180). Re-run that check
   after touching `CityGenerator.js` or the 1-1 level definition.
-- **Two levels**: 1-1 "SHIFT START" (gridN 6, 360x360, car only) and 1-2 "THE
-  MOVE" (gridN 12, 708x708, four corner gas stations, campus top-middle). Both
-  are unlocked in `DEFAULT_PROFILE.unlocks.levels` for debug.
+- **Three levels**: 1-1 "SHIFT START" (gridN 6, 360x360, car only), 1-2 "THE
+  MOVE" (gridN 12, 708x708, four corner gas stations, campus top-middle), and
+  1-3 "EXPANSION" (gridN 18, 1056x1056 desert, seeded/randomized zones, four
+  shuffled corner gas stations, two gym stores, a 12-block campus district, and
+  car/van/bike parked in the primary gym's lot). All are unlocked in
+  `DEFAULT_PROFILE.unlocks.levels` for debug, and old saves merge new default
+  levels on load. 1-3 uses `biome: 'desert'` (sand city/ground/minimap palettes,
+  sandy sky tint, mesas/cactuses/desert trees outside the perimeter) and
+  `sleepSpot: 'van'`, so the van works as a bed in 1-2 and 1-3. The gym is a
+  first-party POI/store archetype with a van-sized parking lot; its door uses
+  the existing interior flow with gym-specific labels. 1-1 and 1-2 generator
+  hashes are unchanged by the expansion.
 - **The van** (1-2 only) is the mobile-studio/creative asset. It is a real
   `Vehicle` built from `VEHICLE_PROFILES.van` (bigger, slower, 56L tank, 140 HP,
   own `snackrun_van_fuel` / `snackrun_van_health` keys, boxy mesh) and it **cannot
@@ -454,8 +463,11 @@ their first pass land as the level-select + 1-2 / van / storage facility — see
 6. **Parking tickets**
 7. **Night hazards** (health meter or money-based robbery — decision needed)
 8. **Police**
-9. **Gym**
-10. **Study** (coffee shop / college campus)
+9. **Gym** — first-pass location landed in 1-3 as a first-party store archetype
+   with a van-friendly parking lot and enterable interior. Fitness meter and
+   workout mechanics are still open.
+10. **Study** (coffee shop / college campus) — first-pass location landed in 1-3
+    as a seeded campus district. Study mechanics are still open.
 
 Loose / later: hunger + thirst meters (with fitness + sleep), multiplayer
 friends/accounts, roommates, volleyball mini-game, malls, multi-floor
@@ -477,5 +489,6 @@ vehicle health, NPC traffic, audio, touch controls. That is the baseline. **Trea
 it as the shipped game, not a prototype**; do not rework it.
 
 **Phase 2** (current) is everything on top of that baseline: the level registry,
-level select, 1-2 "THE MOVE", the van, and the storage facility. When phase 2 is
-done, tag it `milestone-2` and start the next phase from there.
+level select, 1-2 "THE MOVE", 1-3 "EXPANSION", the van, the bike, and the storage
+facility. When phase 2 is done, tag it `milestone-2` and start the next phase
+from there.

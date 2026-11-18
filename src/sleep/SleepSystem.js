@@ -150,7 +150,7 @@ export class SleepSystem {
   _findSpot() {
     const g = this.g;
     const van = g.vehicles && g.vehicles.van;
-    if (g.level.id === '1-2' && van) {
+    if (g.level.sleepSpot === 'van' && van) {
       return {
         kind: 'van',
         label: 'Sleep in the Van',

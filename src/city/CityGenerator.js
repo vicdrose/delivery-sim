@@ -5,7 +5,7 @@ import { makeSharedMaterials } from './materials.js';
 import { LocationRegistry } from './Locations.js';
 import {
   smallHouse, townhouseRow, apartmentBlock, restaurant, shopUnit,
-  stripMall, officeTower, campusHall, gasStation
+  stripMall, officeTower, campusHall, gymStore, gasStation
 } from './Buildings.js';
 import { buildStorageFacility } from './StorageFacility.js';
 import { gridMetrics } from './gridMath.js';
@@ -16,18 +16,29 @@ const ZONE_LOT = {
   commercial: '#cfc9bd',
   business: '#c4c0b6',
   campus: '#79b56b',
-  industrial: '#8d8578'
+  industrial: '#8d8578',
+  gym: '#b8b2a4'
+};
+
+const DESERT_ZONE_LOT = {
+  residential: '#c4a879',
+  commercial: '#c9b48f',
+  business: '#bda982',
+  campus: '#b9ae7d',
+  industrial: '#9f8c71',
+  gym: '#b99c72'
 };
 
 export const CAR_COLORS = ['#e8615a', '#f2a541', '#2a9d8f', '#457b9d', '#b56576', '#e8e6df', '#576066'];
 
 export class CityWorld {
-  constructor(group, locations, minimapData, spawn, materials, storage = null) {
+  constructor(group, locations, minimapData, spawn, materials, storage = null, gym = null) {
     this.group = group;
     this.locations = locations;
     this.minimapData = minimapData;
     this.spawn = spawn;
     this.storage = storage;
+    this.gym = gym;
     this._materials = materials;
     this.windowsMaterial = materials.windows;
   }
@@ -52,6 +63,8 @@ export function generateCity(collision, level) {
   const P = m.P;
   const T = m.T;
   const H = m.H;
+  const desert = level.biome === 'desert';
+  const zoneLot = desert ? DESERT_ZONE_LOT : ZONE_LOT;
 
   const lineCoord = m.lineCoord;
   const blockMin = m.blockMin;
@@ -72,7 +85,7 @@ export function generateCity(collision, level) {
   const minimapBlocks = [];
   const minimapPois = [];
 
-  S.groundQuad(T * 3, T * 3, 0, -0.06, 0, '#6da85e');
+  S.groundQuad(T * 3, T * 3, 0, -0.06, 0, desert ? '#cbb188' : '#6da85e');
 
   for (let i = 0; i <= N; i++) {
     const lx = lineCoord(i);
@@ -178,7 +191,7 @@ export function generateCity(collision, level) {
     S.box(B, 0.14, SW, bx, 0.07, bz + inner + SW / 2, '#b3b9bf');
     S.box(SW, 0.14, B - SW * 2, bx - inner - SW / 2, 0.07, bz, '#b3b9bf');
     S.box(SW, 0.14, B - SW * 2, bx + inner + SW / 2, 0.07, bz, '#b3b9bf');
-    S.groundQuad(inner * 2, inner * 2, bx, 0.02, bz, ZONE_LOT[zone]);
+    S.groundQuad(inner * 2, inner * 2, bx, 0.02, bz, zoneLot[zone]);
     minimapBlocks.push({ x: bx, z: bz, w: B, d: B, zone });
 
     const c0 = rng.chance(0.5) ? -1 : 1;
@@ -203,7 +216,9 @@ export function generateCity(collision, level) {
       else doorW = l2wV(f, 0, meta.hd + 0.2);
       const dirx = Math.abs(Math.sin(f.ry)) > 0.5 ? Math.sign(Math.sin(f.ry)) : 0;
       const dirz = Math.abs(Math.cos(f.ry)) > 0.5 ? Math.sign(Math.cos(f.ry)) : 0;
-      const park = curbSpotFor(doorW.x, doorW.z, dirx, dirz);
+      const park = meta.parkOverride
+        ? new THREE.Vector3(meta.parkOverride.x, 0, meta.parkOverride.z)
+        : curbSpotFor(doorW.x, doorW.z, dirx, dirz);
       locations.register({
         name: nameFor(poiCat),
         category: poiCat,
@@ -385,21 +400,59 @@ export function generateCity(collision, level) {
     }
   }
 
+  function buildGym(col, row, primary) {
+    const { bx, bz, inner } = buildSidewalkAndLot(col, row, 'gym');
+    const face = facingOutward(col, row);
+    const backZ = bz - face.fz * inner * 0.42;
+    const f = frameAt(bx, backZ, face.ry);
+    f.col = col; f.row = row;
+    const meta = placeBuilding(
+      gymStore,
+      f,
+      [],
+      () => (primary ? 'Desert Fitness Gym' : 'Dunes Fitness Gym'),
+      'gym'
+    );
+    const lot = meta.lot;
+    buildingBoxes.push({
+      cx: lot.centerX,
+      cz: lot.centerZ,
+      hw: lot.width / 2 + 1,
+      hd: lot.depth / 2 + 1
+    });
+    lampSpots.push(...lot.lampSpots);
+    const tx = lot.centerX + (primary ? -lot.width / 2 - 3 : lot.width / 2 + 3);
+    const tz = lot.centerZ;
+    if (!treeOverlapsBuilding(tx, tz)) treeSpots.push({ x: tx, z: tz, s: 1.1 });
+    return lot;
+  }
+
   const gasSpots = level.gasSpots;
   const gasSpotSet = new Set(gasSpots.map((s) => s.col + ',' + s.row));
+  const gymBlocks = level.gymBlocks || [];
+  const gymBlockSet = new Set(gymBlocks.map((s) => s.col + ',' + s.row));
   const storageBlock = level.storageBlock;
   const storageKey = storageBlock ? storageBlock.col + ',' + storageBlock.row : null;
 
   for (let row = 0; row < N; row++) {
     for (let col = 0; col < N; col++) {
       if (gasSpotSet.has(col + ',' + row)) continue;
+      if (gymBlockSet.has(col + ',' + row)) continue;
       if (col + ',' + row === storageKey) continue;
       const zone = cfg.zoneOf(col, row);
       if (zone === 'residential') buildResidential(col, row);
       else if (zone === 'commercial') buildCommercial(col, row);
       else if (zone === 'business') buildBusiness(col, row);
-      else buildCampus(col, row);
+      else if (zone === 'campus') buildCampus(col, row);
+      else if (zone === 'gym') buildGym(col, row, false);
+      else buildResidential(col, row);
     }
+  }
+
+  let gym = null;
+  for (let i = 0; i < gymBlocks.length; i++) {
+    const lot = buildGym(gymBlocks[i].col, gymBlocks[i].row, i === 0);
+    if (i === 0) gym = lot;
   }
 
   for (const { col, row } of gasSpots) {
@@ -468,14 +521,19 @@ export function generateCity(collision, level) {
   const winMesh = W.build(materials.windows, { castShadow: false, receiveShadow: false });
   if (winMesh) group.add(winMesh);
 
-  group.add(buildTrees(treeSpots));
+  group.add(buildTrees(
+    treeSpots,
+    desert ? ['#6f8f5a', '#7d9a63', '#5f7f52', '#8ca06a'] : undefined
+  ));
   group.add(buildPropCars(carSpots));
   group.add(buildLamps(lampSpots));
 
   const spawn =
     level.spawn.kind === 'storage' && storage
       ? new THREE.Vector3(storage.footSlot.x, 0, storage.footSlot.z)
-      : new THREE.Vector3(lineCoord(N / 2), 0, H - R / 2);
+      : level.spawn.kind === 'gym' && gym
+        ? new THREE.Vector3(gym.footSlot.x, 0, gym.footSlot.z)
+        : new THREE.Vector3(lineCoord(N / 2), 0, H - R / 2);
 
   const minimapData = {
     span: T,
@@ -483,14 +541,15 @@ export function generateCity(collision, level) {
     roadWidth: R,
     gridN: N,
     pitch: P,
+    biome: level.biome || 'default',
     blocks: minimapBlocks,
     pois: minimapPois
   };
 
-  return new CityWorld(group, locations, minimapData, spawn, materials, storage);
+  return new CityWorld(group, locations, minimapData, spawn, materials, storage, gym);
 }
 
-function buildTrees(spots) {
+function buildTrees(spots, greens = ['#5ea35c', '#6fb261', '#4f9a54', '#83bd6d']) {
   const g = new THREE.Group();
   if (spots.length === 0) return g;
   const trunkGeo = new THREE.CylinderGeometry(0.22, 0.32, 1.6, 6);
@@ -511,7 +570,6 @@ function buildTrees(spots) {
   const sc = new THREE.Vector3();
   const yAxis = new THREE.Vector3(0, 1, 0);
   const col = new THREE.Color();
-  const greens = ['#5ea35c', '#6fb261', '#4f9a54', '#83bd6d'];
   for (let i = 0; i < spots.length; i++) {
     const t = spots[i];
     const s = t.s || 1;
