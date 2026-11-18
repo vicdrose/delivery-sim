@@ -312,8 +312,10 @@ Behavior:
   for the HUD. Both choices are saved per browser.
 - Pause → Settings → RIGHT STICK CAMERA chooses between SNAP BACK (default) and
   FREE. Moving the right stick temporarily orbits and tilts the view at 3x the
-  original sensitivity, with horizontal movement inverted; returning it to
-  neutral smoothly restores the game's normal camera angle. In FREE mode
+  original sensitivity, with horizontal movement inverted. Like the Rocket
+  League replay camera, the look stops at about 80 degrees left/right and 40
+  degrees up/down instead of spinning forever; returning the stick to neutral
+  smoothly snaps back to the game's normal camera angle. In FREE mode
   the view stays where you left it. Changing vehicles or entering/exiting still
   snaps the camera behind the player as usual. The setting is saved per browser
   and resets to SNAP BACK with RESET GAME DATA.

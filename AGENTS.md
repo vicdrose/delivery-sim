@@ -161,8 +161,11 @@ Current behavior worth remembering (all landed and stable):
   offset in `CameraRig` whenever the R3 volume overlay is closed. Camera X is
   inverted before it reaches `CameraRig`, and both look speeds are 3x the
   original values (yaw 4.5 rad/s, pitch 3.3 rad/s); raw axes still feed R3
-  volume. In SNAP BACK mode (default) the offset decays smoothly to zero once
-  the stick is neutral; in FREE mode it holds. This offset never changes driving/walking input,
+  volume. Like the Rocket League replay camera, the offset is clamped to
+  `stickLookYawLimit` (1.4 rad / ~80 deg) and `stickLookPitchLimit` (0.7 rad /
+  ~40 deg) so it cannot spin forever. In SNAP BACK mode (default) the offset
+  decays smoothly to zero once the stick is neutral; in FREE mode it holds at
+  the clamped angle. This offset never changes driving/walking input,
   `orbitYaw`, mode transitions or `snapBehind()` behavior; mode changes clear it.
 - **Settings** = pause menu is a nine-page stack (`ui.pauseMenu` =
   `main` | `levels` | `settings` | `ui` | `sound` | `freestyle` | `songs` | `spotify` | `soundcloud`):

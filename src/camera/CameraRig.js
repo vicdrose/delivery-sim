@@ -2,14 +2,6 @@ import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 
 const C = CONFIG.camera;
-const TAU = Math.PI * 2;
-
-function wrapAngle(value) {
-  let a = value;
-  while (a > Math.PI) a -= TAU;
-  while (a < -Math.PI) a += TAU;
-  return a;
-}
 
 export class CameraRig {
   constructor(camera) {
@@ -42,7 +34,10 @@ export class CameraRig {
     const ix = Number.isFinite(x) ? x : 0;
     const iy = Number.isFinite(y) ? y : 0;
     if (Math.hypot(ix, iy) > 0.01) {
-      this.lookYaw = wrapAngle(this.lookYaw + ix * C.stickLookYawSpeed * dt);
+      this.lookYaw = Math.min(
+        C.stickLookYawLimit,
+        Math.max(-C.stickLookYawLimit, this.lookYaw + ix * C.stickLookYawSpeed * dt)
+      );
       this.lookPitch = Math.min(
         C.stickLookPitchLimit,
         Math.max(-C.stickLookPitchLimit, this.lookPitch - iy * C.stickLookPitchSpeed * dt)
@@ -51,7 +46,7 @@ export class CameraRig {
     }
     if (!snapBack) return;
     const k = 1 - Math.exp(-C.stickLookReturn * dt);
-    this.lookYaw = wrapAngle(this.lookYaw * (1 - k));
+    this.lookYaw *= 1 - k;
     this.lookPitch *= 1 - k;
     if (Math.abs(this.lookYaw) < 0.0005) this.lookYaw = 0;
     if (Math.abs(this.lookPitch) < 0.0005) this.lookPitch = 0;

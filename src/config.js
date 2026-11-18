@@ -85,6 +85,7 @@ export const CONFIG = {
     stickLookYawSpeed: 4.5,
     stickLookPitchSpeed: 3.3,
     stickLookReturn: 6.5,
+    stickLookYawLimit: 1.4,
     stickLookPitchLimit: 0.7
   },
 
