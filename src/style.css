@@ -265,6 +265,18 @@ body {
   letter-spacing: 0.04em;
 }
 
+.radio-widget.freestyle {
+  box-shadow: var(--card-shadow), inset 0 calc(3 * var(--u)) 0 var(--accent2);
+}
+
+.radio-word {
+  font-size: calc(9 * var(--u));
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: var(--accent2);
+  margin-top: calc(3 * var(--u));
+}
+
 .radio-artist {
   font-size: calc(10 * var(--u));
   font-weight: 700;
@@ -519,6 +531,59 @@ body {
 
 .radio-selector.error {
   border-top-color: var(--bad);
+}
+
+.radio-selector.freestyle {
+  border-top-color: var(--accent2);
+}
+
+.radio-freestyle {
+  display: flex;
+  flex-direction: column;
+  gap: calc(6 * var(--u));
+}
+
+.radio-freestyle-row,
+.radio-freestyle-word {
+  display: flex;
+  align-items: baseline;
+  gap: calc(10 * var(--u));
+}
+
+.radio-freestyle-label {
+  flex: 0 0 auto;
+  width: calc(76 * var(--u));
+  font-size: calc(8 * var(--u));
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #8a8578;
+}
+
+.radio-freestyle-value {
+  min-width: 0;
+  font-size: calc(11 * var(--u));
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.radio-freestyle-word {
+  margin-top: calc(2 * var(--u));
+  padding: calc(7 * var(--u)) calc(9 * var(--u));
+  border-radius: calc(9 * var(--u));
+  background: #ece8dd;
+}
+
+.radio-freestyle-placeholder {
+  min-width: 0;
+  font-size: calc(9 * var(--u));
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #8a8578;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .volume-overlay {

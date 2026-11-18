@@ -2,6 +2,7 @@ import { ui, toast } from '../ui/store.js';
 import { LocalStationProvider } from './providers/LocalStationProvider.js';
 import { SpotifyProvider } from './providers/SpotifyProvider.js';
 import { SoundCloudProvider } from './providers/SoundCloudProvider.js';
+import { FreestyleKingProvider } from './FreestyleKingProvider.js';
 
 const STATION_KEY = 'snackrun_radio_station';
 const AUX_KEY = 'snackrun_aux_source';
@@ -65,6 +66,14 @@ const SOUNDCLOUD_LABELS = {
   error: ['LINK FAILED', 'error']
 };
 
+const FREESTYLE_LABELS = {
+  idle: ['READY', 'idle'],
+  loading: ['LOADING', 'idle'],
+  playing: ['PLAYING', 'ok'],
+  paused: ['PAUSED', 'idle'],
+  error: ['BEAT ERROR', 'error']
+};
+
 export class RadioSystem {
   constructor(game, music) {
     this.g = game;
@@ -76,6 +85,7 @@ export class RadioSystem {
     this.selectorOpen = false;
     this.spotify = new SpotifyProvider();
     this.soundcloud = new SoundCloudProvider();
+    this.freestyle = new FreestyleKingProvider();
     this.providers = {
       default: new LocalStationProvider(music, 'radio'),
       ep: new LocalStationProvider(music, 'ep'),
@@ -108,6 +118,10 @@ export class RadioSystem {
     return this.isAux && this.auxSource === 'soundcloud';
   }
 
+  get isFreestyle() {
+    return this.freestyle.active;
+  }
+
   get auxProvider() {
     return this.providers[this.auxSource];
   }
@@ -120,6 +134,7 @@ export class RadioSystem {
   onRunStart() {
     this.inVehicle = false;
     this.paused = false;
+    this.freestyle.deactivate();
     this.closeSelector();
     this._cancelApply();
     this.music.pauseLocalStations();
@@ -134,13 +149,14 @@ export class RadioSystem {
     if (this.inVehicle === next) return;
     this.inVehicle = next;
     this._syncUi();
-    if (this.paused) return;
+    if (this.paused || this.isFreestyle) return;
     this._scheduleApply(next ? 220 : 180);
   }
 
   gamePause() {
     if (this.paused) return;
     this.paused = true;
+    this.freestyle.pause();
     this.closeSelector();
     this._cancelApply();
     this.music.pauseGame();
@@ -151,8 +167,9 @@ export class RadioSystem {
   gameResume() {
     if (!this.paused) return;
     this.paused = false;
+    this.freestyle.resume();
     this.music.resumeGame(false);
-    if (this.inVehicle) this._scheduleApply(160);
+    if (this.inVehicle && !this.isFreestyle) this._scheduleApply(160);
     this._syncUi();
   }
 
@@ -168,8 +185,22 @@ export class RadioSystem {
     this._syncUi();
   }
 
+  toggleFreestyle() {
+    if (this.isFreestyle) {
+      this.freestyle.deactivate();
+      if (this.inVehicle && !this.paused) this._scheduleApply(120);
+    } else {
+      this._cancelApply();
+      this._pauseExternal();
+      this.music.pauseLocalStations();
+      this.freestyle.activate();
+      this._applyFreestyleVolume();
+    }
+    this._syncUi();
+  }
+
   selectStation(id) {
-    if (!STATION_IDS.has(id) || id === this.station) return;
+    if (this.isFreestyle || !STATION_IDS.has(id) || id === this.station) return;
     this._stopCurrent();
     this.station = id;
     try {
@@ -182,17 +213,19 @@ export class RadioSystem {
   }
 
   selectNext() {
+    if (this.isFreestyle) return;
     const index = RADIO_STATIONS.findIndex((s) => s.id === this.station);
     this.selectStation(RADIO_STATIONS[(index + 1) % RADIO_STATIONS.length].id);
   }
 
   selectPrevious() {
+    if (this.isFreestyle) return;
     const index = RADIO_STATIONS.findIndex((s) => s.id === this.station);
     this.selectStation(RADIO_STATIONS[(index - 1 + RADIO_STATIONS.length) % RADIO_STATIONS.length].id);
   }
 
   selectAuxSource(id) {
-    if (!AUX_SOURCES.includes(id) || id === this.auxSource) return false;
+    if (this.isFreestyle || !AUX_SOURCES.includes(id) || id === this.auxSource) return false;
     this._pauseExternal();
     this.auxSource = id;
     try {
@@ -206,11 +239,12 @@ export class RadioSystem {
   }
 
   cycleAuxSource() {
-    if (this.station !== 'aux') return false;
+    if (this.isFreestyle || this.station !== 'aux') return false;
     return this.selectAuxSource(this.auxSource === 'spotify' ? 'soundcloud' : 'spotify');
   }
 
   togglePower() {
+    if (this.isFreestyle) return;
     if (!this.isLocal) {
       if (!this.inVehicle || this.paused) return;
       const provider = this.providerFor();
@@ -231,14 +265,14 @@ export class RadioSystem {
   }
 
   nextTrack() {
-    if (!this.inVehicle || this.paused) return;
+    if (this.isFreestyle || !this.inVehicle || this.paused) return;
     if (this.isLocal) this.music.nextLocal(this.localGroup, false);
     else this.providerFor().next();
     this._syncUi();
   }
 
   previousTrack() {
-    if (!this.inVehicle || this.paused) return;
+    if (this.isFreestyle || !this.inVehicle || this.paused) return;
     if (this.isLocal) this.music.previousLocal(this.localGroup);
     else this.providerFor().previous();
     this._syncUi();
@@ -246,13 +280,29 @@ export class RadioSystem {
 
   setVolume(value) {
     const percent = Math.min(100, Math.max(0, Math.round((Number(value) || 0) * 100)));
+    if (this.isFreestyle) {
+      this.freestyle.setVolume(this._freestyleVolume());
+      return;
+    }
     if (this.isLocal || !this.inVehicle || this.paused) return;
     this.providerFor().setVolume(percent);
   }
 
   _applyStationVolume() {
+    if (this.isFreestyle) {
+      this._applyFreestyleVolume();
+      return;
+    }
     if (this.isLocal) return;
     this.providerFor().setVolume(Math.min(100, Math.max(0, Math.round(this.music.radioVolume * 100))));
+  }
+
+  _freestyleVolume() {
+    return this.music.muted ? 0 : Math.min(1, Math.max(0, this.music.radioVolume));
+  }
+
+  _applyFreestyleVolume() {
+    this.freestyle.setVolume(this._freestyleVolume());
   }
 
   setSpotifyClientId(value) {
@@ -293,7 +343,7 @@ export class RadioSystem {
   }
 
   toggleShuffle() {
-    if (!this.soundcloud.configured) return false;
+    if (this.isFreestyle || !this.soundcloud.configured) return false;
     this.soundcloud.toggleShuffle();
     this._syncUi();
     return true;
@@ -326,7 +376,7 @@ export class RadioSystem {
   }
 
   _applyNow() {
-    if (this.paused) return;
+    if (this.paused || this.isFreestyle) return;
     if (!this.inVehicle) {
       this.music.pauseLocalStations();
       this._pauseExternal();
@@ -346,6 +396,7 @@ export class RadioSystem {
   }
 
   update(dt) {
+    if (this.isFreestyle) this._applyFreestyleVolume();
     const active = this.inVehicle && !this.paused;
     this.spotify.update(dt, active);
     this.soundcloud.update(dt, active);
@@ -359,6 +410,7 @@ export class RadioSystem {
 
   reset() {
     this._cancelApply();
+    this.freestyle.deactivate();
     this.station = 'default';
     this.auxSource = 'spotify';
     this.inVehicle = false;
@@ -377,6 +429,7 @@ export class RadioSystem {
     const group = this.localGroup;
     const spotify = this.spotify.snapshot();
     const soundcloud = this.soundcloud.snapshot();
+    const freestyle = this.freestyle.snapshot();
     const available = local ? this.music.localHasTracks(group) : this.providerFor().configured;
     let track = null;
     let artist = null;
@@ -435,7 +488,7 @@ export class RadioSystem {
     const power = local ? this.music.radioOn : this.isSpotify ? spotify.connected : soundcloud.configured;
     const on = local ? this.music.radioOn : playing;
 
-    return {
+    const state = {
       station: this.station,
       stationName: stationInfo.name,
       stationDetail: this.station === 'aux' ? auxSourceName : stationInfo.detail,
@@ -483,8 +536,28 @@ export class RadioSystem {
         trackCount: soundcloud.trackCount,
         trackIndex: soundcloud.trackIndex,
         error: soundcloud.error
-      }
+      },
+      freestyle
     };
+
+    if (freestyle.active) {
+      const mapped = FREESTYLE_LABELS[freestyle.status] || ['READY', 'idle'];
+      Object.assign(state, {
+        station: 'freestyle',
+        stationName: 'FREESTYLE KING',
+        stationDetail: 'AUTO BEATS',
+        playing: freestyle.playing,
+        track: freestyle.track,
+        artist: null,
+        status: mapped[0],
+        statusKind: mapped[1],
+        power: true,
+        on: true,
+        shuffle: true
+      });
+    }
+
+    return state;
   }
 
   _applyUi(state) {
@@ -500,5 +573,6 @@ export class RadioSystem {
 
   dispose() {
     this._cancelApply();
+    this.freestyle.dispose();
   }
 }

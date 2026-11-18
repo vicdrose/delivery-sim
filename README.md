@@ -49,11 +49,12 @@ are rebuilt and uploaded deliberately; GitHub Pages pushes do not update Steam.
 | H | Horn; SoundCloud shuffle while the station selector is open |
 | M | Mute audio |
 | R | Radio: tap = next track, hold = station selector |
+| Hold R, then B | Toggle Freestyle King / Auto Beats on or off (works on foot or in a car) |
 | P | Radio power on/off (while the station selector is open) |
 | V | Push-to-talk (multiplayer voice) |
 | Esc | Pause |
 | Enter / N | Accept / decline offer |
-| Gamepad | Full support (RT accelerate, LT brake / reverse, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, D-pad ←/→ aux source, Y radio power while the selector is open, R3 radio volume, Select / Back push-to-talk) |
+| Gamepad | Full support (RT accelerate, LT brake / reverse, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, LB + B Freestyle King / Auto Beats, D-pad ←/→ aux source, Y radio power while the selector is open, R3 radio volume, Select / Back push-to-talk) |
 
 On a gamepad, LT only reverses once the car is stopped and the trigger is held
 past halfway. Small trigger drift and analog noise are ignored, so a resting or
@@ -341,6 +342,23 @@ The HUD widget top-right shows the station, the AUX source when AUX is selected,
 current track (and artist when available), and playback status. If a station has
 no tracks or the aux source is not configured, the widget shows a setup message
 instead of failing.
+
+### Freestyle King / Auto Beats
+
+Hold LB (or R) and press B (or keyboard B) to switch the radio into **FREESTYLE
+KING**. The same combo turns it off. It works on foot as well as in the car, and
+pauses normal radio/aux playback while active. The top-right widget and the radio
+selector both change their title to FREESTYLE KING, show the current beat name,
+and mark shuffle as ON. The selector also shows a **WORD — PLACEHOLDER** block;
+actually controlling the displayed word is a later feature.
+
+This mirrors the Freestyle King site's Auto Beats button. The site does not expose
+a JSON API: it writes a generated `beatShuffler` array into the page and
+`rollBeatShuffler()` assigns a random entry to an `<audio>` element, advancing on
+`ended`. SNACKRUN ships a snapshot of that 257-beat list in
+`src/radio/freestyleBeats.js` and plays from the same
+`https://freestylekingapp.com/wp-content/themes/thrive-nouveau/audios//`
+endpoint. Each beat plays through before another random beat begins.
 
 ### Spotify setup
 

@@ -133,6 +133,15 @@ export const ui = reactive({
       trackCount: 0,
       trackIndex: 0,
       error: ''
+    },
+    freestyle: {
+      active: false,
+      track: null,
+      status: 'idle',
+      playing: false,
+      shuffle: true,
+      count: 0,
+      word: 'PLACEHOLDER'
     }
   },
 

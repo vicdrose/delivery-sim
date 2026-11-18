@@ -409,6 +409,11 @@ export class Game {
 
   _updateRadio(dt, s) {
     const held = !!s.radioHeld;
+    if (held && s.autoBeatsPressed) {
+      this.radio.toggleFreestyle();
+      this.audio.play('ui');
+      this._freestyleToggled = true;
+    }
     if (held && !this._lbPrev) {
       this._lbHold = 0;
       this._lbSelector = false;
@@ -420,7 +425,7 @@ export class Game {
         this.audio.play('ui');
       }
     }
-    if (held && this._lbSelector) {
+    if (held && this._lbSelector && !this.radio.isFreestyle) {
       if (s.radioUpPressed) {
         this.radio.selectNext();
         this.audio.play('ui');
@@ -438,10 +443,11 @@ export class Game {
     } else if (!held && this._lbPrev) {
       if (this._lbSelector) {
         this.radio.closeSelector();
-      } else {
+      } else if (!this._freestyleToggled) {
         this.radio.nextTrack();
         this.audio.play('ui');
       }
+      this._freestyleToggled = false;
     }
     this._lbPrev = held;
   }

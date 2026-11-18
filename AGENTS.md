@@ -198,6 +198,17 @@ Current behavior worth remembering (all landed and stable):
   available, and a status such as PLAYING, STANDBY, NO TRACKS, NO ACTIVE DEVICE,
   PREMIUM REQUIRED, SET CLIENT ID, or SET LINK. On shuffled SoundCloud the track
   line is prefixed with `↻`.
+- **Freestyle King / Auto Beats** = hold LB / R and press B / keyboard B to toggle
+  a separate radio mode; it works on foot or in a vehicle. `FreestyleKingProvider`
+  mirrors the Freestyle King website's `rollBeatShuffler()`: it keeps the site's
+  257-beat generated list in `src/radio/freestyleBeats.js`, picks a random beat,
+  and plays it from `https://freestylekingapp.com/wp-content/themes/thrive-nouveau/audios//`
+  through an HTML audio element until `ended`, then picks another random beat.
+  The HUD name and selector title become FREESTYLE KING, the track name is shown,
+  shuffle is always on, and the word controller is a visible PLACEHOLDER for a
+  later pass. Normal radio/external playback is paused while this mode is active;
+  exiting Freestyle King restores the previous station when in a vehicle. B is
+  suppressed as offer decline while LB is held so the combo has no side effect.
 - **SoundCloud shuffle** = ON by default (`snackrun_soundcloud_shuffle`). On READY
   the provider pulls the widget's full track list with `getSounds` and walks a
   Fisher-Yates bag, `skip(index)`-ing through every track once before reshuffling;

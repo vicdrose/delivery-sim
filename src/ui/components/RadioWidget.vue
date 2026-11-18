@@ -2,12 +2,12 @@
   <div
     v-if="ui.screen === 'playing'"
     class="radio-widget"
-    :class="[ui.radio.statusKind, { off: !ui.radio.power }]"
+    :class="[ui.radio.statusKind, { off: !ui.radio.power, freestyle: freestyleActive }]"
   >
     <div class="radio-head">
-      <span class="radio-name">RADIO</span>
+      <span class="radio-name">{{ nameLine }}</span>
       <span class="radio-station">{{ ui.radio.stationName }}</span>
-      <span v-if="ui.radio.station === 'aux'" class="radio-source">{{ ui.radio.auxSourceName }}</span>
+      <span v-if="!freestyleActive && ui.radio.station === 'aux'" class="radio-source">{{ ui.radio.auxSourceName }}</span>
       <span class="radio-state">
         <span v-if="ui.radio.playing" class="radio-bars"><i></i><i></i><i></i></span>
         {{ ui.radio.status }}
@@ -17,6 +17,7 @@
       <span v-if="showShuffleMark" class="radio-shfl-mark">↻</span>{{ trackLine }}
     </div>
     <div v-if="ui.radio.artist" class="radio-artist">{{ ui.radio.artist }}</div>
+    <div v-if="freestyleActive" class="radio-word">WORD · {{ ui.radio.freestyle.word }}</div>
     <div class="radio-hint">{{ hintLine }}</div>
   </div>
 </template>
@@ -25,8 +26,14 @@
 import { computed } from 'vue';
 import { ui } from '../store.js';
 
+const freestyleActive = computed(() => ui.radio.freestyle && ui.radio.freestyle.active);
+
+const nameLine = computed(() => (freestyleActive.value ? 'FREESTYLE KING' : 'RADIO'));
+
 const showShuffleMark = computed(
-  () => ui.radio.station === 'aux' && ui.radio.auxSource === 'soundcloud' && ui.radio.shuffle
+  () =>
+    freestyleActive.value ||
+    (ui.radio.station === 'aux' && ui.radio.auxSource === 'soundcloud' && ui.radio.shuffle)
 );
 
 const trackLine = computed(() => {
@@ -45,6 +52,7 @@ const trackLine = computed(() => {
 });
 
 const hintLine = computed(() => {
+  if (freestyleActive.value) return 'Hold LB + B: exit Freestyle King · R3: volume';
   if (ui.radio.station === 'aux') return 'Hold LB: stations · ←→: Spotify / SoundCloud · R3: volume';
   return 'Hold LB: stations · tap: next · R3: volume';
 });
