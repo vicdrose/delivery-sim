@@ -158,9 +158,11 @@ Current behavior worth remembering (all landed and stable):
   The title screen prints the detected pad name (`ui.padName`) — if nothing shows
   there, the browser is not exposing the pad at all, which no game code can fix.
   The right stick (`rightStickX/Y`, axes 2/3) drives an additive camera look
-  offset in `CameraRig` whenever the R3 volume overlay is closed. In SNAP BACK
-  mode (default) the offset decays smoothly to zero once the stick is neutral;
-  in FREE mode it holds. This offset never changes driving/walking input,
+  offset in `CameraRig` whenever the R3 volume overlay is closed. Camera X is
+  inverted before it reaches `CameraRig`, and both look speeds are 3x the
+  original values (yaw 4.5 rad/s, pitch 3.3 rad/s); raw axes still feed R3
+  volume. In SNAP BACK mode (default) the offset decays smoothly to zero once
+  the stick is neutral; in FREE mode it holds. This offset never changes driving/walking input,
   `orbitYaw`, mode transitions or `snapBehind()` behavior; mode changes clear it.
 - **Settings** = pause menu is an eight-page stack (`ui.pauseMenu` =
   `main` | `levels` | `settings` | `sound` | `freestyle` | `songs` | `spotify` | `soundcloud`):

@@ -82,8 +82,8 @@ export const CONFIG = {
     smoothPos: 5.5,
     smoothLook: 7.0,
     speedFovBoost: 11,
-    stickLookYawSpeed: 1.5,
-    stickLookPitchSpeed: 1.1,
+    stickLookYawSpeed: 4.5,
+    stickLookPitchSpeed: 3.3,
     stickLookReturn: 6.5,
     stickLookPitchLimit: 0.7
   },

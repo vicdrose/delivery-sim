@@ -629,7 +629,7 @@ export class Game {
     this._updateMusicVolume(s);
     this.cameraRig.updateLook(
       dt,
-      ui.musicVolumeActive ? 0 : s.rightStickX,
+      ui.musicVolumeActive ? 0 : -s.rightStickX,
       ui.musicVolumeActive ? 0 : s.rightStickY,
       ui.cameraSnapBack
     );
