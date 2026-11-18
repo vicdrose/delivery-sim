@@ -104,17 +104,20 @@
       <h2>SETTINGS</h2>
       <button class="btn ghost" @click="ui.pauseMenu = 'songs'">SONG CHOICE</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'sound'">SOUND</button>
-      <button class="btn ghost" @click="ui.pauseMenu = 'freestyle'">FREESTYLE KING</button>
-      <button class="btn ghost" @click="ui.pauseMenu = 'spotify'">SPOTIFY</button>
-      <button class="btn ghost" @click="ui.pauseMenu = 'soundcloud'">SOUNDCLOUD</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'ui'">UI</button>
       <button class="btn ghost" @click="handleToggleTraffic">TRAFFIC (BETA): {{ ui.trafficEnabled ? 'ON' : 'OFF' }}</button>
       <button class="btn ghost" @click="toggleCameraSnapBack">
         RIGHT STICK CAMERA: {{ ui.cameraSnapBack ? 'SNAP BACK' : 'FREE' }}
       </button>
-      <button class="btn ghost" @click="handleToggleMobile">TOUCH CONTROLS: {{ ui.mobileOverride === null ? (detectedMobile ? 'AUTO (ON)' : 'AUTO (OFF)') : (ui.mobileOverride ? 'ON' : 'OFF') }}</button>
-      <button class="btn ghost" @click="handleUiScale">{{ uiScaleLabel() }}</button>
       <button class="btn danger" @click="handleReset">{{ resetArmed ? 'CONFIRM RESET?' : 'RESET GAME DATA' }}</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'main'">BACK</button>
+    </div>
+
+    <div v-else-if="ui.pauseMenu === 'ui'" class="pause-card">
+      <h2>UI</h2>
+      <button class="btn ghost" @click="handleToggleMobile">TOUCH CONTROLS: {{ ui.mobileOverride === null ? (detectedMobile ? 'AUTO (ON)' : 'AUTO (OFF)') : (ui.mobileOverride ? 'ON' : 'OFF') }}</button>
+      <button class="btn ghost" @click="handleUiScale">{{ uiScaleLabel() }}</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
 
     <div v-else-if="ui.pauseMenu === 'sound'" class="pause-card sound-card">
@@ -138,6 +141,9 @@
         <div class="volume-scale"><span>0%</span><span>100%</span><span>200%</span></div>
       </div>
       <p class="volume-note">R3 in game opens the radio volume slider. Rotate the right stick clockwise to raise it, counterclockwise to lower it. When AUX is set to SPOTIFY, this also sets Spotify's volume (0-100%).</p>
+      <button class="btn ghost" @click="ui.pauseMenu = 'freestyle'">FREESTYLE KING</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'spotify'">SPOTIFY</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'soundcloud'">SOUNDCLOUD</button>
       <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
     </div>
 
@@ -161,7 +167,7 @@
         <div class="volume-scale"><span>0.25s</span><span>2.5s</span><span>5s</span></div>
       </div>
       <p class="volume-note">Auto wrap rolls a new random word from the current bank on this interval. Holding LB and pressing Up, Down, Left or Right picks a bank and restarts the timer.</p>
-      <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'sound'">BACK</button>
     </div>
 
     <div v-else-if="ui.pauseMenu === 'spotify'" class="pause-card spotify-card">
@@ -205,7 +211,7 @@
         <div>3. Paste the client ID here and connect</div>
         <div>4. Open Spotify on the phone, then pick AUX and switch to SPOTIFY in game</div>
       </div>
-      <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'sound'">BACK</button>
     </div>
 
     <div v-else-if="ui.pauseMenu === 'soundcloud'" class="pause-card spotify-card">
@@ -257,7 +263,7 @@
         <div>4. X on a controller or H on the keyboard toggles shuffle in the radio menu</div>
         <div>5. Private tracks and on.soundcloud.com short links may not load</div>
       </div>
-      <button class="btn ghost" @click="ui.pauseMenu = 'settings'">BACK</button>
+      <button class="btn ghost" @click="ui.pauseMenu = 'sound'">BACK</button>
     </div>
 
     <div v-else-if="ui.pauseMenu === 'songs'" class="pause-card songs-card">

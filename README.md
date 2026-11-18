@@ -302,10 +302,14 @@ Behavior:
   so it can go past 100%). Settings are saved per browser. When AUX is set to
   SPOTIFY, the same volume setting controls Spotify's device volume (mapped to
   Spotify's 0-100%). When AUX is set to SOUNDCLOUD it sets the embedded
-  SoundCloud player's volume.
-- Pause → Settings → Freestyle King sets AUTO WRAP, the interval between random
-  words in the current bank (0.25s to 5s in 0.25s steps, default 1s). The choice
-  is saved per browser.
+  SoundCloud player's volume. The Sound page also opens Freestyle King, Spotify
+  and SoundCloud.
+- Pause → Settings → Sound → Freestyle King sets AUTO WRAP, the interval between
+  random words in the current bank (0.25s to 5s in 0.25s steps, default 1s). The
+  choice is saved per browser.
+- Pause → Settings → UI holds TOUCH CONTROLS and UI SIZE. Touch controls can be
+  forced on or off or left on AUTO; UI SIZE cycles through auto and fixed scales
+  for the HUD. Both choices are saved per browser.
 - Pause → Settings → RIGHT STICK CAMERA chooses between SNAP BACK (default) and
   FREE. Moving the right stick temporarily orbits and tilts the view at 3x the
   original sensitivity, with horizontal movement inverted; returning it to
@@ -343,7 +347,7 @@ station cycle wraps in the order below.
   - **SOUNDCLOUD** — plays a public SoundCloud profile, playlist or track inside
     the game through SoundCloud's official embedded player. It cannot control a
     soundcloud.com tab you already have open: browsers do not allow one site to
-    reach into another tab's audio. Paste a link once in Pause → Settings →
+    reach into another tab's audio. Paste a link once in Pause → Settings → Sound →
     SoundCloud and the aux source reuses it. Shuffle is ON by default: the
     player visits every track once in a random order, then starts a fresh pass.
     The selector shows the playlist position (`4 / 23`) and a SHUFFLE button;
@@ -376,7 +380,7 @@ rolls a new random word every AUTO WRAP interval, which defaults to one second.
 Every word command selects its bank and restarts the timer, so pressing Right
 then doing nothing keeps pulling fresh compound words once a second. Pausing the
 game freezes the timer; resuming starts a fresh interval. Change the interval in
-Pause → Settings → Freestyle King.
+Pause → Settings → Sound → Freestyle King.
 
 This mirrors the Freestyle King site's Auto Beats button. The site does not expose
 a JSON API: it writes a generated `beatShuffler` array into the page and
@@ -395,7 +399,7 @@ entry with the site's `array[Math.floor(Math.random() * array.length)]` logic.
 ### Spotify setup
 
 Spotify control uses the Web API with PKCE from the browser. There is no backend
-and no native wrapper. Pause → Settings → Spotify holds the setup:
+and no native wrapper. Pause → Settings → Sound → Spotify holds the setup:
 
 1. Create an app at https://developer.spotify.com/dashboard.
 2. Add the redirect URI shown on that page to the app exactly as written.
@@ -434,7 +438,7 @@ tab, so SNACKRUN embeds SoundCloud's own player in a hidden iframe and drives it
 through the official Widget API (`w.soundcloud.com/player/api.js`). Every player
 starts with **Soulection Radio Sessions** built in
 (`https://soundcloud.com/soulection/sets/soulection-radio-sessions`), so the
-station is available without any setup. Pause → Settings → SoundCloud can replace
+station is available without any setup. Pause → Settings → Sound → SoundCloud can replace
 it:
 
 1. Open soundcloud.com and copy a **public** profile, playlist/set or track link.
@@ -459,7 +463,7 @@ Behaviour and limits:
   playlist link gives the widget a full track list; shuffle builds a new random
   order from that list, plays each track once, and reshuffles after the last
   one. It never repeats a track inside a pass. The setting works from the radio
-  selector (X/H or the button) and from Pause → Settings → SoundCloud.
+  selector (X/H or the button) and from Pause → Settings → Sound → SoundCloud.
 - A playlist that is left on shuffle keeps playing forever; with shuffle off it
   also wraps at the end of the list. The HUD shows a small `↻` in front of the
   track whenever shuffle is on.

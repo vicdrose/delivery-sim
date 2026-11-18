@@ -164,19 +164,19 @@ Current behavior worth remembering (all landed and stable):
   volume. In SNAP BACK mode (default) the offset decays smoothly to zero once
   the stick is neutral; in FREE mode it holds. This offset never changes driving/walking input,
   `orbitYaw`, mode transitions or `snapBehind()` behavior; mode changes clear it.
-- **Settings** = pause menu is an eight-page stack (`ui.pauseMenu` =
-  `main` | `levels` | `settings` | `sound` | `freestyle` | `songs` | `spotify` | `soundcloud`):
-  level picker, sound, Freestyle King, traffic, touch controls, UI size,
-  per-song radio on/off + volume, Spotify connection, SoundCloud link, and
+- **Settings** = pause menu is a nine-page stack (`ui.pauseMenu` =
+  `main` | `levels` | `settings` | `ui` | `sound` | `freestyle` | `songs` | `spotify` | `soundcloud`):
+  level picker, sound, UI, traffic, per-song radio on/off + volume, and
   **RESET GAME DATA** (wipes every `snackrun*` localStorage key except the four
   Spotify keys — client ID, token, PKCE verifier and state — then rebuilds the
-  profile; `Game.resetAllData()`). The SOUND page holds master mute and the
-  overall radio volume (0-200%); Song Choice gives every track its own 0-200%
-  volume. Both persist in `snackrun_radio_volume` / `snackrun_song_volumes`.
-  The FREESTYLE KING page sets AUTO WRAP (250-5000ms in 250ms steps, default
-  1000ms), persisted in `snackrun_freestyle_auto_wrap`. The settings hub also has
-  RIGHT STICK CAMERA: SNAP BACK (default) or FREE, persisted in
-  `snackrun_camera_snap_back`; RESET GAME DATA returns it to SNAP BACK.
+  profile; `Game.resetAllData()`). The SOUND page holds master mute, the overall
+  radio volume (0-200%) and links to Freestyle King, Spotify and SoundCloud;
+  Song Choice gives every track its own 0-200% volume. Both persist in
+  `snackrun_radio_volume` / `snackrun_song_volumes`. The FREESTYLE KING page sets
+  AUTO WRAP (250-5000ms in 250ms steps, default 1000ms), persisted in
+  `snackrun_freestyle_auto_wrap`. The UI page holds TOUCH CONTROLS and UI SIZE.
+  The settings hub also has RIGHT STICK CAMERA: SNAP BACK (default) or FREE,
+  persisted in `snackrun_camera_snap_back`; RESET GAME DATA returns it to SNAP BACK.
 - **Radio volume on the controller** = R3 toggles a radio-volume slider overlay;
   rotating the right stick clockwise raises it, counterclockwise lowers it (a full
   turn spans 0-200%). The slider stays open until R3 is pressed again; while it is
@@ -247,7 +247,7 @@ Current behavior worth remembering (all landed and stable):
   hidden offscreen iframe, no OAuth and no backend. Every player starts with
   Soulection Radio Sessions built in
   (`https://soundcloud.com/soulection/sets/soulection-radio-sessions`); Pause →
-  Settings → SoundCloud stores a replacement in `snackrun_soundcloud_url`, and
+  Settings → Sound → SoundCloud stores a replacement in `snackrun_soundcloud_url`, and
   RESTORE BUILT-IN removes it and returns to the default. The built-in station
   does not preload the widget script; a saved custom link does. Pick AUX in the
   selector and switch the source with Left/Right. Play/pause, next/previous and
@@ -255,7 +255,7 @@ Current behavior worth remembering (all landed and stable):
   cannot control the SoundCloud Android app or an already-open soundcloud.com tab,
   and private tracks or `on.soundcloud.com` short links may fail (`LINK FAILED`).
 - **Spotify** = Web API + PKCE from the browser, no backend and no native wrapper.
-  Pause → Settings → Spotify stores the client ID (`snackrun_spotify_client_id`),
+  Pause → Settings → Sound → Spotify stores the client ID (`snackrun_spotify_client_id`),
   token (`snackrun_spotify_token`), PKCE verifier/state, and shows the exact
   redirect URI. Scopes are `user-read-playback-state
   user-modify-playback-state user-read-currently-playing`. Playback control needs
