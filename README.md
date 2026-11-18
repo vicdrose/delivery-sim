@@ -88,18 +88,22 @@ debug. Each level owns its own grid, seed, gas stations and vehicle set.
   2.25× the area of 1-2). The layout is seeded but randomized: commercial and
   business blocks are scattered across the rings, gas stations sit in shuffled
   corners, and the college campus is a 3–4×3–4 block district in a seeded random
-  spot. The van and bike park in a dedicated gym lot; you start on foot at the gym
-  door. The desert sits outside the perimeter with beige/red mesas, cactuses,
+  spot. The car, van and bike use a drive-in storage facility on the south edge;
+  the van and bike are kept in its open bay and you start on foot at the gate.
+  The desert sits outside the perimeter with beige/red mesas, cactuses,
   scattered desert trees and boulders — no ocean and no green island mountains.
   The sky and fog take a sandy tint, and the city ground, lots and minimap use
   warm desert palettes.
 
-The **gym** is a first-party store archetype, not a delivery pickup. Its lot has
-marked van, bike and car stalls, lamps and a wide approach so the van can park
-without threading a curb. Walk up to the gym door and press E to step inside. The
-college campus uses the same hall buildings as the earlier levels, clustered into
-a walkable district; it is scenery and lives to give the expansion a different
-silhouette, not a new delivery system.
+The **gym** is a first-party store archetype, not a delivery pickup. Its parking
+lot has a marked, van-sized stall by the door; the `Zzz` sleep marker sits there.
+Vehicles are never stored there: the van and bike live in the storage facility,
+so when sleepiness gets critical you have to get in the van and drive it to the
+gym to sleep. The sleep prompt only works once the van is parked in that stall.
+Walk up to the gym door and press E to step inside. The college campus uses the
+same hall buildings as the earlier levels, clustered into a walkable district;
+it is scenery and lives to give the expansion a different silhouette, not a new
+delivery system.
 
 ## Gameplay loop
 
@@ -159,8 +163,9 @@ Each level has one sleep spot:
   `Zzz` marker sits on the doorstep; stand on it and press E.
 - **1-2** — the rear of the van. The spot and marker follow the van wherever it is
   parked, so the van works as a bed on the move.
-- **1-3** — the rear of the van in the gym parking lot, same as 1-2. The van's
-  dedicated van stall makes it easy to get back to when it is time to sleep.
+- **1-3** — the van-sized stall in the gym parking lot. The `Zzz` marker and the
+  critical-need distance point to the gym, but the van starts in storage; you
+  have to drive it to the gym before the sleep or meditation prompt works.
 
 Sleep is time-based, not a day skip. **100% tiredness is 8 in-game hours of sleep**,
 and the length scales with the meter (60% = 4 hr 48 min). During sleep the clock and

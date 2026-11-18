@@ -177,9 +177,14 @@ export class DeliveryMode {
         if (spot.poi && d && d.dropoff && d.dropoff.id === spot.poi.id && g.fsm.hasFood) return null;
         const tired = g.sleep.canSleep;
         if (tired && g.sleep.onDelivery) return null;
+        if (spot.kind === 'gym' && !g.sleep.spotReady(spot)) return 'Bring the Van Here';
         return tired ? spot.label : spot.meditateLabel;
       },
       action: () => {
+        if (spot.kind === 'gym' && !g.sleep.spotReady(spot)) {
+          toast('Drive the van to the gym to sleep.', 'warn', 3200);
+          return;
+        }
         if (g.sleep.useSpot()) g.audio.play('ui');
       }
     });

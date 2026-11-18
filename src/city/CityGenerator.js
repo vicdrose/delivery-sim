@@ -531,9 +531,7 @@ export function generateCity(collision, level) {
   const spawn =
     level.spawn.kind === 'storage' && storage
       ? new THREE.Vector3(storage.footSlot.x, 0, storage.footSlot.z)
-      : level.spawn.kind === 'gym' && gym
-        ? new THREE.Vector3(gym.footSlot.x, 0, gym.footSlot.z)
-        : new THREE.Vector3(lineCoord(N / 2), 0, H - R / 2);
+      : new THREE.Vector3(lineCoord(N / 2), 0, H - R / 2);
 
   const minimapData = {
     span: T,

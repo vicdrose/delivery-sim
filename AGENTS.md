@@ -323,26 +323,30 @@ Current behavior worth remembering (all landed and stable):
   MOVE" (gridN 12, 708x708, four corner gas stations, campus top-middle), and
   1-3 "EXPANSION" (gridN 18, 1056x1056 desert, seeded/randomized zones, four
   shuffled corner gas stations, two gym stores, a 12-block campus district, and
-  car/van/bike parked in the primary gym's lot). All are unlocked in
-  `DEFAULT_PROFILE.unlocks.levels` for debug, and old saves merge new default
-  levels on load. 1-3 uses `biome: 'desert'` (sand city/ground/minimap palettes,
-  sandy sky tint, mesas/cactuses/desert trees outside the perimeter) and
-  `sleepSpot: 'van'`, so the van works as a bed in 1-2 and 1-3. The gym is a
-  first-party POI/store archetype with a van-sized parking lot; its door uses
-  the existing interior flow with gym-specific labels. 1-1 and 1-2 generator
-  hashes are unchanged by the expansion.
-- **The van** (1-2 only) is the mobile-studio/creative asset. It is a real
+  a drive-in storage facility on the south edge holding the van and bike). All
+  are unlocked in `DEFAULT_PROFILE.unlocks.levels` for debug, and old saves merge
+  new default levels on load. 1-3 uses `biome: 'desert'` (sand city/ground/minimap
+  palettes, sandy sky tint, mesas/cactuses/desert trees outside the perimeter).
+  1-2 keeps `sleepSpot: 'van'` (the marker follows the van anywhere); 1-3 uses
+  `sleepSpot: 'gym'` with a fixed `Zzz` marker in the primary gym's van-sized
+  stall, and sleeping or meditating there requires driving the van from storage
+  and parking it in that stall. The gym lot never stores the fleet. The gym is a
+  first-party POI/store archetype; its door uses the existing interior flow with
+  gym-specific labels. 1-1 and 1-2 generator hashes are unchanged by the expansion.
+- **The van** (1-2 and 1-3) is the mobile-studio/creative asset. It is a real
   `Vehicle` built from `VEHICLE_PROFILES.van` (bigger, slower, 56L tank, 140 HP,
   own `snackrun_van_fuel` / `snackrun_van_health` keys, boxy mesh) and it **cannot
   take deliveries** (`deliveries: false`). The car is the only delivery vehicle.
   No offers spawn while the van is the active vehicle, the objective reads
   "THE VAN IS NOT FOR DELIVERIES", and the beacon/minimap still point at the car.
-  In 1-2 its rear is the level's sleep spot (the `Zzz` marker moves with it).
+  In 1-2 its rear is the level's sleep spot (the `Zzz` marker moves with it). In
+  1-3 it starts in the storage facility's open bay; the fixed gym-stall sleep
+  marker only works after the van is driven there.
   **The van's creative workflow is deliberately TBD** — do not invent a rhythm
   mode; that is roadmap item #10.
-- **The bike** (1-2 only) is a delivery-capable `VEHICLE_PROFILES.bike` with its
-  own `snackrun_bike_fuel` / `snackrun_bike_health`, a 12-unit tank and an 18 m/s
-  (~40 mph) top speed. Its mesh has a front basket: collected food rides there
+- **The bike** (1-2 and 1-3) is a delivery-capable `VEHICLE_PROFILES.bike` with
+  its own `snackrun_bike_fuel` / `snackrun_bike_health`, a 12-unit tank and an 18
+  m/s (~40 mph) top speed. Its mesh has a front basket: collected food rides there
   (`Vehicle.setFoodBag`) instead of in the player's hands, which are hidden while
   riding. `_buildBikeMesh` builds frame/tank/seat/fork/bars/basket and two wheels.
   Riding uses a single near-first-person camera mode `'bike'`
@@ -363,11 +367,13 @@ Current behavior worth remembering (all landed and stable):
   read `g.vehicle`, never cache it. `_bindVehicleCallbacks` rebinds crash/skid
   audio on every switch, not just at mode entry.
 - **Storage facility** is a gated drive-in block: 8 roll-door units facing a
-  20m aisle that exits through a single gate on the street side. In 1-2 the van
-  is backed into the west-front unit with its nose facing the aisle (so it can
-  pull straight out), the bike shares that open bay against the back wall, and
-  the car is parked at the curb outside the gate; the player starts on foot at the
-  gate (`spawn.kind: 'storage'`).
+  20m aisle that exits through a single gate on the street side. It is used in
+  1-2 and 1-3: the van is backed into the west-front unit with its nose facing
+  the aisle (so it can pull straight out), the bike shares that open bay against
+  the back wall, and the car is parked at the curb outside the gate; the player
+  starts on foot at the gate (`spawn.kind: 'storage'`). 1-3 places this block at
+  `storageBlock: { col: 8, row: 17, vanUnit: 'west-front' }`; the gym lot never
+  holds the fleet.
 - **Multiplayer is presence-only co-presence.** Title → MULTIPLAYER creates or
   joins a five-character room (32 cap) on a separate Node `ws` relay
   (`server/index.js`, `render.yaml`). Everyone loads the host's level, but each

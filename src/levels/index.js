@@ -109,6 +109,7 @@ export const LEVELS = [
     sub: 'Bigger city, fresh block. The car runs deliveries. The van is the studio. The bike gets you there.',
     vehicles: ['car', 'van', 'bike'],
     deliveryVehicle: 'car',
+    sleepSpot: 'van',
     seed: 20261102,
     grid: makeGrid(12, { zoneOf: zoneOfWide }),
     gasSpots: [
@@ -123,17 +124,17 @@ export const LEVELS = [
   {
     id: '1-3',
     name: 'EXPANSION',
-    sub: 'Desert heat. A gym with room for the van. A campus out on the edge of town.',
+    sub: 'Desert heat. The van and bike live in storage. Drive the van to the gym when it is time to sleep.',
     vehicles: ['car', 'van', 'bike'],
     deliveryVehicle: 'car',
     seed: EXPANSION_SEED,
     biome: 'desert',
-    sleepSpot: 'van',
+    sleepSpot: 'gym',
     grid: makeGrid(EXPANSION_N, { zoneOf: zoneOfExpansion, treeChance: 0.28 }),
     gasSpots: EXPANSION_GAS_SPOTS,
     gymBlocks: EXPANSION_GYM_BLOCKS,
-    storageBlock: null,
-    spawn: { kind: 'gym' }
+    storageBlock: { col: 8, row: 17, vanUnit: 'west-front' },
+    spawn: { kind: 'storage' }
   }
 ];
 

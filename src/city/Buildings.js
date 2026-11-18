@@ -326,14 +326,11 @@ export function gymStore(S, W, rng, f) {
     const q = l2w(f, -lotW / 2 + (i * lotW) / stallCount, lotZ);
     S.groundQuad(0.2, 6.2, q.x, 0.05, q.z, '#e8e6df');
   }
-  const vanLocalZ = d / 2 + 7;
-  const vanP = l2w(f, 0, vanLocalZ);
-  S.groundQuad(4.6, 8.4, vanP.x, 0.052, vanP.z, '#4a4d52');
-  const stripeP = l2w(f, 2.35, vanLocalZ);
+  const sleepLocalZ = d / 2 + 7;
+  const sleepP = l2w(f, 0, sleepLocalZ);
+  S.groundQuad(4.6, 8.4, sleepP.x, 0.052, sleepP.z, '#4a4d52');
+  const stripeP = l2w(f, 2.35, sleepLocalZ);
   S.groundQuad(0.22, 8.4, stripeP.x, 0.055, stripeP.z, '#f2a541');
-  const bikeP = l2w(f, -5.6, vanLocalZ + 1);
-  const carP = l2w(f, 5.8, vanLocalZ + 1);
-  const footP = l2w(f, 3.2, d / 2 + 2.2);
   const lampL = l2w(f, -lotW / 2 + 1.5, lotZ + lotD / 2 - 2);
   const lampR = l2w(f, lotW / 2 - 1.5, lotZ + lotD / 2 - 2);
   S.cyl(0.12, 0.16, 6, 6, lampL.x, 3, lampL.z, '#545c64');
@@ -346,16 +343,13 @@ export function gymStore(S, W, rng, f) {
     hd: d / 2,
     poiCategory: 'gym',
     doorLocal: { dx: 0, dz: d / 2 + 0.25 },
-    parkOverride: { x: vanP.x, z: vanP.z },
+    parkOverride: { x: sleepP.x, z: sleepP.z },
     lot: {
       centerX: lotP.x,
       centerZ: lotP.z,
       width: lotW,
       depth: lotD,
-      vanSlot: { x: vanP.x, z: vanP.z, heading: f.ry },
-      bikeSlot: { x: bikeP.x, z: bikeP.z, heading: f.ry },
-      carSlot: { x: carP.x, z: carP.z, heading: f.ry },
-      footSlot: { x: footP.x, z: footP.z, yaw: f.ry },
+      sleepSlot: { x: sleepP.x, z: sleepP.z, heading: f.ry },
       lampSpots: [
         { x: lampL.x, z: lampL.z, ry: f.ry },
         { x: lampR.x, z: lampR.z, ry: f.ry }

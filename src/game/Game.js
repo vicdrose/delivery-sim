@@ -191,9 +191,7 @@ export class Game {
       const v = new Vehicle(this.scene, this.collision, profile);
       v.resolveNpc = (x, z, r) => this.npcTraffic.resolveCircle(x, z, r);
       const slot = slots ? slots[id + 'Slot'] : null;
-      const gymSlot = !slot && this.city.gym ? this.city.gym[id + 'Slot'] : null;
       if (slot) v.reset(slot.x, slot.z, slot.heading);
-      else if (gymSlot) v.reset(gymSlot.x, gymSlot.z, gymSlot.heading);
       else v.reset(this.city.spawn.x + 6, this.city.spawn.z - 5, Math.PI);
       this.vehicles[id] = v;
     }

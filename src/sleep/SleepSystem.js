@@ -147,9 +147,28 @@ export class SleepSystem {
     return this.spot;
   }
 
+  spotReady(spot = this.getSpot()) {
+    if (!spot) return false;
+    if (spot.kind !== 'gym') return true;
+    const van = spot.vehicle;
+    return !!van && van.group.position.distanceTo(spot.position) <= 8;
+  }
+
   _findSpot() {
     const g = this.g;
     const van = g.vehicles && g.vehicles.van;
+    if (g.level.sleepSpot === 'gym' && g.city?.gym?.sleepSlot) {
+      const slot = g.city.gym.sleepSlot;
+      return {
+        kind: 'gym',
+        label: 'Sleep in the Van at the Gym',
+        meditateLabel: 'Meditate at the Gym',
+        name: 'The Gym',
+        position: new THREE.Vector3(slot.x, 0, slot.z),
+        slot,
+        vehicle: van
+      };
+    }
     if (g.level.sleepSpot === 'van' && van) {
       return {
         kind: 'van',
@@ -370,7 +389,10 @@ export class SleepSystem {
       toast('Finish the delivery before you sleep.', 'warn', 3200);
       return false;
     }
-    this.getSpot();
+    if (!this.spotReady()) {
+      toast('Drive the van to the gym first.', 'warn', 3200);
+      return false;
+    }
     this._captureCamera();
 
     this.blocking = true;
@@ -396,7 +418,10 @@ export class SleepSystem {
 
   beginMeditation() {
     if (this.blocking || ui.screen !== 'playing' || this.value <= 0) return false;
-    this.getSpot();
+    if (!this.spotReady()) {
+      toast('Drive the van to the gym first.', 'warn', 3200);
+      return false;
+    }
 
     this.blocking = true;
     this.mode = 'meditate';
