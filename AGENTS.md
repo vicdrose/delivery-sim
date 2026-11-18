@@ -297,9 +297,11 @@ Current behavior worth remembering (all landed and stable):
   relative bearing and distance to the sleep spot (`ui.needSleep`). At
   `CONFIG.gas.criticalFrac` (5%) or less the matching **YOU REALLY NEED GAS** banner
   points at the nearest gas POI (`ui.needGas`). `src/ui/components/CriticalNeedBanner.vue`
-  renders both at once if needed; `DeliveryMode._updateHud()` computes them from the
-  active reference position/heading (vehicle when driving, player on foot), using
-  world forward `(sin h, cos h)` and right `(cos h, -sin h)`. Banners clear when the
+  renders both at once if needed; `DeliveryMode._updateHud()` measures distance from
+  the active reference position (vehicle when driving, player on foot) but takes the
+  arrow's heading from `camera.getWorldDirection()` flattened to XZ, with right
+  `(fz, -fx)`. The arrow is therefore camera-relative: orbiting the camera turns it,
+  but spinning the character on the spot does not. Banners clear when the
   need is handled; the HUD hides them on the title screen and during the sleep fade.
   The earlier low-fuel toast (25%) and running-on-empty toast (80%) are unchanged.
 - **NPC traffic**: ON by default in every level and mode; the pause-menu toggle
