@@ -105,6 +105,89 @@ export class InteriorManager {
       can.position.set(x - 0.3, 0.72, oz - 3.76);
       gas.add(can);
     }
+
+    const chipMats = ['#e76f51', '#f4a261', '#e9c46a', '#d62828'].map(
+      (color) => new THREE.MeshLambertMaterial({ color })
+    );
+    const candyMats = ['#7b2cbf', '#3a86ff', '#ff006e', '#fb5607'].map(
+      (color) => new THREE.MeshLambertMaterial({ color })
+    );
+    const addSnackDivider = (x, z, leftKind) => {
+      gas.add(makeBox(0.9, 1.45, 4.4, x, 0.72, z, counterMat));
+      for (const shelfY of [0.58, 1.08]) {
+        gas.add(makeBox(1.25, 0.06, 4.3, x, shelfY, z, darkMat));
+        for (let i = 0; i < 5; i += 1) {
+          const zi = z - 1.7 + i * 0.85;
+          for (const side of [-1, 1]) {
+            const kind = side < 0 ? leftKind : leftKind === 'chips' ? 'candy' : 'chips';
+            const mats = kind === 'chips' ? chipMats : candyMats;
+            const h = kind === 'chips' ? 0.3 : 0.2;
+            const item = makeBox(
+              0.14,
+              h,
+              0.34,
+              x + side * 0.55,
+              shelfY + 0.03 + h / 2,
+              zi,
+              mats[(i + (side > 0 ? 1 : 0)) % mats.length]
+            );
+            gas.add(item);
+          }
+        }
+      }
+      gas.add(makeBox(1.05, 0.22, 4.4, x, 1.58, z, this.accentMat));
+    };
+    addSnackDivider(ox - 2.7, oz + 0.2, 'chips');
+    addSnackDivider(ox + 2.7, oz + 0.2, 'candy');
+
+    const glassCaseMat = new THREE.MeshLambertMaterial({
+      color: '#bfe9ff',
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false
+    });
+    const bunMat = new THREE.MeshLambertMaterial({ color: '#e8b96b' });
+    const sausageMat = new THREE.MeshLambertMaterial({ color: '#8c3b2e' });
+    const cheeseMat = new THREE.MeshLambertMaterial({ color: '#f2b134' });
+    const sauceMat = new THREE.MeshLambertMaterial({ color: '#d62828' });
+    const heatMat = new THREE.MeshLambertMaterial({
+      color: '#ff8a3d',
+      emissive: '#b23a00',
+      emissiveIntensity: 0.4
+    });
+    const addGlass = (w, h, d, x, y, z) => {
+      const pane = makeBox(w, h, d, x, y, z, glassCaseMat);
+      pane.castShadow = false;
+      gas.add(pane);
+    };
+    const caseX = ox + 5.5;
+    const caseZ = oz + 1.6;
+    gas.add(makeBox(1.3, 0.9, 3.0, caseX, 0.45, caseZ, counterMat));
+    gas.add(makeBox(1.15, 0.06, 2.85, caseX, 0.94, caseZ, darkMat));
+    addGlass(0.06, 1.0, 2.85, caseX - 0.62, 1.45, caseZ);
+    addGlass(0.06, 1.0, 3.0, caseX + 0.62, 1.45, caseZ);
+    addGlass(1.3, 0.06, 3.0, caseX, 1.97, caseZ);
+    for (let i = 0; i < 3; i += 1) {
+      const hz = caseZ - 1.05 + i * 0.6;
+      gas.add(makeBox(0.55, 0.1, 0.5, caseX - 0.18, 1.04, hz, bunMat));
+      gas.add(makeBox(0.12, 0.1, 0.52, caseX - 0.18, 1.12, hz, sausageMat));
+    }
+    const pizzaZ = caseZ + 0.95;
+    const pizza = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.06, 12), cheeseMat);
+    pizza.position.set(caseX + 0.18, 1.02, pizzaZ);
+    gas.add(pizza);
+    for (let i = 0; i < 4; i += 1) {
+      const dot = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.02, 8), sauceMat);
+      dot.position.set(
+        caseX + 0.18 + Math.cos(i * Math.PI / 2) * 0.17,
+        1.06,
+        pizzaZ + Math.sin(i * Math.PI / 2) * 0.17
+      );
+      gas.add(dot);
+    }
+    gas.add(makeBox(0.9, 0.08, 0.14, caseX, 1.86, caseZ - 0.95, heatMat));
+    gas.add(makeBox(0.9, 0.08, 0.14, caseX, 1.86, caseZ + 0.95, heatMat));
+
     gas.add(makeBox(2.1, 0.95, 0.8, ox + 4.3, 0.48, oz + 3.4, counterMat));
     gas.add(makeBox(0.52, 0.38, 0.42, ox + 4.3, 1.15, oz + 3.4, darkMat));
     gas.add(makeBox(1.6, 0.16, 0.5, ox + 4.3, 0.9, oz + 2.9, this.accentMat));
@@ -136,6 +219,9 @@ export class InteriorManager {
     c.addBox(ox, oz + 6, 7, 1, 'interior');
     if (isGas) {
       c.addBox(ox, oz - 4.35, 5.3, 0.6, 'interior');
+      c.addBox(ox - 2.7, oz + 0.2, 0.65, 2.3, 'interior');
+      c.addBox(ox + 2.7, oz + 0.2, 0.65, 2.3, 'interior');
+      c.addBox(ox + 5.5, oz + 1.6, 0.8, 1.65, 'interior');
       c.addBox(ox + 4.3, oz + 3.4, 1.1, 0.45, 'interior');
     } else {
       c.addBox(ox + 2.6, oz - 1.4, 2.6, 0.6, 'interior');

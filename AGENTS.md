@@ -334,7 +334,13 @@ Current behavior worth remembering (all landed and stable):
   (`caffeineSleepReduction`). Only two cans are allowed before sleep; the used count
   persists in `snackrun_caffeine_count`, resets in `_wake()` on actual sleep
   completion (not meditation), and also clears in `SleepSystem.reset()` for RESET
-  GAME DATA. The fridge prompt reports the remaining allowance.
+  GAME DATA. The fridge prompt reports the remaining allowance. The gas interior also
+  has two double-sided snack dividers (chips / candy, reversed on the second) and a
+  glass hot-food case by the register with hot dogs and pizza. They have collision so
+  the player cannot walk through them, but are visual-only set dressing for the
+  future hunger meter: no prompts, purchases, prices or hunger state yet. Hot food is
+  intended to cost more and fill more than snacks; tune those numbers when hunger
+  actually lands.
 - **Sleepiness & sleep** is the third gas-style meter (moon row under fuel and
   health). It rises with time, extra while walking / sprinting / driving, warns at
   80%, caps at 100, and persists in `snackrun_sleepiness`. Each level has one sleep
@@ -547,9 +553,11 @@ their first pass land as the level-select + 1-2 / van / storage facility — see
 10. **Study** (coffee shop / college campus) — first-pass location landed in 1-3
     as a seeded campus district. Study mechanics are still open.
 
-Loose / later: hunger + thirst meters (with fitness + sleep), multiplayer
-friends/accounts, roommates, volleyball mini-game, malls, multi-floor
-deliveries, more cities, national-park travel cutscenes, then the rhythm mode.
+Loose / later: hunger + thirst meters (with fitness + sleep — the gas interiors
+already have visual-only snack dividers and a hot-food case waiting for them),
+multiplayer friends/accounts, roommates, volleyball mini-game, malls,
+multi-floor deliveries, more cities, national-park travel cutscenes, then the
+rhythm mode.
 
 Multiplayer co-presence has a first pass landed already (rooms, 32-player
 presence, remote avatars/cars, minimap blips, 8-peer proximity PTT voice,

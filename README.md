@@ -167,6 +167,13 @@ can only drink two cans before you have to sleep; the fridge prompt changes to
 you actually sleep (not when you meditate), and it persists across reloads in
 `snackrun_caffeine_count`.
 
+The store also has two double-sided snack dividers down the middle: each has chips
+on one side and candy on the other, reversed on the second divider. A glass hot-food
+case by the register holds hot dogs and pizza. These are currently just set dressing
+for the planned hunger meter — there are no prompts, purchases, prices or hunger
+effects yet. The plan is for hot dogs and pizza to be more filling and more expensive
+than chips or candy; exact values will be tuned when hunger lands.
+
 ## Sleep & dreams
 
 A sleepiness meter (the moon row in the HUD, under fuel and vehicle health) climbs
