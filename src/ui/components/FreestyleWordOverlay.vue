@@ -17,6 +17,7 @@ const visible = computed(
     ui.screen === 'playing' &&
     !ui.paused &&
     !ui.sleep.active &&
+    !!ui.radio?.inVehicle &&
     !!freestyle.value?.active &&
     !!freestyle.value?.wordVisible &&
     !!word.value

@@ -234,7 +234,7 @@ export class RadioSystem {
   }
 
   showFreestyleWord() {
-    if (!this.isFreestyle || this.freestyleWordVisible) return;
+    if (!this.isFreestyle || !this.inVehicle || this.freestyleWordVisible) return;
     this.freestyleWordVisible = true;
     this._syncUi();
   }

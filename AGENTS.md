@@ -240,8 +240,10 @@ Current behavior worth remembering (all landed and stable):
   a fixed, centered white word with a 2px black outline and a short fade/scale
   in/out. It tracks auto wrap and word rolls live, hides on mode deactivation,
   run start, reset, or Astro Beats activation, and is suppressed while paused,
-  sleeping or off the playing screen. `Game._updateRadio()` owns the release
-  trigger; `RadioSystem` owns the visibility flag so every exit path clears it.
+  sleeping, on foot (the beat pauses when you exit the car), or off the playing
+  screen; re-entering the car brings it back. The font size is half the original
+  (4vw, clamped 20-70px). `Game._updateRadio()` owns the release trigger;
+  `RadioSystem` owns the visibility flag so every exit path clears it.
   Auto wrap is always on: while the mode is active the current bank rolls a new
   random word every AUTO WRAP interval (default 1s), and any D-pad/arrow word
   command picks that bank and restarts the timer. Game pause freezes the timer;
