@@ -69,9 +69,14 @@ current music instead of replacing it. Hold LB / R and press A / E once to open 
 shuffled four-card spread face-down; the music that was already playing keeps
 going. The next press flips all cards to reveal the body, sign, house and crystal.
 Press it again to flip them back and draw a fresh spread, then again to reveal the
-new cards. LB + B switches to Freestyle King; Y / P or the popup's CLOSE button
-just closes the cards. Exiting the car still pauses the underlying station, and
-getting back in resumes it.
+new cards. The spread gives each card enough vertical room to show the whole
+image. Once the cards are revealed, click or tap any one to zoom it to 2.5x at the
+center of the screen while a black overlay fades from transparent to 60%. The
+zoomed card gets its own FLIP button (turns only that card over) and CLOSE button
+(animates it back to its slot); clicking the dark area closes it too. LB + B
+switches to Freestyle King; Y / P or the popup's CLOSE button just closes the
+cards. Exiting the car still pauses the underlying station, and getting back in
+resumes it.
 
 On a gamepad, LT only reverses once the car is stopped and the trigger is held
 past halfway. Small trigger drift and analog noise are ignored, so a resting or

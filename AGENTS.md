@@ -249,8 +249,15 @@ Current behavior worth remembering (all landed and stable):
   `src/radio/astroBeatsCards.js` (body, sign, house and crystal decks plus the
   shared card back). The first press draws a shuffled four-card spread face-down;
   the next press flips it face-up, the next flips back and redraws all four cards,
-  and subsequent presses alternate reveal / shuffle-reveal. LB + B switches to
-  Freestyle King, and Y / P or the popup CLOSE button just closes the cards.
+  and subsequent presses alternate reveal / shuffle-reveal. The spread uses a
+  taller card slot so the whole portrait image is visible. Clicking or tapping a
+  revealed card opens a per-card zoom modal: a clone animates from that card's
+  real screen rect to the center at 2.5x while a black scrim eases from 0 to 60%
+  opacity. The modal has FLIP (toggles only the zoomed card's face) and CLOSE
+  (reverses the animation); clicking the scrim also closes. `RadioStationOverlay.vue`
+  owns this as local UI state and resets the zoom when the selector, spread or
+  level changes. LB + B switches to Freestyle King, and Y / P or the popup CLOSE
+  button just closes the cards.
   Astro Beats is an overlay, not a station: `RadioSystem` keeps the current local
   station, Freestyle King beat or external player running and shows its real
   status / track in the HUD and popup. Only the popup's station, power, shuffle and

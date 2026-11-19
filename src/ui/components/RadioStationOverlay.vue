@@ -35,10 +35,12 @@
             v-for="(card, index) in astroCards"
             :key="`${astroDraw}-${card.key}`"
             class="astro-card"
+            :class="{ 'zoom-source': zoomIndex === index }"
             role="button"
             tabindex="0"
-            @click="flipAstro"
-            @keydown.enter.prevent="flipAstro"
+            @click="onCardClick($event, index)"
+            @keydown.enter.prevent="onCardKey($event, index)"
+            @keydown.space.prevent="onCardKey($event, index)"
           >
             <div class="astro-card-inner">
               <div class="astro-card-face astro-card-front">
@@ -127,10 +129,48 @@
     </div>
     <div class="radio-selector-foot">{{ footHint }}</div>
   </div>
+  <div
+    v-if="show && zoomIndex !== null && selectedCard"
+    class="astro-zoom-layer"
+    :class="{ open: zoomOpen }"
+  >
+    <div
+      class="astro-zoom-scrim"
+      @click="closeZoom"
+      @transitionend="onScrimTransitionEnd"
+    ></div>
+    <div class="astro-zoom-card" :style="zoomCardStyle">
+      <div class="astro-card-inner astro-zoom-card-inner" :class="{ flipped: zoomFaceUp }">
+        <div class="astro-card-face astro-card-front">
+          <img
+            v-if="!astroImageErrors[zoomIndex]"
+            :src="selectedCard.front"
+            :alt="`${selectedCard.kind} card back`"
+            @error="astroImageErrors[zoomIndex] = true"
+          />
+          <div v-else class="astro-card-fallback">{{ selectedCard.kind }}</div>
+        </div>
+        <div class="astro-card-face astro-card-back">
+          <img
+            v-if="!astroImageErrors[zoomIndex]"
+            :src="selectedCard.back"
+            :alt="selectedCard.name"
+            @error="astroImageErrors[zoomIndex] = true"
+          />
+          <div v-else class="astro-card-fallback">{{ selectedCard.name }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="astro-zoom-title">{{ selectedCard.kind }} · {{ selectedCard.name }}</div>
+    <div class="astro-zoom-actions">
+      <button class="astro-zoom-btn" @click="toggleZoomFace">FLIP</button>
+      <button class="astro-zoom-btn close" @click="closeZoom">CLOSE</button>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { ui } from '../store.js';
 import { bus } from '../../core/bus.js';
 
@@ -144,10 +184,57 @@ const astroFlipped = computed(() => !!ui.radio.astroBeats?.flipped);
 const astroCards = computed(() => ui.radio.astroBeats?.cards || []);
 const astroDraw = computed(() => ui.radio.astroBeats?.draw || 0);
 const astroImageErrors = ref([false, false, false, false]);
+const ZOOM_SCALE = 2.5;
+const zoomIndex = ref(null);
+const zoomSource = ref(null);
+const zoomOpen = ref(false);
+const zoomFaceUp = ref(true);
+
+const selectedCard = computed(() => {
+  if (zoomIndex.value === null) return null;
+  return astroCards.value[zoomIndex.value] || null;
+});
+
+const zoomFinal = computed(() => {
+  const source = zoomSource.value;
+  if (!source) return null;
+  const width = source.width * ZOOM_SCALE;
+  const height = source.height * ZOOM_SCALE;
+  return {
+    left: (window.innerWidth - width) / 2,
+    top: (window.innerHeight - height) / 2,
+    width,
+    height
+  };
+});
+
+const zoomCardStyle = computed(() => {
+  const source = zoomSource.value;
+  if (!source) return {};
+  const target = zoomOpen.value && zoomFinal.value ? zoomFinal.value : source;
+  return {
+    left: `${target.left}px`,
+    top: `${target.top}px`,
+    width: `${target.width}px`,
+    height: `${target.height}px`
+  };
+});
 
 watch(astroDraw, () => {
   astroImageErrors.value = [false, false, false, false];
+  resetZoom();
 });
+
+watch(astroActive, (active) => {
+  if (!active) resetZoom();
+});
+
+watch(show, (visible) => {
+  if (!visible) resetZoom();
+});
+
+onMounted(() => window.addEventListener('resize', resetZoom));
+onBeforeUnmount(() => window.removeEventListener('resize', resetZoom));
 
 const titleLine = computed(() => {
   if (astroActive.value) return 'ASTRO BEATS';
@@ -236,6 +323,64 @@ const nowLine = computed(() => {
   if (radio.station === 'ep' && !radio.epHasTracks) return 'Drop EP files into src/audio/tracks/infinite-ep/';
   return radio.stationDetail;
 });
+
+function resetZoom() {
+  zoomIndex.value = null;
+  zoomSource.value = null;
+  zoomOpen.value = false;
+  zoomFaceUp.value = true;
+}
+
+function onCardClick(event, index) {
+  if (!astroFlipped.value) {
+    flipAstro();
+    return;
+  }
+  openZoom(event.currentTarget || event.target, index);
+}
+
+function onCardKey(event, index) {
+  onCardClick(event, index);
+}
+
+function openZoom(el, index) {
+  if (!el || zoomIndex.value !== null) return;
+  const rect = el.getBoundingClientRect();
+  zoomSource.value = {
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height
+  };
+  zoomIndex.value = index;
+  zoomFaceUp.value = true;
+  zoomOpen.value = false;
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (zoomIndex.value === index) zoomOpen.value = true;
+      });
+    });
+  });
+}
+
+function closeZoom() {
+  if (zoomIndex.value === null) return;
+  if (!zoomOpen.value) {
+    resetZoom();
+    return;
+  }
+  zoomOpen.value = false;
+}
+
+function toggleZoomFace() {
+  zoomFaceUp.value = !zoomFaceUp.value;
+}
+
+function onScrimTransitionEnd(event) {
+  if (event.propertyName !== 'opacity' || zoomOpen.value) return;
+  resetZoom();
+}
 
 function flipAstro() {
   bus.emit('ui:astro-flip');
