@@ -95,14 +95,15 @@ export class InteriorManager {
       emissiveIntensity: 0.35
     });
     const canMat = new THREE.MeshLambertMaterial({ color: '#2a9d8f' });
+    const fridgeX = ox - 5.85;
     for (let i = 0; i < 5; i += 1) {
-      const x = ox - 4.2 + i * 2.1;
-      gas.add(makeBox(1.7, 2.4, 0.9, x, 1.2, oz - 4.35, fridgeBodyMat));
-      gas.add(makeBox(1.45, 1.85, 0.07, x, 1.1, oz - 3.86, fridgeGlassMat));
-      gas.add(makeBox(0.07, 0.55, 0.1, x + 0.56, 1.15, oz - 3.78, darkMat));
-      gas.add(makeBox(1.2, 0.24, 0.05, x, 2.05, oz - 3.8, this.accentMat));
+      const z = oz + 4.2 - i * 2.1;
+      gas.add(makeBox(0.9, 2.4, 1.7, fridgeX, 1.2, z, fridgeBodyMat));
+      gas.add(makeBox(0.07, 1.85, 1.45, fridgeX + 0.49, 1.1, z, fridgeGlassMat));
+      gas.add(makeBox(0.1, 0.55, 0.07, fridgeX + 0.57, 1.15, z - 0.56, darkMat));
+      gas.add(makeBox(0.05, 0.24, 1.2, fridgeX + 0.55, 2.05, z, this.accentMat));
       const can = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.28, 8), canMat);
-      can.position.set(x - 0.3, 0.72, oz - 3.76);
+      can.position.set(fridgeX + 0.59, 0.72, z + 0.3);
       gas.add(can);
     }
 
@@ -112,33 +113,33 @@ export class InteriorManager {
     const candyMats = ['#7b2cbf', '#3a86ff', '#ff006e', '#fb5607'].map(
       (color) => new THREE.MeshLambertMaterial({ color })
     );
-    const addSnackDivider = (x, z, leftKind) => {
-      gas.add(makeBox(0.9, 1.45, 4.4, x, 0.72, z, counterMat));
+    const addSnackDivider = (x, z, backKind) => {
+      gas.add(makeBox(4.4, 1.45, 0.9, x, 0.72, z, counterMat));
       for (const shelfY of [0.58, 1.08]) {
-        gas.add(makeBox(1.25, 0.06, 4.3, x, shelfY, z, darkMat));
+        gas.add(makeBox(4.3, 0.06, 1.25, x, shelfY, z, darkMat));
         for (let i = 0; i < 5; i += 1) {
-          const zi = z - 1.7 + i * 0.85;
+          const xi = x - 1.7 + i * 0.85;
           for (const side of [-1, 1]) {
-            const kind = side < 0 ? leftKind : leftKind === 'chips' ? 'candy' : 'chips';
+            const kind = side < 0 ? backKind : backKind === 'chips' ? 'candy' : 'chips';
             const mats = kind === 'chips' ? chipMats : candyMats;
             const h = kind === 'chips' ? 0.3 : 0.2;
             const item = makeBox(
-              0.14,
-              h,
               0.34,
-              x + side * 0.55,
+              h,
+              0.14,
+              xi,
               shelfY + 0.03 + h / 2,
-              zi,
+              z + side * 0.55,
               mats[(i + (side > 0 ? 1 : 0)) % mats.length]
             );
             gas.add(item);
           }
         }
       }
-      gas.add(makeBox(1.05, 0.22, 4.4, x, 1.58, z, this.accentMat));
+      gas.add(makeBox(4.4, 0.22, 1.05, x, 1.58, z, this.accentMat));
     };
-    addSnackDivider(ox - 2.7, oz + 0.2, 'chips');
-    addSnackDivider(ox + 2.7, oz + 0.2, 'candy');
+    addSnackDivider(ox, oz - 2.5, 'chips');
+    addSnackDivider(ox, oz + 1.9, 'candy');
 
     const glassCaseMat = new THREE.MeshLambertMaterial({
       color: '#bfe9ff',
@@ -205,7 +206,7 @@ export class InteriorManager {
 
     this.entryPos = new THREE.Vector3(ox, 0, oz + 3.9);
     this.exitAnchor = new THREE.Vector3(ox, 0, oz + 4.4);
-    this.fridgeAnchor = new THREE.Vector3(ox, 0, oz - 2.9);
+    this.fridgeAnchor = new THREE.Vector3(ox - 3.8, 0, oz);
   }
 
   _buildCollisions(isGas) {
@@ -218,9 +219,9 @@ export class InteriorManager {
     c.addBox(ox + 7, oz, 1, 6, 'interior');
     c.addBox(ox, oz + 6, 7, 1, 'interior');
     if (isGas) {
-      c.addBox(ox, oz - 4.35, 5.3, 0.6, 'interior');
-      c.addBox(ox - 2.7, oz + 0.2, 0.65, 2.3, 'interior');
-      c.addBox(ox + 2.7, oz + 0.2, 0.65, 2.3, 'interior');
+      c.addBox(ox - 5.85, oz, 0.6, 5.3, 'interior');
+      c.addBox(ox, oz - 2.5, 2.3, 0.65, 'interior');
+      c.addBox(ox, oz + 1.9, 2.3, 0.65, 'interior');
       c.addBox(ox + 5.5, oz + 1.6, 0.8, 1.65, 'interior');
       c.addBox(ox + 4.3, oz + 3.4, 1.1, 0.45, 'interior');
     } else {

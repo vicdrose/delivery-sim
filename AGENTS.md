@@ -327,7 +327,7 @@ Current behavior worth remembering (all landed and stable):
   1-3 is enterable. The pump service stays outside at a derived pump point a bit
   further out from the store door; the door itself registers `Enter Gas & Go`, so
   the closer of door / pump wins without losing refuel or G repair. `InteriorManager`
-  swaps the shared room's restaurant props for a back-wall fridge row plus a
+  swaps the shared room's restaurant props for a left-wall fridge row plus a
   front-door cash register when the POI is gas, and rebuilds the interior collision
   layer to match. The fridge interaction sells a **Yerba Mate Can** for `$3`
   (`CONFIG.gas.caffeineCost`) and calls `SleepSystem.drinkCaffeine()` to subtract 40
@@ -335,8 +335,9 @@ Current behavior worth remembering (all landed and stable):
   persists in `snackrun_caffeine_count`, resets in `_wake()` on actual sleep
   completion (not meditation), and also clears in `SleepSystem.reset()` for RESET
   GAME DATA. The fridge prompt reports the remaining allowance. The gas interior also
-  has two double-sided snack dividers (chips / candy, reversed on the second) and a
-  glass hot-food case by the register with hot dogs and pizza. They have collision so
+  has two double-sided snack dividers running across the store (chips / candy,
+  reversed on the second; the door-side one pulled back for walking room) and a glass
+  hot-food case by the register with hot dogs and pizza. They have collision so
   the player cannot walk through them, but are visual-only set dressing for the
   future hunger meter: no prompts, purchases, prices or hunger state yet. Hot food is
   intended to cost more and fill more than snacks; tune those numbers when hunger

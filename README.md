@@ -157,7 +157,7 @@ sleep persist across reloads.
 Every `Gas & Go` in 1-1, 1-2 and 1-3 now has an enterable convenience store. The
 pump stays outside: walk up to the pump to refuel or repair, then step up to the
 store door and press E (or the action button) to go inside. The interior has a row
-of refrigerators along the back wall and a cash register by the front door on your
+of refrigerators along the left wall and a cash register by the front door on your
 way out.
 
 Walk to the refrigerators and press E to buy a **Yerba Mate Can** for `$3`. Each can
@@ -167,8 +167,9 @@ can only drink two cans before you have to sleep; the fridge prompt changes to
 you actually sleep (not when you meditate), and it persists across reloads in
 `snackrun_caffeine_count`.
 
-The store also has two double-sided snack dividers down the middle: each has chips
-on one side and candy on the other, reversed on the second divider. A glass hot-food
+The store also has two double-sided snack dividers running across the store: each
+has chips on one side and candy on the other, reversed on the second divider. The
+divider nearest the door is pulled back to leave room to walk in. A glass hot-food
 case by the register holds hot dogs and pizza. These are currently just set dressing
 for the planned hunger meter — there are no prompts, purchases, prices or hunger
 effects yet. The plan is for hot dogs and pizza to be more filling and more expensive
