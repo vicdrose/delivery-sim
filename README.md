@@ -49,10 +49,10 @@ are rebuilt and uploaded deliberately; GitHub Pages pushes do not update Steam.
 | H | Horn; SoundCloud shuffle while the station selector is open |
 | M | Mute audio |
 | R | Radio: tap = next track, hold = station selector |
-| Hold R, then B | Toggle Freestyle King / Auto Beats on or off (works on foot or in a car) |
+| Hold R, then B | Toggle Freestyle King / Auto Beats on or off (works on foot or in a car; pauses when you exit the car) |
 | Hold R in Freestyle King, then ↑ / ↓ / ← / → | Random word: adjective / verb / emotion / compound word |
 | Hold R, then E | Open Astro Beats, then flip / shuffle the four cards |
-| Hold R in Astro Beats, then P | Close Astro Beats and restore the radio |
+| Hold R in Astro Beats, then P | Close Astro Beats; the current music keeps playing |
 | P | Radio power on/off (while the station selector is open) |
 | Right stick | Look around with the camera (inverted X, 3x sensitivity); R3 opens the radio volume slider |
 | V | Push-to-talk (multiplayer voice) |
@@ -64,12 +64,14 @@ Menus are controller-friendly too: on the title screen and every pause page,
 D-pad or arrow keys move the highlight, A (or Enter) activates the highlighted
 button, B (or N) goes back, and D-pad left/right adjusts a focused volume slider.
 
-Astro Beats uses the same radio popup as Freestyle King. Hold LB / R and press A
-/ E once to open a shuffled four-card spread face-down. The next press flips all
-cards to reveal the body, sign, house and crystal. Press it again to flip them
-back and draw a fresh spread, then again to reveal the new cards. LB + B switches
-to Freestyle King; Y / P or the popup's CLOSE button exits Astro Beats and
-restores the previous radio station.
+Astro Beats uses the same radio popup as Freestyle King but sits on top of the
+current music instead of replacing it. Hold LB / R and press A / E once to open a
+shuffled four-card spread face-down; the music that was already playing keeps
+going. The next press flips all cards to reveal the body, sign, house and crystal.
+Press it again to flip them back and draw a fresh spread, then again to reveal the
+new cards. LB + B switches to Freestyle King; Y / P or the popup's CLOSE button
+just closes the cards. Exiting the car still pauses the underlying station, and
+getting back in resumes it.
 
 On a gamepad, LT only reverses once the car is stopped and the trigger is held
 past halfway. Small trigger drift and analog noise are ignored, so a resting or
@@ -379,7 +381,8 @@ instead of failing.
 
 Hold LB (or R) and press B (or keyboard B) to switch the radio into **FREESTYLE
 KING**. The same combo turns it off. It works on foot as well as in the car, and
-pauses normal radio/aux playback while active. The top-right widget keeps the
+pauses normal radio/aux playback while active. Exiting the car pauses the beat;
+getting back in resumes it. The top-right widget keeps the
 `RADIO` label, shows `FK` in the station slot, then the current beat name, a
 shuffle mark and the current word. The radio selector title stays FREESTYLE KING;
 while LB is held, its center shows the current word.

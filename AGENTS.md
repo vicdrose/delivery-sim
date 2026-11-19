@@ -240,7 +240,8 @@ Current behavior worth remembering (all landed and stable):
   command picks that bank and restarts the timer. Game pause freezes the timer;
   resume restarts it. Normal radio/external playback is paused while this mode
   is active; exiting Freestyle King restores the previous station when in a
-  vehicle. B is suppressed
+  vehicle. Leaving the vehicle pauses the beat just like the normal radio, and
+  re-entering resumes the same beat. B is suppressed
   as offer decline while LB is held so the combo has no side effect.
 - **Astro Beats cards** = hold LB / R and press A / keyboard E to open a second
   popup mode in the same radio selector. It uses the public Astro Beats card
@@ -249,12 +250,14 @@ Current behavior worth remembering (all landed and stable):
   shared card back). The first press draws a shuffled four-card spread face-down;
   the next press flips it face-up, the next flips back and redraws all four cards,
   and subsequent presses alternate reveal / shuffle-reveal. LB + B switches to
-  Freestyle King, and Y / P or the popup CLOSE button exits Astro Beats and
-  restores the prior radio station when in a vehicle. `RadioSystem` owns the
-  exclusive mode state (`ui.radio.astroBeats`), pauses normal radio playback while
-  active, and suppresses station, power, volume, shuffle and track-skip commands.
-  A / E is suppressed as an interact action while LB / R is held so the combo has
-  no side effect.
+  Freestyle King, and Y / P or the popup CLOSE button just closes the cards.
+  Astro Beats is an overlay, not a station: `RadioSystem` keeps the current local
+  station, Freestyle King beat or external player running and shows its real
+  status / track in the HUD and popup. Only the popup's station, power, shuffle and
+  track-skip commands are suppressed while the cards are open; R3 volume still
+  works. Vehicle exit and re-entry still pause / resume the underlying station,
+  and game pause / resume does too. A / E is suppressed as an interact action
+  while LB / R is held so the combo has no side effect.
 - **SoundCloud shuffle** = ON by default (`snackrun_soundcloud_shuffle`). On READY
   the provider pulls the widget's full track list with `getSounds` and walks a
   Fisher-Yates bag, `skip(index)`-ing through every track once before reshuffling;

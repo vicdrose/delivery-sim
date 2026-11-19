@@ -24,24 +24,7 @@
         </button>
       </div>
     </div>
-    <template v-if="freestyleActive">
-      <div class="radio-freestyle">
-        <div class="radio-freestyle-row">
-          <span class="radio-freestyle-label">AUTO BEATS</span>
-          <span class="radio-freestyle-value">{{ beatLine }}</span>
-        </div>
-        <div class="radio-freestyle-row">
-          <span class="radio-freestyle-label">SHUFFLE</span>
-          <span class="radio-freestyle-value">ON · {{ ui.radio.freestyle.count }} BEATS</span>
-        </div>
-        <div class="radio-freestyle-word">
-          <span class="radio-freestyle-bank">{{ wordBankLabel }}</span>
-          <span class="radio-freestyle-word-text">{{ wordLine }}</span>
-        </div>
-        <div class="radio-freestyle-controls">{{ wordHint }}</div>
-      </div>
-    </template>
-    <template v-else-if="astroActive">
+    <template v-if="astroActive">
       <div class="radio-astro">
         <div class="radio-astro-status">
           <span class="radio-astro-status-label">{{ astroStatusLabel }}</span>
@@ -80,6 +63,23 @@
           </div>
         </div>
         <div class="radio-astro-controls">{{ astroControlsLine }}</div>
+      </div>
+    </template>
+    <template v-else-if="freestyleActive">
+      <div class="radio-freestyle">
+        <div class="radio-freestyle-row">
+          <span class="radio-freestyle-label">AUTO BEATS</span>
+          <span class="radio-freestyle-value">{{ beatLine }}</span>
+        </div>
+        <div class="radio-freestyle-row">
+          <span class="radio-freestyle-label">SHUFFLE</span>
+          <span class="radio-freestyle-value">ON · {{ ui.radio.freestyle.count }} BEATS</span>
+        </div>
+        <div class="radio-freestyle-word">
+          <span class="radio-freestyle-bank">{{ wordBankLabel }}</span>
+          <span class="radio-freestyle-word-text">{{ wordLine }}</span>
+        </div>
+        <div class="radio-freestyle-controls">{{ wordHint }}</div>
       </div>
     </template>
     <template v-else>
@@ -220,7 +220,6 @@ const footHint = computed(() => {
 
 const nowLine = computed(() => {
   const radio = ui.radio;
-  if (astroActive.value) return radio.astroBeats?.flipped ? astroStatusValue.value : 'FOUR CARDS READY';
   if (freestyleActive.value) return radio.freestyle.track || 'Freestyle King';
   if (radio.track && radio.artist) return `${radio.track} — ${radio.artist}`;
   if (radio.track) return radio.track;

@@ -422,7 +422,7 @@ export class Game {
     const held = !!s.radioHeld;
     const astroExit = held && this.radio.isAstroBeats && s.radioPowerPressed;
     if (held && s.autoBeatsPressed) {
-      this.radio.toggleFreestyle();
+      this.radio.showFreestyle();
       this.audio.play('ui');
       this._freestyleToggled = true;
     }

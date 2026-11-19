@@ -173,7 +173,13 @@ export class RadioSystem {
     if (this.inVehicle === next) return;
     this.inVehicle = next;
     this._syncUi();
-    if (this.paused || this.isFreestyle || this.isAstroBeats) return;
+    if (this.paused) return;
+    if (this.isFreestyle) {
+      if (next) this.freestyle.resume();
+      else this.freestyle.pause();
+      this._syncUi();
+      return;
+    }
     this._scheduleApply(next ? 220 : 180);
   }
 
@@ -193,7 +199,7 @@ export class RadioSystem {
     this.paused = false;
     this.freestyle.resume();
     this.music.resumeGame(false);
-    if (this.inVehicle && !this.isFreestyle && !this.isAstroBeats) this._scheduleApply(160);
+    if (this.inVehicle && !this.isFreestyle) this._scheduleApply(160);
     this._syncUi();
   }
 
@@ -209,20 +215,33 @@ export class RadioSystem {
     this._syncUi();
   }
 
-  toggleFreestyle() {
-    const wasAstroBeats = this.isAstroBeats;
-    if (wasAstroBeats) this.deactivateAstroBeats(false);
-    if (this.isFreestyle) {
-      this.freestyle.deactivate();
-      if (this.inVehicle && !this.paused) this._scheduleApply(120);
-    } else {
-      this._cancelApply();
-      this._pauseExternal();
-      this.music.pauseLocalStations();
-      this.freestyle.activate();
-      this._applyFreestyleVolume();
-    }
+  activateFreestyle() {
+    this._cancelApply();
+    this._pauseExternal();
+    this.music.pauseLocalStations();
+    this.freestyle.activate();
+    this._applyFreestyleVolume();
     this._syncUi();
+  }
+
+  deactivateFreestyle() {
+    this.freestyle.deactivate();
+    if (this.inVehicle && !this.paused) this._scheduleApply(120);
+    this._syncUi();
+  }
+
+  toggleFreestyle() {
+    if (this.isAstroBeats) this.deactivateAstroBeats();
+    if (this.isFreestyle) this.deactivateFreestyle();
+    else this.activateFreestyle();
+  }
+
+  showFreestyle() {
+    if (this.isAstroBeats && this.isFreestyle) {
+      this.deactivateAstroBeats();
+      return;
+    }
+    this.toggleFreestyle();
   }
 
   pressAstroBeats() {
@@ -231,10 +250,6 @@ export class RadioSystem {
   }
 
   activateAstroBeats() {
-    if (this.isFreestyle) this.freestyle.deactivate();
-    this._cancelApply();
-    this._pauseExternal();
-    this.music.pauseLocalStations();
     this.astroBeats.active = true;
     this.astroBeats.flipped = false;
     this.astroBeats.draw += 1;
@@ -256,12 +271,11 @@ export class RadioSystem {
     this._syncUi();
   }
 
-  deactivateAstroBeats(restore = true) {
+  deactivateAstroBeats() {
     if (!this.isAstroBeats) return;
     this.astroBeats.active = false;
     this.astroBeats.flipped = false;
     this.astroBeats.cards = [];
-    if (restore && this.inVehicle && !this.paused) this._scheduleApply(120);
     this._syncUi();
   }
 
@@ -404,7 +418,6 @@ export class RadioSystem {
       this.freestyle.setVolume(this._freestyleVolume());
       return;
     }
-    if (this.isAstroBeats) return;
     if (this.isLocal || !this.inVehicle || this.paused) return;
     this.providerFor().setVolume(percent);
   }
@@ -414,7 +427,7 @@ export class RadioSystem {
       this._applyFreestyleVolume();
       return;
     }
-    if (this.isAstroBeats || this.isLocal) return;
+    if (this.isLocal) return;
     this.providerFor().setVolume(Math.min(100, Math.max(0, Math.round(this.music.radioVolume * 100))));
   }
 
@@ -497,7 +510,7 @@ export class RadioSystem {
   }
 
   _applyNow() {
-    if (this.paused || this.isFreestyle || this.isAstroBeats) return;
+    if (this.paused || this.isFreestyle) return;
     if (!this.inVehicle) {
       this.music.pauseLocalStations();
       this._pauseExternal();
@@ -688,18 +701,11 @@ export class RadioSystem {
     }
 
     if (astroBeats.active) {
+      const sourceName = state.stationName;
       Object.assign(state, {
         station: 'astro',
         stationName: 'ASTRO',
-        stationDetail: 'CARDS',
-        playing: false,
-        track: astroBeats.flipped ? astroBeats.spreadLine : 'FOUR CARDS READY',
-        artist: null,
-        status: astroBeats.flipped ? 'REVEALED' : 'FACE DOWN',
-        statusKind: 'idle',
-        power: true,
-        on: true,
-        shuffle: true
+        stationDetail: `CARDS · ${sourceName}`
       });
     }
 
