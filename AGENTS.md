@@ -323,6 +323,18 @@ Current behavior worth remembering (all landed and stable):
   exact bill (`[G] Repair $420.00`) and an unaffordable repair toast states the
   amount needed. Persisted in `snackrun_health`; wear rate was cut 30x after
   day-12 breakdowns proved too fast.
+- **Gas station store & caffeine** = every `category: 'gas'` POI in 1-1, 1-2 and
+  1-3 is enterable. The pump service stays outside at a derived pump point a bit
+  further out from the store door; the door itself registers `Enter Gas & Go`, so
+  the closer of door / pump wins without losing refuel or G repair. `InteriorManager`
+  swaps the shared room's restaurant props for a back-wall fridge row plus a
+  front-door cash register when the POI is gas, and rebuilds the interior collision
+  layer to match. The fridge interaction sells a **Yerba Mate Can** for `$3`
+  (`CONFIG.gas.caffeineCost`) and calls `SleepSystem.drinkCaffeine()` to subtract 40
+  (`caffeineSleepReduction`). Only two cans are allowed before sleep; the used count
+  persists in `snackrun_caffeine_count`, resets in `_wake()` on actual sleep
+  completion (not meditation), and also clears in `SleepSystem.reset()` for RESET
+  GAME DATA. The fridge prompt reports the remaining allowance.
 - **Sleepiness & sleep** is the third gas-style meter (moon row under fuel and
   health). It rises with time, extra while walking / sprinting / driving, warns at
   80%, caps at 100, and persists in `snackrun_sleepiness`. Each level has one sleep

@@ -84,6 +84,8 @@ export const ui = reactive({
 
   sleepiness: 15,
   sleepy: false,
+  caffeineUsed: 0,
+  caffeineRemaining: 2,
   sleep: {
     active: false,
     mode: null,

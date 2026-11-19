@@ -4,9 +4,22 @@ import { bus } from '../core/bus.js';
 import { ui, toast } from '../ui/store.js';
 
 const STORAGE_KEY = 'snackrun_sleepiness';
+const CAFFEINE_KEY = 'snackrun_caffeine_count';
 const SLEEP = CONFIG.sleep;
+const GAS = CONFIG.gas;
 
 const clamp = (v) => Math.min(SLEEP.max, Math.max(0, Number.isFinite(v) ? v : SLEEP.startValue));
+const clampCaffeine = (v) => Math.min(GAS.caffeineMax, Math.max(0, Number.isFinite(v) ? Math.floor(v) : 0));
+
+function readCaffeineCount() {
+  try {
+    const raw = localStorage.getItem(CAFFEINE_KEY);
+    if (raw !== null) return clampCaffeine(Number(raw));
+  } catch {
+    void 0;
+  }
+  return 0;
+}
 
 function readSleepiness() {
   try {
@@ -34,6 +47,7 @@ export class SleepSystem {
   constructor(game) {
     this.g = game;
     this.value = readSleepiness();
+    this.caffeineCount = readCaffeineCount();
     this.blocking = false;
     this.mode = null;
     this.phase = 'idle';
@@ -292,9 +306,26 @@ export class SleepSystem {
     this._syncUi();
   }
 
+  get caffeineRemaining() {
+    return Math.max(0, GAS.caffeineMax - this.caffeineCount);
+  }
+
+  drinkCaffeine() {
+    if (this.caffeineCount >= GAS.caffeineMax) return 0;
+    const before = this.value;
+    this.value = clamp(this.value - GAS.caffeineSleepReduction);
+    this.caffeineCount = clampCaffeine(this.caffeineCount + 1);
+    this.save();
+    this._syncUi();
+    this._publish();
+    return Math.round(before - this.value);
+  }
+
   _syncUi() {
     ui.sleepiness = this.value;
     ui.sleepy = this.value >= SLEEP.warnAt;
+    ui.caffeineUsed = this.caffeineCount;
+    ui.caffeineRemaining = this.caffeineRemaining;
   }
 
   _progress() {
@@ -524,6 +555,7 @@ export class SleepSystem {
 
   _wake() {
     this.value = 0;
+    this.caffeineCount = 0;
     this._saveClock = 0;
     this.save();
     this._syncUi();
@@ -576,6 +608,7 @@ export class SleepSystem {
   save() {
     try {
       localStorage.setItem(STORAGE_KEY, this.value.toFixed(1));
+      localStorage.setItem(CAFFEINE_KEY, String(this.caffeineCount));
     } catch {
       void 0;
     }
@@ -593,6 +626,7 @@ export class SleepSystem {
       this.g.dayCycle.paused = false;
     }
     this.value = SLEEP.startValue;
+    this.caffeineCount = 0;
     this._saveClock = 0;
     this._blackout = 0;
     this._content = 0;

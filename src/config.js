@@ -134,9 +134,13 @@ export const CONFIG = {
     tankSize: 40,
     consumptionRate: 0.18,
     refillRadius: 4.5,
+    pumpDoorOffset: 1.65,
     criticalFrac: 0.05,
     refillCostPerUnit: 0.85,
-    repairCostPerUnit: 42
+    repairCostPerUnit: 42,
+    caffeineCost: 3,
+    caffeineSleepReduction: 40,
+    caffeineMax: 2
   },
 
   sleep: {

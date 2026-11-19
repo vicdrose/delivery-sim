@@ -152,6 +152,21 @@ Vehicle repairs happen at the same pump with the car parked at it. Press G on fo
 prompt shows the exact repair bill, e.g. `[G] Repair $420.00`. Fuel, health and
 sleep persist across reloads.
 
+## Gas station store & caffeine
+
+Every `Gas & Go` in 1-1, 1-2 and 1-3 now has an enterable convenience store. The
+pump stays outside: walk up to the pump to refuel or repair, then step up to the
+store door and press E (or the action button) to go inside. The interior has a row
+of refrigerators along the back wall and a cash register by the front door on your
+way out.
+
+Walk to the refrigerators and press E to buy a **Yerba Mate Can** for `$3`. Each can
+drops sleepiness by 40 points, so it can take you from 100% to 60% in one drink. You
+can only drink two cans before you have to sleep; the fridge prompt changes to
+`Yerba Mate — sleep first` once the limit is reached. The counter resets only when
+you actually sleep (not when you meditate), and it persists across reloads in
+`snackrun_caffeine_count`.
+
 ## Sleep & dreams
 
 A sleepiness meter (the moon row in the HUD, under fuel and vehicle health) climbs

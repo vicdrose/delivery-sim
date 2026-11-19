@@ -22,6 +22,13 @@ export class InteriorManager {
     this.accentMat = new THREE.MeshLambertMaterial({ color: '#e8615a' });
     const darkMat = new THREE.MeshLambertMaterial({ color: '#3b4048' });
 
+    const makeBox = (w, h, d, x, y, z, mat) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(x, y, z);
+      m.castShadow = true;
+      return m;
+    };
+
     const ox = ORIGIN.x;
     const oz = ORIGIN.z;
 
@@ -44,37 +51,26 @@ export class InteriorManager {
     mkWall(4.6, wallH, 0.3, ox + 4.2, wallH / 2, oz + 5);
     mkWall(3.8, 0.9, 0.3, ox, wallH - 0.45, oz + 5);
 
-    const counter = new THREE.Mesh(new THREE.BoxGeometry(5.2, 1.05, 1.2), counterMat);
-    counter.position.set(ox + 2.6, 0.52, oz - 1.4);
-    counter.castShadow = true;
-    g.add(counter);
+    const restaurant = new THREE.Group();
+    g.add(restaurant);
+    restaurant.add(makeBox(5.2, 1.05, 1.2, ox + 2.6, 0.52, oz - 1.4, counterMat));
+    restaurant.add(makeBox(0.55, 0.4, 0.45, ox + 1.6, 1.28, oz - 1.4, darkMat));
+    restaurant.add(makeBox(5.2, 0.5, 0.08, ox + 2.6, 0.42, oz - 0.76, this.accentMat));
 
-    const register = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.4, 0.45), darkMat);
-    register.position.set(ox + 1.6, 1.28, oz - 1.4);
-    g.add(register);
-
-    const counterFront = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.5, 0.08), this.accentMat);
-    counterFront.position.set(ox + 2.6, 0.42, oz - 0.76);
-    g.add(counterFront);
-
-    this.menuBoard = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.7, 0.12), this.accentMat);
-    this.menuBoard.position.set(ox + 2.6, 2.2, oz - 4.75);
-    g.add(this.menuBoard);
-
-    const awningStrip = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.35, 0.35), this.accentMat);
-    awningStrip.position.set(ox, 2.95, oz + 5);
-    g.add(awningStrip);
+    this.menuBoard = makeBox(4.4, 1.7, 0.12, ox + 2.6, 2.2, oz - 4.75, this.accentMat);
+    restaurant.add(this.menuBoard);
+    restaurant.add(makeBox(2.6, 0.35, 0.35, ox, 2.95, oz + 5, this.accentMat));
 
     for (const [tx, tz] of [[-3.5, 1.5], [-3.5, 3.2], [-1.5, 2.4]]) {
       const table = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.08, 10), counterMat);
       table.position.set(ox + tx, 0.85, oz + tz);
-      g.add(table);
+      restaurant.add(table);
       const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.85, 6), darkMat);
       leg.position.set(ox + tx, 0.42, oz + tz);
-      g.add(leg);
+      restaurant.add(leg);
       const stool = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.5, 8), darkMat);
       stool.position.set(ox + tx, 0.25, oz + tz + 0.9);
-      g.add(stool);
+      restaurant.add(stool);
     }
 
     this.pickupMarker = new THREE.Mesh(
@@ -82,12 +78,38 @@ export class InteriorManager {
       new THREE.MeshBasicMaterial({ color: '#ffd23f' })
     );
     this.pickupMarker.position.set(ox + 2.6, 1.75, oz - 0.4);
-    g.add(this.pickupMarker);
+    restaurant.add(this.pickupMarker);
 
     this.counterBag = this._buildBag();
     this.counterBag.position.set(ox + 3.2, 1.1, oz - 1.4);
     this.counterBag.visible = false;
-    g.add(this.counterBag);
+    restaurant.add(this.counterBag);
+    this.restaurantGroup = restaurant;
+
+    const gas = new THREE.Group();
+    g.add(gas);
+    const fridgeBodyMat = new THREE.MeshLambertMaterial({ color: '#dfe7e6' });
+    const fridgeGlassMat = new THREE.MeshLambertMaterial({
+      color: '#79c9c4',
+      emissive: '#1d4c4a',
+      emissiveIntensity: 0.35
+    });
+    const canMat = new THREE.MeshLambertMaterial({ color: '#2a9d8f' });
+    for (let i = 0; i < 5; i += 1) {
+      const x = ox - 4.2 + i * 2.1;
+      gas.add(makeBox(1.7, 2.4, 0.9, x, 1.2, oz - 4.35, fridgeBodyMat));
+      gas.add(makeBox(1.45, 1.85, 0.07, x, 1.1, oz - 3.86, fridgeGlassMat));
+      gas.add(makeBox(0.07, 0.55, 0.1, x + 0.56, 1.15, oz - 3.78, darkMat));
+      gas.add(makeBox(1.2, 0.24, 0.05, x, 2.05, oz - 3.8, this.accentMat));
+      const can = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.28, 8), canMat);
+      can.position.set(x - 0.3, 0.72, oz - 3.76);
+      gas.add(can);
+    }
+    gas.add(makeBox(2.1, 0.95, 0.8, ox + 4.3, 0.48, oz + 3.4, counterMat));
+    gas.add(makeBox(0.52, 0.38, 0.42, ox + 4.3, 1.15, oz + 3.4, darkMat));
+    gas.add(makeBox(1.6, 0.16, 0.5, ox + 4.3, 0.9, oz + 2.9, this.accentMat));
+    this.gasGroup = gas;
+    this.gasGroup.visible = false;
 
     this.light = new THREE.PointLight('#ffe6bd', 60, 26, 2);
     this.light.position.set(ox, 3.0, oz);
@@ -98,15 +120,26 @@ export class InteriorManager {
     this.group.visible = false;
     this.scene.add(g);
 
+    this.entryPos = new THREE.Vector3(ox, 0, oz + 3.9);
+    this.exitAnchor = new THREE.Vector3(ox, 0, oz + 4.4);
+    this.fridgeAnchor = new THREE.Vector3(ox, 0, oz - 2.9);
+  }
+
+  _buildCollisions(isGas) {
     const c = this.collision;
+    const ox = ORIGIN.x;
+    const oz = ORIGIN.z;
+    c.clear('interior');
     c.addBox(ox, oz - 5, 7, 1, 'interior');
     c.addBox(ox - 7, oz, 1, 6, 'interior');
     c.addBox(ox + 7, oz, 1, 6, 'interior');
     c.addBox(ox, oz + 6, 7, 1, 'interior');
-    c.addBox(ox + 2.6, oz - 1.4, 2.6, 0.6, 'interior');
-
-    this.entryPos = new THREE.Vector3(ox, 0, oz + 3.9);
-    this.exitAnchor = new THREE.Vector3(ox, 0, oz + 4.4);
+    if (isGas) {
+      c.addBox(ox, oz - 4.35, 5.3, 0.6, 'interior');
+      c.addBox(ox + 4.3, oz + 3.4, 1.1, 0.45, 'interior');
+    } else {
+      c.addBox(ox + 2.6, oz - 1.4, 2.6, 0.6, 'interior');
+    }
   }
 
   get isInside() {
@@ -117,12 +150,22 @@ export class InteriorManager {
     this.build();
     this.returnPos.copy(playerPosToRestore);
     this.insidePoi = poi;
+    const isGas = !!poi && poi.category === 'gas';
     this.group.visible = true;
     this.light.visible = true;
+    this.restaurantGroup.visible = !isGas;
+    this.gasGroup.visible = isGas;
+    this.pickupMarker.visible = !isGas;
+    this.counterBag.visible = false;
+    this._buildCollisions(isGas);
     const accents = ['#e8615a', '#2a9d8f', '#f2a541', '#457b9d', '#b56576'];
     const hash = [...poi.name].reduce((a, ch) => a + ch.charCodeAt(0), 0);
     this.accentMat.color.set(accents[hash % accents.length]);
-    return { entryPos: this.entryPos.clone(), exitAnchor: this.exitAnchor.clone() };
+    return {
+      entryPos: this.entryPos.clone(),
+      exitAnchor: this.exitAnchor.clone(),
+      fridgeAnchor: this.fridgeAnchor.clone()
+    };
   }
 
   exit() {

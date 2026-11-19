@@ -263,13 +263,20 @@ export class DeliveryMode {
           })
         });
       } else if (poi.category === 'gas') {
+        const pumpPos = this._gasPumpPos(poi);
         g.interaction.add({
           position: poi.door,
+          radius: 2.4,
+          label: () => (this.playerMode === 'foot' ? `Enter ${poi.name}` : null),
+          action: () => this._enterBuilding(poi)
+        });
+        g.interaction.add({
+          position: pumpPos,
           radius: CONFIG.gas.refillRadius,
           label: () => {
             if (this.playerMode !== 'foot') return null;
             const veh = g.vehicle;
-            const nearCar = veh.position.distanceTo(poi.door) <= CONFIG.parking.arriveRadius * 0.9;
+            const nearCar = veh.position.distanceTo(pumpPos) <= CONFIG.parking.arriveRadius * 0.9;
             const parts = [];
             if (veh.fuelLevel < veh.fuelMax) {
               const quote = this._refuelQuote(veh);
@@ -287,7 +294,7 @@ export class DeliveryMode {
           },
           action: () => {
             const veh = g.vehicle;
-            const carHere = veh.position.distanceTo(poi.door) <= CONFIG.parking.arriveRadius * 0.9;
+            const carHere = veh.position.distanceTo(pumpPos) <= CONFIG.parking.arriveRadius * 0.9;
             if (veh.health < veh.healthMax && veh.fuelLevel >= veh.fuelMax && carHere) {
               this._repairAtStation(poi);
             } else {
@@ -301,8 +308,9 @@ export class DeliveryMode {
 
   _enterBuilding(poi, opts = {}) {
     const g = this.g;
-    const counterLabel = opts.counterLabel || 'Browse Menu';
-    const idleToast = opts.idleToast || 'Smells amazing. Maybe after your shift.';
+    const isGas = poi.category === 'gas';
+    const counterLabel = opts.counterLabel || (isGas ? 'Checkout' : 'Browse Menu');
+    const idleToast = opts.idleToast || (isGas ? 'Just browsing.' : 'Smells amazing. Maybe after your shift.');
     g.audio.play('door');
     this.doorstepBag.visible = false;
     const res = g.interiors.enter(poi, g.player.pos.clone());
@@ -323,29 +331,47 @@ export class DeliveryMode {
         radius: 2.2,
         label: () => (this.playerMode === 'inside' ? 'Leave' : null),
         action: () => this._exitBuilding()
-      }),
-      g.interaction.add({
-        position: new THREE.Vector3(res.entryPos.x + 2.6, 0, res.entryPos.z - 5.2),
-        radius: 2.6,
-        label: () => {
-          if (this.playerMode !== 'inside') return null;
-          if (isTarget() && g.fsm.state === DeliveryState.COLLECTING) return 'Pick Up Order';
-          if (isTarget() && g.fsm.state === DeliveryState.ON_FOOT_PICKUP) return 'Talk to Staff';
-          return counterLabel;
-        },
-        action: () => {
-          const fsm = g.fsm;
-          if (isTarget() && fsm.state === DeliveryState.COLLECTING) {
-            fsm.collectFood();
-          } else if (isTarget()) {
-            if (fsm.enterBuilding()) toast('The staff is whipping it up...', 'info');
-          } else {
-            toast(idleToast, 'info');
-            g.audio.play('ui');
-          }
-        }
       })
     );
+
+    if (isGas) {
+      this._tempItems.push(
+        g.interaction.add({
+          position: res.fridgeAnchor,
+          radius: 2.8,
+          label: () => {
+            if (this.playerMode !== 'inside') return null;
+            if (g.sleep.caffeineRemaining <= 0) return 'Yerba Mate — sleep first';
+            return `Yerba Mate Can $${CONFIG.gas.caffeineCost} (-${CONFIG.gas.caffeineSleepReduction})`;
+          },
+          action: () => this._buyCaffeine()
+        })
+      );
+    } else {
+      this._tempItems.push(
+        g.interaction.add({
+          position: new THREE.Vector3(res.entryPos.x + 2.6, 0, res.entryPos.z - 5.2),
+          radius: 2.6,
+          label: () => {
+            if (this.playerMode !== 'inside') return null;
+            if (isTarget() && g.fsm.state === DeliveryState.COLLECTING) return 'Pick Up Order';
+            if (isTarget() && g.fsm.state === DeliveryState.ON_FOOT_PICKUP) return 'Talk to Staff';
+            return counterLabel;
+          },
+          action: () => {
+            const fsm = g.fsm;
+            if (isTarget() && fsm.state === DeliveryState.COLLECTING) {
+              fsm.collectFood();
+            } else if (isTarget()) {
+              if (fsm.enterBuilding()) toast('The staff is whipping it up...', 'info');
+            } else {
+              toast(idleToast, 'info');
+              g.audio.play('ui');
+            }
+          }
+        })
+      );
+    }
 
     if (isTarget() && g.fsm.state === DeliveryState.ON_FOOT_PICKUP) {
       g.fsm.enterBuilding();
@@ -419,10 +445,25 @@ export class DeliveryMode {
     return isMobileUI() ? '' : `[${k}] `;
   }
 
+  _gasPumpPos(poi) {
+    if (!poi.buildingAABB) return poi.door.clone();
+    const out = new THREE.Vector3(
+      poi.door.x - poi.buildingAABB.cx,
+      0,
+      poi.door.z - poi.buildingAABB.cz
+    );
+    if (out.lengthSq() < 0.000001) return poi.door.clone();
+    out.normalize();
+    return poi.door.clone().addScaledVector(out, CONFIG.gas.pumpDoorOffset);
+  }
+
   _nearGasPump() {
     const g = this.g;
     for (const poi of g.city.locations.pois) {
-      if (poi.category === 'gas' && g.player.pos.distanceTo(poi.door) <= CONFIG.gas.refillRadius) return poi;
+      if (
+        poi.category === 'gas' &&
+        g.player.pos.distanceTo(this._gasPumpPos(poi)) <= CONFIG.gas.refillRadius
+      ) return poi;
     }
     return null;
   }
@@ -473,7 +514,7 @@ export class DeliveryMode {
   _repairAtStation(poi) {
     const g = this.g;
     const veh = g.vehicle;
-    if (poi && veh.position.distanceTo(poi.door) > CONFIG.parking.arriveRadius * 0.9) {
+    if (poi && veh.position.distanceTo(this._gasPumpPos(poi)) > CONFIG.parking.arriveRadius * 0.9) {
       toast('Drive the car over to the pump first!', 'info');
       return;
     }
@@ -492,6 +533,27 @@ export class DeliveryMode {
     veh.repairFull();
     g.audio.play('cash');
     toast(`Repaired! -$${cost.toFixed(2)}`, 'success');
+  }
+
+  _buyCaffeine() {
+    const g = this.g;
+    if (g.sleep.caffeineRemaining <= 0) {
+      toast('Two cans is your limit. Sleep it off first.', 'warn', 3600);
+      return;
+    }
+    if (g.progression.profile.bank < CONFIG.gas.caffeineCost) {
+      toast('Not enough money for a Yerba Mate Can.', 'danger');
+      return;
+    }
+    g.progression.addMoney(-CONFIG.gas.caffeineCost);
+    ui.money = g.progression.profile.bank;
+    const reduced = g.sleep.drinkCaffeine();
+    g.audio.play('cash');
+    toast(
+      `Yerba Mate Can — tiredness down ${reduced}. ${g.sleep.caffeineRemaining} left before you need sleep.`,
+      'success',
+      4200
+    );
   }
 
   _clearTempItems() {
