@@ -105,19 +105,21 @@ debug. Each level owns its own grid, seed, gas stations and vehicle set.
 - **1-3 EXPANSION** — a 1.5× wider desert city (18×18 grid, 1056×1056 m, about
   2.25× the area of 1-2). The layout is seeded but randomized: commercial and
   business blocks are scattered across the rings, gas stations sit in shuffled
-  corners, and the college campus is a 3–4×3–4 block district in a seeded random
-  spot. The car, van and bike use a drive-in storage facility on the south edge;
-  the van and bike are kept in its open bay and you start on foot at the gate.
+  corners, two gym lots sit in the business districts, and the college campus is
+  a 3–4×3–4 block district in a seeded random spot. The car, van and bike use a
+  drive-in storage facility on the south edge; the van and bike are kept in its
+  open bay and you start on foot at the gate.
   The desert sits outside the perimeter with beige/red mesas, cactuses,
   scattered desert trees and boulders — no ocean and no green island mountains.
   The sky and fog take a sandy tint, and the city ground, lots and minimap use
   warm desert palettes.
 
 The **gym** is a first-party store archetype, not a delivery pickup. Its parking
-lot has a marked, van-sized stall by the door; the `Zzz` sleep marker sits there.
-Vehicles are never stored there: the van and bike live in the storage facility,
-so when sleepiness gets critical you have to get in the van and drive it to the
-gym to sleep. The sleep prompt only works once the van is parked in that stall.
+lot has a marked, van-sized stall by the door. Every gym lot also gets a cyan
+rounded-square **safe sleep zone** outline while you are driving the van. It is
+currently visual only: it marks the lot, but sleeping still works behind the van
+anywhere in the city and there is no programmed benefit or disturbance roll yet.
+Vehicles are never stored there: the van and bike live in the storage facility.
 Walk up to the gym door and press E to step inside. The college campus uses the
 same hall buildings as the earlier levels, clustered into a walkable district;
 it is scenery and lives to give the expansion a different silhouette, not a new
@@ -204,9 +206,17 @@ Each level has one sleep spot:
   `Zzz` marker sits on the doorstep; stand on it and press E.
 - **1-2** — the rear of the van. The spot and marker follow the van wherever it is
   parked, so the van works as a bed on the move.
-- **1-3** — the van-sized stall in the gym parking lot. The `Zzz` marker and the
-  critical-need distance point to the gym, but the van starts in storage; you
-  have to drive it to the gym before the sleep or meditation prompt works.
+- **1-3** — the rear of the van, exactly like 1-2. Get in the van and the `Zzz`
+  marker and critical-need distance follow it, so you can sleep wherever you
+  park. The cyan safe-zone outlines are visual markers only for now.
+
+While you are driving the van, cyan rounded-square outlines pulse around every
+gym parking lot and around the storage facility lot. The storage outline is only
+visible during storage hours, 6:00 AM–9:00 PM (`CONFIG.storage.openHour` /
+`closeHour`); the gym outlines are always visible in the van. None of these
+zones changes danger, grants a perk, or blocks sleeping anywhere else yet. The
+planned first benefit is avoiding a future random window-knock / complaint wake
+event while parked inside a safe zone.
 
 Sleep is time-based, not a day skip. **100% tiredness is 8 in-game hours of sleep**,
 and the length scales with the meter (60% = 4 hr 48 min). During sleep the clock and
@@ -243,7 +253,7 @@ src/
     CityGenerator.js      Block orchestration, roads, sidewalks, props, spawn point
     Buildings.js          Building archetypes with door metadata per zone type
     Locations.js          POI registry (food + home categories) for delivery targets
-    StorageFacility.js    Drive-in storage block: gated aisle, roll-door units, slots
+    StorageFacility.js    Drive-in storage block: gated aisle, roll-door units, slots, safe-zone bounds
     gridMath.js           gridMetrics(grid) — derived street arithmetic per level
     names.js              Procedural street / venue naming
     materials.js          Shared vertex-color materials
@@ -271,7 +281,7 @@ src/
     DeliveryGenerator.js  Order generation, pricing, time limits, payout finalize
     DeliveryStateMachine.js Explicit FSM for the whole delivery flow
   progression/Progression.js  localStorage profile (bank, day, stats)
-  sleep/SleepSystem.js    Sleepiness meter, sleep spots, sleep sequence, dream roll
+  sleep/SleepSystem.js    Sleepiness meter, sleep spots, sleep sequence, dream roll, safe-zone outlines
   sleep/SleepBlur.js      Sleepiness post-process: Gaussian blur, radial smear, vignette
                           over the 3D view only (HUD stays sharp)
   rhythm/index.js         Stub seam where the rhythm mode will plug in

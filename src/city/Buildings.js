@@ -349,6 +349,7 @@ export function gymStore(S, W, rng, f) {
       centerZ: lotP.z,
       width: lotW,
       depth: lotD,
+      heading: f.ry,
       sleepSlot: { x: sleepP.x, z: sleepP.z, heading: f.ry },
       lampSpots: [
         { x: lampL.x, z: lampL.z, ry: f.ry },

@@ -117,6 +117,7 @@ export function buildStorageFacility(S, W, rng, f, collision, opts = {}) {
     box(0.9, 0.5, 0.9, lx, 0.25, lz, rng.pick(['#a67c52', '#8d949b', '#b08968']));
   }
 
+  const centerP = p(0, 0);
   const vanP = p(vanSide * (AW - 2.4), unitZ(openIndex) - 1.0);
   const bikeP = p(vanSide * (IN - 2.4), unitZ(openIndex) + 1.9);
   const carP = p(6.5, IN + 3.6);
@@ -125,6 +126,13 @@ export function buildStorageFacility(S, W, rng, f, collision, opts = {}) {
 
   return {
     unitLength: unitLen,
+    safeZone: {
+      x: centerP.x,
+      z: centerP.z,
+      width: span,
+      depth: span,
+      heading: f.ry
+    },
     vanSlot: { x: vanP.x, z: vanP.z, heading: -vanSide * (Math.PI / 2) },
     bikeSlot: { x: bikeP.x, z: bikeP.z, heading: -vanSide * (Math.PI / 2) },
     carSlot: { x: carP.x, z: carP.z, heading: -Math.PI / 2 },

@@ -406,21 +406,25 @@ Current behavior worth remembering (all landed and stable):
   are unlocked in `DEFAULT_PROFILE.unlocks.levels` for debug, and old saves merge
   new default levels on load. 1-3 uses `biome: 'desert'` (sand city/ground/minimap
   palettes, sandy sky tint, mesas/cactuses/desert trees outside the perimeter).
-  1-2 keeps `sleepSpot: 'van'` (the marker follows the van anywhere); 1-3 uses
-  `sleepSpot: 'gym'` with a fixed `Zzz` marker in the primary gym's van-sized
-  stall, and sleeping or meditating there requires driving the van from storage
-  and parking it in that stall. The gym lot never stores the fleet. The gym is a
-  first-party POI/store archetype; its door uses the existing interior flow with
-  gym-specific labels. 1-1 and 1-2 generator hashes are unchanged by the expansion.
+  Both 1-2 and 1-3 use `sleepSpot: 'van'` (the `Zzz` marker follows the van
+  anywhere, so the player can sleep in it wherever parked). 1-3 also has two gym
+  stores; every gym lot gets a cyan rounded-square safe-sleep outline while the
+  van is the active vehicle and the player is driving it, and the storage lot
+  gets the same outline only from 6 AM–9 PM (`CONFIG.storage.openHour` /
+  `closeHour`). Safe zones are visual-only: no programmed benefit, disturbance
+  RNG, danger change, or storage access gating yet. The gym lot never stores the
+  fleet. The gym is a first-party POI/store archetype; its door uses the existing
+  interior flow with gym-specific labels. 1-1 and 1-2 generator hashes are
+  unchanged by the expansion.
 - **The van** (1-2 and 1-3) is the mobile-studio/creative asset. It is a real
   `Vehicle` built from `VEHICLE_PROFILES.van` (bigger, slower, 56L tank, 140 HP,
   own `snackrun_van_fuel` / `snackrun_van_health` keys, boxy mesh) and it **cannot
   take deliveries** (`deliveries: false`). The car is the only delivery vehicle.
   No offers spawn while the van is the active vehicle, the objective reads
   "THE VAN IS NOT FOR DELIVERIES", and the beacon/minimap still point at the car.
-  In 1-2 its rear is the level's sleep spot (the `Zzz` marker moves with it). In
-  1-3 it starts in the storage facility's open bay; the fixed gym-stall sleep
-  marker only works after the van is driven there.
+  In both 1-2 and 1-3 its rear is the level's sleep spot (the `Zzz` marker moves
+  with it). In 1-3 it starts in the storage facility's open bay, then works as a
+  bed anywhere the player parks.
   **The van's creative workflow is deliberately TBD** — do not invent a rhythm
   mode; that is roadmap item #10.
 - **The bike** (1-2 and 1-3) is a delivery-capable `VEHICLE_PROFILES.bike` with
@@ -452,7 +456,8 @@ Current behavior worth remembering (all landed and stable):
   the back wall, and the car is parked at the curb outside the gate; the player
   starts on foot at the gate (`spawn.kind: 'storage'`). 1-3 places this block at
   `storageBlock: { col: 8, row: 17, vanUnit: 'west-front' }`; the gym lot never
-  holds the fleet.
+  holds the fleet. `buildStorageFacility()` returns `safeZone` bounds for the
+  gated lot, used only by the cyan visual marker while storage is open.
 - **Multiplayer is presence-only co-presence.** Title → MULTIPLAYER creates or
   joins a five-character room (32 cap) on a separate Node `ws` relay
   (`server/index.js`, `render.yaml`). Everyone loads the host's level, but each
@@ -489,7 +494,8 @@ water-bottle emoji + meter, burger emoji + meter, run down like fuel.
   remaining money-sink pressure are still open.
 - **Fitness / Sleep / Hunger / Thirst** — the same meter family, next systems.
   **Sleep has landed** (meter, home/van sleep spots, time-based sleep, meditation,
-  dream roll seam). Fitness and hunger/thirst are still open; gym is roadmap #9.
+  dream roll seam, visual-only cyan van safe zones at gym and storage lots).
+  Fitness and hunger/thirst are still open; gym is roadmap #9.
 
 Other pillars:
 
@@ -543,14 +549,18 @@ their first pass land as the level-select + 1-2 / van / storage facility — see
    meters, delivery-capable, close camera + rider animation). Still open:
    buying/owning more than one and the van's creative workflow.
 4. **Storage unit** — **first pass landed** as the 1-2 drive-in facility (a place
-   to keep vehicles). Still open: monthly storage billing, per-unit assignment.
+   to keep vehicles, with a time-gated visual-only van safe-sleep zone in 1-2/1-3).
+   Still open: monthly storage billing, per-unit assignment, and real 9 PM closing
+   / 6 AM opening access gating.
 5. **Parking rentals**
 6. **Parking tickets**
 7. **Night hazards** (health meter or money-based robbery — decision needed)
 8. **Police**
 9. **Gym** — first-pass location landed in 1-3 as a first-party store archetype
-   with a van-friendly parking lot and enterable interior. Fitness meter and
-   workout mechanics are still open.
+   with a van-friendly parking lot, enterable interior, and a visual-only cyan
+   van safe-sleep zone around every gym lot. Fitness meter and workout mechanics
+   are still open; the safe zone's future benefit is avoiding a planned random
+   window-knock / complaint wake event.
 10. **Study** (coffee shop / college campus) — first-pass location landed in 1-3
     as a seeded campus district. Study mechanics are still open.
 

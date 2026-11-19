@@ -181,7 +181,9 @@ export const CONFIG = {
     unitWallHeight: 3.8,
     unitMouthHeight: 3.3,
     pierWidth: 0.5,
-    fenceHeight: 2.6
+    fenceHeight: 2.6,
+    openHour: 6,
+    closeHour: 21
   },
 
   controlsHelp: [

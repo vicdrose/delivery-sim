@@ -32,13 +32,14 @@ const DESERT_ZONE_LOT = {
 export const CAR_COLORS = ['#e8615a', '#f2a541', '#2a9d8f', '#457b9d', '#b56576', '#e8e6df', '#576066'];
 
 export class CityWorld {
-  constructor(group, locations, minimapData, spawn, materials, storage = null, gym = null) {
+  constructor(group, locations, minimapData, spawn, materials, storage = null, gym = null, gymLots = []) {
     this.group = group;
     this.locations = locations;
     this.minimapData = minimapData;
     this.spawn = spawn;
     this.storage = storage;
     this.gym = gym;
+    this.gymLots = gymLots.length ? gymLots : gym ? [gym] : [];
     this._materials = materials;
     this.windowsMaterial = materials.windows;
   }
@@ -431,6 +432,7 @@ export function generateCity(collision, level) {
   const gasSpotSet = new Set(gasSpots.map((s) => s.col + ',' + s.row));
   const gymBlocks = level.gymBlocks || [];
   const gymBlockSet = new Set(gymBlocks.map((s) => s.col + ',' + s.row));
+  const gymLots = [];
   const storageBlock = level.storageBlock;
   const storageKey = storageBlock ? storageBlock.col + ',' + storageBlock.row : null;
 
@@ -444,7 +446,7 @@ export function generateCity(collision, level) {
       else if (zone === 'commercial') buildCommercial(col, row);
       else if (zone === 'business') buildBusiness(col, row);
       else if (zone === 'campus') buildCampus(col, row);
-      else if (zone === 'gym') buildGym(col, row, false);
+      else if (zone === 'gym') gymLots.push(buildGym(col, row, false));
       else buildResidential(col, row);
     }
   }
@@ -452,6 +454,7 @@ export function generateCity(collision, level) {
   let gym = null;
   for (let i = 0; i < gymBlocks.length; i++) {
     const lot = buildGym(gymBlocks[i].col, gymBlocks[i].row, i === 0);
+    gymLots.push(lot);
     if (i === 0) gym = lot;
   }
 
@@ -544,7 +547,7 @@ export function generateCity(collision, level) {
     pois: minimapPois
   };
 
-  return new CityWorld(group, locations, minimapData, spawn, materials, storage, gym);
+  return new CityWorld(group, locations, minimapData, spawn, materials, storage, gym, gymLots);
 }
 
 function buildTrees(spots, greens = ['#5ea35c', '#6fb261', '#4f9a54', '#83bd6d']) {

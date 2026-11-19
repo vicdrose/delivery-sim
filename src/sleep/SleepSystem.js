@@ -7,6 +7,8 @@ const STORAGE_KEY = 'snackrun_sleepiness';
 const CAFFEINE_KEY = 'snackrun_caffeine_count';
 const SLEEP = CONFIG.sleep;
 const GAS = CONFIG.gas;
+const STORAGE = CONFIG.storage;
+const SAFE_ZONE_COLOR = '#35e8ff';
 
 const clamp = (v) => Math.min(SLEEP.max, Math.max(0, Number.isFinite(v) ? v : SLEEP.startValue));
 const clampCaffeine = (v) => Math.min(GAS.caffeineMax, Math.max(0, Number.isFinite(v) ? Math.floor(v) : 0));
@@ -43,6 +45,100 @@ function formatDuration(hours) {
   return `${h} hr ${m} min`;
 }
 
+function currentHour(t) {
+  const hour = (CONFIG.day.dayStartHour + t * 24) % 24;
+  return hour < 0 ? hour + 24 : hour;
+}
+
+function storageOpenAt(t) {
+  const hour = currentHour(t);
+  const open = STORAGE.openHour;
+  const close = STORAGE.closeHour;
+  if (open === close) return true;
+  if (open < close) return hour >= open && hour < close;
+  return hour >= open || hour < close;
+}
+
+function roundedRectShape(width, depth, radius) {
+  const hw = width / 2;
+  const hd = depth / 2;
+  const r = Math.min(radius, hw, hd);
+  const shape = new THREE.Shape();
+  shape.moveTo(-hw + r, -hd);
+  shape.lineTo(hw - r, -hd);
+  shape.quadraticCurveTo(hw, -hd, hw, -hd + r);
+  shape.lineTo(hw, hd - r);
+  shape.quadraticCurveTo(hw, hd, hw - r, hd);
+  shape.lineTo(-hw + r, hd);
+  shape.quadraticCurveTo(-hw, hd, -hw, hd - r);
+  shape.lineTo(-hw, -hd + r);
+  shape.quadraticCurveTo(-hw, -hd, -hw + r, -hd);
+  return shape;
+}
+
+function roundedRectCurve(width, depth, radius) {
+  const hw = width / 2;
+  const hd = depth / 2;
+  const r = Math.min(radius, hw, hd);
+  const p = (x, z) => new THREE.Vector3(x, 0, z);
+  const curve = new THREE.CurvePath();
+  curve.add(new THREE.LineCurve3(p(-hw + r, -hd), p(hw - r, -hd)));
+  curve.add(new THREE.QuadraticBezierCurve3(p(hw - r, -hd), p(hw, -hd), p(hw, -hd + r)));
+  curve.add(new THREE.LineCurve3(p(hw, -hd + r), p(hw, hd - r)));
+  curve.add(new THREE.QuadraticBezierCurve3(p(hw, hd - r), p(hw, hd), p(hw - r, hd)));
+  curve.add(new THREE.LineCurve3(p(hw - r, hd), p(-hw + r, hd)));
+  curve.add(new THREE.QuadraticBezierCurve3(p(-hw + r, hd), p(-hw, hd), p(-hw, hd - r)));
+  curve.add(new THREE.LineCurve3(p(-hw, hd - r), p(-hw, -hd + r)));
+  curve.add(new THREE.QuadraticBezierCurve3(p(-hw, -hd + r), p(-hw, -hd), p(-hw + r, -hd)));
+  return curve;
+}
+
+function makeSafeZone(spec, storage) {
+  const width = (Number(spec.width) || 0) + 1.2;
+  const depth = (Number(spec.depth) || 0) + 1.2;
+  const radius = Math.min(5, width * 0.12, depth * 0.12);
+  const curve = roundedRectCurve(width, depth, radius);
+  const fillGeometry = new THREE.ShapeGeometry(roundedRectShape(width, depth, radius), 12);
+  fillGeometry.rotateX(Math.PI / 2);
+  const fillMaterial = new THREE.MeshBasicMaterial({
+    color: SAFE_ZONE_COLOR,
+    transparent: true,
+    opacity: 0.05,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+  const fill = new THREE.Mesh(fillGeometry, fillMaterial);
+  fill.position.y = 0.075;
+
+  const glowMaterial = new THREE.MeshBasicMaterial({
+    color: SAFE_ZONE_COLOR,
+    transparent: true,
+    opacity: 0.1,
+    depthWrite: false
+  });
+  const glow = new THREE.Mesh(new THREE.TubeGeometry(curve, 128, 0.42, 6, true), glowMaterial);
+  glow.position.y = 0.12;
+
+  const outlineMaterial = new THREE.MeshBasicMaterial({
+    color: SAFE_ZONE_COLOR,
+    transparent: true,
+    opacity: 0.46,
+    depthWrite: false
+  });
+  const outline = new THREE.Mesh(new THREE.TubeGeometry(curve, 128, 0.16, 6, true), outlineMaterial);
+  outline.position.y = 0.14;
+
+  const group = new THREE.Group();
+  group.name = storage ? 'Storage Safe Sleep Zone' : 'Gym Safe Sleep Zone';
+  group.userData.safeZone = true;
+  group.userData.storage = storage;
+  group.add(fill, glow, outline);
+  group.position.set(Number(spec.x) || 0, 0, Number(spec.z) || 0);
+  group.rotation.y = Number(spec.heading) || 0;
+  group.visible = false;
+  return { group, fillMaterial, glowMaterial, outlineMaterial, storage };
+}
+
 export class SleepSystem {
   constructor(game) {
     this.g = game;
@@ -69,11 +165,14 @@ export class SleepSystem {
     this._camYaw = 0;
     this._levelId = null;
     this._markerTime = 0;
+    this._safeZones = [];
+    this._safeZoneTime = 0;
     this._saveClock = 0;
     this._unsubStand = bus.on('sleep:stand', () => {
       if (this.blocking && this.mode === 'meditate') this._endMeditation(false);
     });
     this._buildMarker();
+    this._rebuildSafeZones();
     this._syncUi();
     this._publish();
   }
@@ -136,6 +235,68 @@ export class SleepSystem {
     this._ringMat = ringMat;
     this._beamMat = beamMat;
     this._sprite = sprite;
+  }
+
+  _rebuildSafeZones() {
+    this._disposeSafeZones();
+    const city = this.g.city;
+    if (!city) return;
+    const zones = [];
+    for (const lot of city.gymLots || []) {
+      zones.push(makeSafeZone({
+        x: lot.centerX,
+        z: lot.centerZ,
+        width: lot.width,
+        depth: lot.depth,
+        heading: lot.heading || lot.sleepSlot?.heading || 0
+      }, false));
+    }
+    if (city.storage?.safeZone) {
+      zones.push(makeSafeZone(city.storage.safeZone, true));
+    }
+    this._safeZones = zones;
+    for (const zone of zones) this.g.scene.add(zone.group);
+  }
+
+  _disposeSafeZones() {
+    for (const zone of this._safeZones) {
+      this.g.scene.remove(zone.group);
+      zone.group.traverse((child) => {
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) child.material.dispose();
+      });
+    }
+    this._safeZones = [];
+  }
+
+  _inVan() {
+    return (
+      ui.vehicleId === 'van' &&
+      this.g.currentMode &&
+      this.g.currentMode.playerMode === 'drive'
+    );
+  }
+
+  _updateSafeZones(dt) {
+    if (!this._safeZones.length) return;
+    this._safeZoneTime += dt;
+    const inVan = this._inVan();
+    const storageOpen = storageOpenAt(this.g.dayCycle.t);
+    const pulse = Math.sin(this._safeZoneTime * 3);
+    const scale = 1 + pulse * 0.018;
+    for (const zone of this._safeZones) {
+      const show =
+        ui.screen === 'playing' &&
+        !this.blocking &&
+        inVan &&
+        (!zone.storage || storageOpen);
+      zone.group.visible = show;
+      if (!show) continue;
+      zone.group.scale.setScalar(scale);
+      zone.fillMaterial.opacity = 0.05 + pulse * 0.02;
+      zone.glowMaterial.opacity = 0.1 + pulse * 0.035;
+      zone.outlineMaterial.opacity = 0.46 + pulse * 0.14;
+    }
   }
 
   get spotKind() {
@@ -222,6 +383,7 @@ export class SleepSystem {
   onLevelChange() {
     this._levelId = null;
     this.spot = null;
+    this._rebuildSafeZones();
     this.getSpot();
   }
 
@@ -266,6 +428,7 @@ export class SleepSystem {
   }
 
   update(dt, s) {
+    this._updateSafeZones(dt);
     this._updateMarker(dt);
 
     if (this.blocking) {
@@ -640,6 +803,7 @@ export class SleepSystem {
       this._unsubStand();
       this._unsubStand = null;
     }
+    this._disposeSafeZones();
     if (this.marker) {
       this.g.scene.remove(this.marker);
       this.marker.traverse((child) => {
