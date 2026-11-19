@@ -235,6 +235,13 @@ Current behavior worth remembering (all landed and stable):
   Up rolls an adjective, Down a verb, Left an emotion and Right a compound word.
   The selected word is centered in the popup and repeated in the top-right HUD
   under the beat title; activating the mode starts with a random compound word.
+  Releasing LB/R while the mode is active calls `RadioSystem.showFreestyleWord()`,
+  which sets `ui.radio.freestyle.wordVisible` and reveals `FreestyleWordOverlay.vue`:
+  a fixed, centered white word with a 2px black outline and a short fade/scale
+  in/out. It tracks auto wrap and word rolls live, hides on mode deactivation,
+  run start, reset, or Astro Beats activation, and is suppressed while paused,
+  sleeping or off the playing screen. `Game._updateRadio()` owns the release
+  trigger; `RadioSystem` owns the visibility flag so every exit path clears it.
   Auto wrap is always on: while the mode is active the current bank rolls a new
   random word every AUTO WRAP interval (default 1s), and any D-pad/arrow word
   command picks that bank and restarts the timer. Game pause freezes the timer;

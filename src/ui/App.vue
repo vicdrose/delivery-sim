@@ -19,6 +19,7 @@
     <MultiplayerHud />
     <TouchControls />
   </div>
+  <FreestyleWordOverlay />
   <SleepOverlay />
   <Screens />
 </template>
@@ -39,6 +40,7 @@ import RadioWidget from './components/RadioWidget.vue';
 import RadioStationOverlay from './components/RadioStationOverlay.vue';
 import VolumeOverlay from './components/VolumeOverlay.vue';
 import SleepOverlay from './components/SleepOverlay.vue';
+import FreestyleWordOverlay from './components/FreestyleWordOverlay.vue';
 import ToastStack from './components/ToastStack.vue';
 import PaymentFlash from './components/PaymentFlash.vue';
 import BagSecuredFlash from './components/BagSecuredFlash.vue';

@@ -432,6 +432,12 @@ Left = emotion, Right = compound word**. The same word appears in the top-right
 radio under the beat title. Freestyle King starts with a random compound word.
 A short LB/R tap still skips to another random beat.
 
+When you let go of LB/R, the current word also pops up large in the middle of
+the screen: white text with a black outline, fading and scaling in over a moment.
+It keeps up with auto wrap and word rolls while it is up, so the big word always
+matches the one in the HUD. Turning Freestyle King off (or starting Astro Beats)
+makes it fade away; hold and release the bumper again to bring it back.
+
 Auto wrap is always on: while Freestyle King is active, the current word bank
 rolls a new random word every AUTO WRAP interval, which defaults to one second.
 Every word command selects its bank and restarts the timer, so pressing Right

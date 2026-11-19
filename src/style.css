@@ -623,6 +623,55 @@ body {
   color: #8a8578;
 }
 
+.freestyle-word-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 150;
+  pointer-events: none;
+}
+
+.freestyle-word-text {
+  display: block;
+  max-width: 90vw;
+  color: #fff;
+  font-family: inherit;
+  font-size: clamp(40px, 8vw, 140px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  text-shadow: 0 0 2px #000, 0 6px 20px rgba(0, 0, 0, 0.75);
+  animation: freestyle-word-pop 0.16s ease-out;
+}
+
+@keyframes freestyle-word-pop {
+  from {
+    opacity: 0.35;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.freestyle-word-enter-active,
+.freestyle-word-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.freestyle-word-enter-from,
+.freestyle-word-leave-to {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
 .radio-astro {
   display: flex;
   flex-direction: column;

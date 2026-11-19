@@ -156,7 +156,8 @@ export const ui = reactive({
       count: 0,
       word: null,
       wordBank: 'compound',
-      autoWrapMs: 1000
+      autoWrapMs: 1000,
+      wordVisible: false
     },
     astroBeats: {
       active: false,

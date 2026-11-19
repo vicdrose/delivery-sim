@@ -477,6 +477,9 @@ export class Game {
         if (this.radio.toggleShuffle()) this.audio.play('ui');
       }
     } else if (!held && this._lbPrev) {
+      if (this.radio.isFreestyle && !this.radio.isAstroBeats) {
+        this.radio.showFreestyleWord();
+      }
       if (this._lbSelector) {
         this.radio.closeSelector();
       } else if (!this._freestyleToggled && !this._astroBeatsToggled) {

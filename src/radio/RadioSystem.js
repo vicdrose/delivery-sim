@@ -97,6 +97,7 @@ export class RadioSystem {
     this.spotify = new SpotifyProvider();
     this.soundcloud = new SoundCloudProvider();
     this.freestyle = new FreestyleKingProvider();
+    this.freestyleWordVisible = false;
     this.astroBeats = {
       active: false,
       flipped: false,
@@ -156,6 +157,7 @@ export class RadioSystem {
     this.inVehicle = false;
     this.paused = false;
     this.freestyle.deactivate();
+    this.freestyleWordVisible = false;
     this.astroBeats.active = false;
     this.astroBeats.flipped = false;
     this.astroBeats.cards = [];
@@ -225,8 +227,15 @@ export class RadioSystem {
   }
 
   deactivateFreestyle() {
+    this.freestyleWordVisible = false;
     this.freestyle.deactivate();
     if (this.inVehicle && !this.paused) this._scheduleApply(120);
+    this._syncUi();
+  }
+
+  showFreestyleWord() {
+    if (!this.isFreestyle || this.freestyleWordVisible) return;
+    this.freestyleWordVisible = true;
     this._syncUi();
   }
 
@@ -250,6 +259,7 @@ export class RadioSystem {
   }
 
   activateAstroBeats() {
+    this.freestyleWordVisible = false;
     this.astroBeats.active = true;
     this.astroBeats.flipped = false;
     this.astroBeats.draw += 1;
@@ -548,6 +558,7 @@ export class RadioSystem {
   reset() {
     this._cancelApply();
     this.freestyle.deactivate();
+    this.freestyleWordVisible = false;
     this.freestyle.resetAutoWrap();
     this.astroBeats.active = false;
     this.astroBeats.flipped = false;
@@ -570,7 +581,7 @@ export class RadioSystem {
     const group = this.localGroup;
     const spotify = this.spotify.snapshot();
     const soundcloud = this.soundcloud.snapshot();
-    const freestyle = this.freestyle.snapshot();
+    const freestyle = { ...this.freestyle.snapshot(), wordVisible: this.freestyleWordVisible };
     const astroBeats = this._astroSnapshot();
     const available = local ? this.music.localHasTracks(group) : this.providerFor().configured;
     let track = null;
