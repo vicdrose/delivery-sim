@@ -868,6 +868,7 @@ export class DeliveryMode {
     ui.playerMode = this.playerMode;
     ui.speedMph =
       this.playerMode === 'drive' ? Math.round(Math.abs(g.vehicle.speed) * 2.23694) : 0;
+    ui.vehicleMoving = this.playerMode === 'drive' && Math.abs(g.vehicle.speed) >= 1.6;
     ui.hasFood = fsm.hasFood;
     ui.day = g.dayCycle.day;
     ui.fuelLevel = g.vehicle.fuelLevel;

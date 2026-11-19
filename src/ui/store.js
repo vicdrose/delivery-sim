@@ -51,6 +51,9 @@ export const ui = reactive({
   handbrakePressed: false,
   sprintPressed: false,
   voiceHeld: false,
+  hornHeld: false,
+  shiftHeld: false,
+  vehicleMoving: false,
 
   money: 0,
   todayEarned: 0,

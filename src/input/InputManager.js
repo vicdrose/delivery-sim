@@ -76,12 +76,22 @@ export class InputManager {
     state.handbrake = state.handbrake || ui.handbrakePressed;
     state.sprint = state.sprint || ui.sprintPressed;
     state.voiceHeld = state.voiceHeld || ui.voiceHeld;
+    state.horn = state.horn || !!ui.hornHeld;
+    state.shiftHeld = state.shiftHeld || !!ui.shiftHeld;
 
     const actionEdge = ui.actionPressed && !this._actionPrev;
-    state.actionPressed = state.actionPressed || actionEdge;
-    state.interactPressed = state.interactPressed || actionEdge;
-    state.acceptPressed = state.acceptPressed || actionEdge;
-    state.enterExitPressed = state.enterExitPressed || actionEdge;
+    if (actionEdge) {
+      state.actionPressed = true;
+      state.enterExitPressed = true;
+      if (ui.playerMode !== 'drive') {
+        state.interactPressed = true;
+        state.acceptPressed = true;
+      }
+    }
+    if (ui.hornHeld && ui.offer) {
+      state.acceptPressed = true;
+      state.interactPressed = true;
+    }
     state.pausePressed = state.pausePressed || (ui.pausePressed && !this._pausePrev);
     state.repairPressed = state.repairPressed || (ui.repairPressed && !this._repairPrev);
 

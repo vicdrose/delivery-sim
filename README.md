@@ -57,8 +57,15 @@ are rebuilt and uploaded deliberately; GitHub Pages pushes do not update Steam.
 | Right stick | Look around with the camera (inverted X, 3x sensitivity); R3 opens the radio volume slider |
 | V | Push-to-talk (multiplayer voice) |
 | Esc | Pause |
-| Enter / N | Accept / decline offer |
-| Gamepad | Full support (RT accelerate, LT brake / reverse, stick steer, A interact/accept, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, LB + B Freestyle King / Auto Beats, LB + A Astro Beats flip / shuffle, D-pad ←/→ aux source, D-pad ↑/↓/←/→ random word in Freestyle King, Y radio power or Astro Beats close while the selector is open, right stick camera look, R3 radio volume, Select / Back push-to-talk) |
+| Enter / N | Accept / decline offer; hold N for 1.5s to toggle the shift |
+| Gamepad | Full support (RT accelerate, LT brake / reverse, stick steer, A interact/accept, B decline / hold 1.5s to toggle shift, Y vehicle, RB handbrake, X horn / SoundCloud shuffle while the selector is open, LB radio / hold stations, LB + B Freestyle King / Auto Beats, LB + A Astro Beats flip / shuffle, D-pad ←/→ aux source, D-pad ↑/↓/←/→ random word in Freestyle King, Y radio power or Astro Beats close while the selector is open, right stick camera look, R3 radio volume, Select / Back push-to-talk) |
+
+On touch controls, the big round button reads **HORN** whenever the vehicle is
+moving and **EXIT** when it is stopped. Pressing HORN with an offer waiting also
+accepts the offer, so one tap sounds the horn and takes the job. When an offer
+pops up, a small **B** button appears (on foot or driving); hold it for 1.5
+seconds to end your shift, just like gamepad B / keyboard N. Hold it again later
+to start a new shift.
 
 Menus are controller-friendly too: on the title screen and every pause page,
 D-pad or arrow keys move the highlight, A (or Enter) activates the highlighted

@@ -37,6 +37,16 @@
     >MIC</button>
 
     <button v-if="showRepair" class="touch-btn wrench-btn" @pointerdown="repair">⚙</button>
+
+    <button
+      v-if="showShift"
+      class="touch-btn shift-btn"
+      :class="{ holding: ui.shiftHeld }"
+      @pointerdown="shiftDown"
+      @pointerup="shiftUp"
+      @pointercancel="shiftUp"
+      @lostpointercapture="shiftUp"
+    >B</button>
   </div>
 </template>
 
@@ -53,11 +63,17 @@ const active = ref(false);
 const RADIUS = 58;
 
 watch([mobile, () => ui.paused], ([shown, paused]) => {
-  if (!shown || paused) ui.sprintPressed = false;
+  if (!shown || paused) {
+    ui.sprintPressed = false;
+    ui.hornHeld = false;
+    ui.shiftHeld = false;
+  }
 });
 
 onBeforeUnmount(() => {
   ui.sprintPressed = false;
+  ui.hornHeld = false;
+  ui.shiftHeld = false;
 });
 
 const thumbStyle = computed(() => ({
@@ -110,6 +126,7 @@ function pulse(key) {
 
 function actionDown(e) {
   e.currentTarget.setPointerCapture?.(e.pointerId);
+  if (ui.playerMode === 'drive' && ui.vehicleMoving) ui.hornHeld = true;
   if (hasAction.value) {
     pulse('actionPressed');
   } else {
@@ -118,6 +135,7 @@ function actionDown(e) {
 }
 
 function actionUp() {
+  ui.hornHeld = false;
   ui.sprintPressed = false;
 }
 
@@ -128,6 +146,15 @@ function pause() {
 
 function repair() {
   pulse('repairPressed');
+}
+
+function shiftDown(e) {
+  e.currentTarget.setPointerCapture?.(e.pointerId);
+  ui.shiftHeld = true;
+}
+
+function shiftUp() {
+  ui.shiftHeld = false;
 }
 
 function micDown(e) {
@@ -143,12 +170,18 @@ const showMic = computed(() => ui.multiplayer.inRoom && ui.multiplayer.voiceEnab
 
 const showRepair = computed(() => ui.nearGasStation && ui.playerMode === 'foot' && ui.healthLevel < ui.healthMax);
 
+const showShift = computed(() => !!ui.offer && !ui.paused);
+
+watch(showShift, (shown) => {
+  if (!shown) ui.shiftHeld = false;
+});
+
 const hasAction = computed(() => !!ui.offer || !!ui.prompt || ui.playerMode === 'drive');
 
 const actionLabel = computed(() => {
+  if (ui.playerMode === 'drive') return ui.vehicleMoving ? 'HORN' : 'EXIT';
   if (ui.offer) return 'ACCEPT';
   if (ui.prompt) return shortPrompt(ui.prompt);
-  if (ui.playerMode === 'drive') return 'EXIT';
   return 'RUN';
 });
 
@@ -220,6 +253,24 @@ function shortPrompt(p) {
   font-size: 22px;
   background: rgba(242, 165, 65, 0.85);
   border-color: rgba(255, 255, 255, 0.85);
+}
+
+.shift-btn {
+  right: 94px;
+  bottom: 216px;
+  width: 50px;
+  height: 50px;
+  font-size: 18px;
+  background: rgba(126, 102, 214, 0.9);
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 5px 0 rgba(58, 43, 112, 0.6);
+}
+
+.shift-btn.holding {
+  transform: scale(0.92);
+  background: rgba(158, 240, 26, 0.92);
+  color: #1d2430;
+  box-shadow: 0 0 18px rgba(158, 240, 26, 0.7);
 }
 
 .mic-btn {
