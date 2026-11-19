@@ -62,10 +62,10 @@ are rebuilt and uploaded deliberately; GitHub Pages pushes do not update Steam.
 
 On touch controls, the big round button reads **HORN** whenever the vehicle is
 moving and **EXIT** when it is stopped. Pressing HORN with an offer waiting also
-accepts the offer, so one tap sounds the horn and takes the job. When an offer
-pops up, a small **B** button appears (on foot or driving); hold it for 1.5
-seconds to end your shift, just like gamepad B / keyboard N. Hold it again later
-to start a new shift.
+accepts the offer, so one tap sounds the horn and takes the job. A small **B**
+button is always on screen (on foot or driving); hold it for 1.5 seconds to end
+your shift, just like gamepad B / keyboard N. Hold it again later to start a new
+shift.
 
 Menus are controller-friendly too: on the title screen and every pause page,
 D-pad or arrow keys move the highlight, A (or Enter) activates the highlighted

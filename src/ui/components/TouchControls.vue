@@ -39,7 +39,6 @@
     <button v-if="showRepair" class="touch-btn wrench-btn" @pointerdown="repair">⚙</button>
 
     <button
-      v-if="showShift"
       class="touch-btn shift-btn"
       :class="{ holding: ui.shiftHeld }"
       @pointerdown="shiftDown"
@@ -169,12 +168,6 @@ function micUp() {
 const showMic = computed(() => ui.multiplayer.inRoom && ui.multiplayer.voiceEnabled);
 
 const showRepair = computed(() => ui.nearGasStation && ui.playerMode === 'foot' && ui.healthLevel < ui.healthMax);
-
-const showShift = computed(() => !!ui.offer && !ui.paused);
-
-watch(showShift, (shown) => {
-  if (!shown) ui.shiftHeld = false;
-});
 
 const hasAction = computed(() => !!ui.offer || !!ui.prompt || ui.playerMode === 'drive');
 

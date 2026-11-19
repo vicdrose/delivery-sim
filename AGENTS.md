@@ -140,11 +140,10 @@ Full architecture in `README.md` (`src/` tree). Key files:
 Current behavior worth remembering (all landed and stable):
 
 - **Shift** = hold B (gamepad) / N (keyboard), or the small **B** touch button
-  shown while an offer is waiting, for 1.5s to toggle on/off. The touch button
-  works on foot and while driving, clearing its held state as soon as the offer
-  goes away. Game **starts with shift ON**. Flash = "SHIFT STARTED"; ending shows
-  "Shift ended." toast; when off, banner reads "HOLD B TO BEGIN SHIFT". B also
-  maps to decline.
+  that is always on screen, for 1.5s to toggle on/off. The touch button works on
+  foot and while driving, clearing its held state on pause / screen changes. Game
+  **starts with shift ON**. Flash = "SHIFT STARTED"; ending shows "Shift ended."
+  toast; when off, banner reads "HOLD B TO BEGIN SHIFT". B also maps to decline.
 - **RT = gas** when driving and **sprint on foot**; LT = brake, and holding it
   past halfway reverses once the car is stopped. Left stick / W,A,S,D move and
   steer.
@@ -335,7 +334,7 @@ Current behavior worth remembering (all landed and stable):
   `InputManager._mergeTouch()` merges into `state.horn`; a press with `ui.offer`
   pending also sets `acceptPressed`, so the horn and offer acceptance happen on
   the same tap. A stopped press only sets `enterExitPressed` and does not accept
-  the offer. `ui.shiftHeld` comes from the offer-time **B** button and feeds the
+  the offer. `ui.shiftHeld` comes from the always-on **B** button and feeds the
   same 1.5s shift toggle as gamepad B / keyboard N.
 - **Fuel & partial refuel** = 40-unit tank at `$0.85` per unit (`$34` empty to
   full). The pump never refuses a fill because the bank is short of a full tank:
