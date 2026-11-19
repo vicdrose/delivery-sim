@@ -69,8 +69,9 @@ current music instead of replacing it. Hold LB / R and press A / E once to open 
 shuffled four-card spread face-down; the music that was already playing keeps
 going. The next press flips all cards to reveal the body, sign, house and crystal.
 Press it again to flip them back and draw a fresh spread, then again to reveal the
-new cards. The spread gives each card enough vertical room to show the whole
-image. Once the cards are revealed, click or tap any one to zoom it to 2.5x at the
+new cards. The spread copies the Astro Beats app's sizing: the three standard
+cards are shorter and the crystal card is taller, each matched to its image's own
+aspect ratio so the whole card shows with no black bars. Once the cards are revealed, click or tap any one to zoom it to 2.5x at the
 center of the screen while a black overlay fades from transparent to 60%. The
 zoomed card gets its own FLIP button (turns only that card over) and CLOSE button
 (animates it back to its slot); clicking the dark area closes it too. LB + B

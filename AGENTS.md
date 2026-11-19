@@ -249,9 +249,12 @@ Current behavior worth remembering (all landed and stable):
   `src/radio/astroBeatsCards.js` (body, sign, house and crystal decks plus the
   shared card back). The first press draws a shuffled four-card spread face-down;
   the next press flips it face-up, the next flips back and redraws all four cards,
-  and subsequent presses alternate reveal / shuffle-reveal. The spread uses a
-  taller card slot so the whole portrait image is visible. Clicking or tapping a
-  revealed card opens a per-card zoom modal: a clone animates from that card's
+  and subsequent presses alternate reveal / shuffle-reveal. The spread copies
+  the Astro Beats app's sizing: the three standard cards use the app's `150x220`
+  proportions and the crystal card `150x260`, then each card's `aspect-ratio` is
+  refined from its image's natural dimensions on load, so cards have different
+  heights, are vertically centered in the row, and show the whole image with no
+  letterbox bars. Clicking or tapping a revealed card opens a per-card zoom modal: a clone animates from that card's
   real screen rect to the center at 2.5x while a black scrim eases from 0 to 60%
   opacity. The modal has FLIP (toggles only the zoomed card's face) and CLOSE
   (reverses the animation); clicking the scrim also closes. `RadioStationOverlay.vue`

@@ -36,6 +36,7 @@
             :key="`${astroDraw}-${card.key}`"
             class="astro-card"
             :class="{ 'zoom-source': zoomIndex === index }"
+            :style="{ aspectRatio: astroAspectRatios[index] }"
             role="button"
             tabindex="0"
             @click="onCardClick($event, index)"
@@ -57,6 +58,7 @@
                   v-if="!astroImageErrors[index]"
                   :src="card.back"
                   :alt="card.name"
+                  @load="onCardImageLoad($event, index)"
                   @error="astroImageErrors[index] = true"
                 />
                 <div v-else class="astro-card-fallback">{{ card.name }}</div>
@@ -184,6 +186,8 @@ const astroFlipped = computed(() => !!ui.radio.astroBeats?.flipped);
 const astroCards = computed(() => ui.radio.astroBeats?.cards || []);
 const astroDraw = computed(() => ui.radio.astroBeats?.draw || 0);
 const astroImageErrors = ref([false, false, false, false]);
+const ASTRO_ASPECT_DEFAULTS = [150 / 220, 150 / 220, 150 / 220, 150 / 260];
+const astroAspectRatios = ref([...ASTRO_ASPECT_DEFAULTS]);
 const ZOOM_SCALE = 2.5;
 const zoomIndex = ref(null);
 const zoomSource = ref(null);
@@ -222,6 +226,7 @@ const zoomCardStyle = computed(() => {
 
 watch(astroDraw, () => {
   astroImageErrors.value = [false, false, false, false];
+  astroAspectRatios.value = [...ASTRO_ASPECT_DEFAULTS];
   resetZoom();
 });
 
@@ -323,6 +328,12 @@ const nowLine = computed(() => {
   if (radio.station === 'ep' && !radio.epHasTracks) return 'Drop EP files into src/audio/tracks/infinite-ep/';
   return radio.stationDetail;
 });
+
+function onCardImageLoad(event, index) {
+  const img = event.target;
+  if (!img.naturalWidth || !img.naturalHeight) return;
+  astroAspectRatios.value[index] = img.naturalWidth / img.naturalHeight;
+}
 
 function resetZoom() {
   zoomIndex.value = null;
