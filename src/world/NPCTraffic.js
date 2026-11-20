@@ -356,8 +356,11 @@ export class NPCTraffic {
   }
 
   destroy() {
-    this.scene.remove(this.bodies, this.cabins);
-    this.bodies.dispose();
-    this.cabins.dispose();
+    for (const mesh of [this.bodies, this.cabins, this.wheels, this.rims]) {
+      this.scene.remove(mesh);
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+      mesh.dispose();
+    }
   }
 }

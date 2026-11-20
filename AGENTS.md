@@ -413,7 +413,10 @@ Current behavior worth remembering (all landed and stable):
   "TRAFFIC (BETA)" remains as a debug override and persists in localStorage
   `snackrun_traffic`. Kept for debugging collisions: traffic uses lane-offset
   positions, wheels use body-rotation angle, and cars are forced to turn at grid
-  edges (no driving onto the beach).
+  edges (no driving onto the beach). Its bodies, cabins, wheels and white rims are
+  four separate root-level `InstancedMesh` objects holding world-space matrices,
+  so `NPCTraffic.destroy()` must remove and dispose all four on level change;
+  leaving the wheel/rim meshes behind strands them in the street with no car.
 - **Out of gas** = no forward *and* no reverse; braking still decelerates while
   rolling.
 - **Cars** (NPC + parked) have four wheels with white rims.
